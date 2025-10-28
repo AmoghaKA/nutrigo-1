@@ -172,10 +172,7 @@ export default function ForWhomSection() {
                 </div>
               ))}
             </div>
-            <div className="text-left">
-              <p className="text-white font-bold">Join 72,000+ users</p>
-              <p className="text-sm text-slate-400">Making smarter food choices every day</p>
-            </div>
+
           </div>
 
           <p className="text-slate-400 text-sm max-w-2xl mx-auto">

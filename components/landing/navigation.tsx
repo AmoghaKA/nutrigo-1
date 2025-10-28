@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import { useState, useEffect } from "react"
+import Image from "next/image"
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -17,6 +18,13 @@ export default function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  const menuItems = [
+    { name: "Features", href: "#features" },
+    { name: "About Us", href: "#about" },
+    { name: "Pricing", href: "/pricing" }, // This will be a separate page
+    { name: "Contact", href: "#contact" },
+  ]
+
   return (
     <nav
       className={`fixed top-0 w-full z-50 transition-all duration-500 ${
@@ -27,27 +35,28 @@ export default function Navigation() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
+          {/* Logo Section - Replace with your own logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative w-10 h-10 bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300 shadow-xl">
-                <span className="text-white font-black text-lg">N</span>
-              </div>
+            <div className="relative w-45 h-45">
+              <Image
+                src="/logo.png" 
+                alt="NutriGo Logo"
+                fill
+                className="object-contain transform group-hover:scale-110 transition-transform duration-300"
+                priority
+              />
             </div>
-            <span className="font-black text-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
-              NutriGo
-            </span>
           </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8">
-            {["Features", "Market", "Roadmap"].map((item) => (
+            {menuItems.map((item) => (
               <Link
-                key={item}
-                href={`#${item.toLowerCase()}`}
+                key={item.name}
+                href={item.href}
                 className="relative text-slate-300 hover:text-emerald-400 transition-colors duration-300 font-medium group"
               >
-                {item}
+                {item.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-400 group-hover:w-full transition-all duration-300"></span>
               </Link>
             ))}
@@ -82,14 +91,14 @@ export default function Navigation() {
         {/* Mobile Menu */}
         {isOpen && (
           <div className="md:hidden pb-6 space-y-4 border-t border-emerald-500/20 pt-4 animate-in slide-in-from-top duration-300">
-            {["Features", "Market", "Roadmap"].map((item) => (
+            {menuItems.map((item) => (
               <Link
-                key={item}
-                href={`#${item.toLowerCase()}`}
+                key={item.name}
+                href={item.href}
                 className="block text-slate-300 hover:text-emerald-400 transition-colors duration-300 py-2"
                 onClick={() => setIsOpen(false)}
               >
-                {item}
+                {item.name}
               </Link>
             ))}
             <div className="flex gap-3 pt-4">

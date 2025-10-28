@@ -35,28 +35,28 @@ const team = [
     name: "ARJUN BHAT",
     role: "Frontend Developer",
     skills: "React & Next.js",
-    image: "/team/arjun.jpg", // Replace with actual image path
+    image: "/team/arjun.jpg",
     color: "from-blue-400 to-cyan-500",
   },
   {
     name: "PRANAV RAO K",
     role: "Frontend Developer",
     skills: "React & TailwindCSS",
-    image: "/team/pranav.jpg", // Replace with actual image path
+    image: "/team/pranav.jpg",
     color: "from-amber-400 to-orange-500",
   },
   {
     name: "TUSHAR P",
     role: "Backend Developer",
     skills: "Auth & Cloud",
-    image: "/team/tushar.jpg", // Replace with actual image path
+    image: "/team/tushar.jpg",
     color: "from-purple-400 to-violet-500",
   },
   {
     name: "AMOGHA K A",
     role: "Backend Developer",
     skills: "Node.js & Databases",
-    image: "/team/amogha.jpg", // Replace with actual image path
+    image: "/team/amogha.jpg",
     color: "from-emerald-400 to-teal-500",
   },
 ]
@@ -64,8 +64,8 @@ const team = [
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-slate-950">
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      {/* Hero Section - Added scroll-mt-24 and id="about" */}
+      <section id="about" className="scroll-mt-24 relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-slow"></div>
@@ -250,14 +250,14 @@ export default function AboutPage() {
                     <div className={`w-full h-full bg-gradient-to-br ${member.color} flex items-center justify-center`}>
                       <span className="text-6xl">👤</span>
                     </div>
-                    {
+                    {/* Uncomment when images are ready:
                     <Image
                       src={member.image}
                       alt={member.name}
                       fill
                       className="object-cover"
                     />
-                    }
+                    */}
                   </div>
 
                   {/* Content */}
@@ -285,7 +285,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-      
     </div>
   )
 }

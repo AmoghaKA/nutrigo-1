@@ -2,28 +2,26 @@
 
 import Link from "next/link"
 import { Mail, Linkedin, Twitter, Github, Heart } from "lucide-react"
+import Image from "next/image"
 
 export default function Footer() {
   return (
     <footer className="border-t border-emerald-500/20 bg-slate-950 py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent"></div>
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid md:grid-cols-5 gap-12 mb-12">
           {/* Brand */}
           <div className="md:col-span-2 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl blur-md opacity-75 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative w-12 h-12 bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-xl">
-                  <span className="text-white font-black text-xl">N</span>
-                </div>
-              </div>
-              <span className="font-black text-2xl bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                NutriGo
-              </span>
-            </div>
+            <Link href="/" className="flex items-center gap-3 group w-fit">
+              <Image
+                src="/logo.png"
+                alt="NutriGo Logo"
+                width={180}
+                height={180}
+                className="transform group-hover:scale-110 transition-transform duration-300"
+              />
+            </Link>
             <p className="text-slate-400 leading-relaxed max-w-sm">
               Decode Your Food, Redefine Your Health. AI-powered nutrition insights for smarter, healthier choices.
             </p>
