@@ -6,6 +6,7 @@ import CTASection from "@/components/landing/cta-section"
 import Footer from "@/components/landing/footer"
 import Navigation from "@/components/landing/navigation"
 
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-background">
