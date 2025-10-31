@@ -1,4 +1,6 @@
 "use client"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
@@ -71,22 +73,38 @@ export default function LoginPage() {
     setError("")
   }
 
+ 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
 
-    if (!formData.email || !formData.password) {
-      setError("Email and password are required")
-      setIsLoading(false)
-      setIsHappy(false)
-      return
-    }
-
-    setTimeout(() => {
-      setIsLoading(false)
-      router.push("/dashboard")
-    }, 1500)
+  if (!formData.email || !formData.password) {
+    setError("Email and password are required");
+    setIsLoading(false);
+    setIsHappy(false);
+    return;
   }
+
+  const supabase = createClientComponentClient();
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: formData.email,
+    password: formData.password,
+  });
+
+  if (error) {
+    setError("Invalid email or password");
+    setIsLoading(false);
+    setIsHappy(false);
+    return;
+  }
+
+  setIsLoading(false);
+  router.push("/dashboard");
+};
+
+
 
   const calculateEyePosition = (centerX: number, centerY: number) => {
     if (isPasswordFocused) return { x: 0, y: 0 }
