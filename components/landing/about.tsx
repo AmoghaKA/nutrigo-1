@@ -57,7 +57,7 @@ const team = [
     name: "AMOGHA K A",
     role: "Backend Developer",
     skills: "Node.js & Databases",
-    image: "/team/AM.png",
+    image: "/team/AM.jpg",
     color: "from-emerald-400 to-teal-500",
   },
 ]
@@ -259,7 +259,6 @@ export default function AboutPage() {
                       className="object-cover"
                     />
                   </div>
-
                   {/* Content */}
                   <div className="p-6 text-center space-y-3">
                     <h3 className="text-xl font-black text-white group-hover:text-emerald-400 transition-colors duration-300">
