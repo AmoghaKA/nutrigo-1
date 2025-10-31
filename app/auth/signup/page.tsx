@@ -1,5 +1,10 @@
 "use client"
 
+import { supabase } from "@/lib/supabaseClient"
+
+
+
+
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -73,34 +78,50 @@ export default function SignUpPage() {
     setError("")
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const handleSubmit = async (e) => {
+  e.preventDefault()
+  setIsLoading(true)
+  setError("")
 
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-      setError("All fields are required")
-      setIsLoading(false)
-      setIsHappy(false)
-      return
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      setIsLoading(false)
-      return
-    }
-
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters")
-      setIsLoading(false)
-      return
-    }
-
-    setTimeout(() => {
-      setIsLoading(false)
-      router.push("/dashboard")
-    }, 1500)
+  if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    setError("All fields are required")
+    setIsLoading(false)
+    return
   }
+
+  if (formData.password !== formData.confirmPassword) {
+    setError("Passwords do not match")
+    setIsLoading(false)
+    return
+  }
+
+  if (formData.password.length < 8) {
+    setError("Password must be at least 8 characters")
+    setIsLoading(false)
+    return
+  }
+
+  // ✅ Create user in Supabase
+  const { data, error: signUpError } = await supabase.auth.signUp({
+    email: formData.email,
+    password: formData.password,
+    options: {
+      data: { full_name: formData.name },
+    },
+  })
+
+  if (signUpError) {
+    setError(signUpError.message)
+    setIsLoading(false)
+    return
+  }
+
+  // ✅ Success
+  alert("Signup successful! You can now log in.")
+  setIsLoading(false)
+  router.push("/auth/login")
+}
+
 
   const calculateEyePosition = (centerX: number, centerY: number) => {
     if (isPasswordFocused || isConfirmPasswordFocused) return { x: 0, y: 0 }
