@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowRight, Eye, EyeOff, ArrowLeft, CheckCircle2 } from "lucide-react"
+import { ArrowRight, Eye, EyeOff, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [showErrorPopup, setShowErrorPopup] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   
@@ -96,7 +97,7 @@ export default function LoginPage() {
     setSuccess("")
   }
 
-  // ✅ Enhanced manual user login with success popup
+  // ✅ Enhanced manual user login with unregistered user detection
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -116,17 +117,29 @@ export default function LoginPage() {
     })
 
     if (signInError) {
-      // ✅ Set custom error messages
+      // ✅ Handle different error scenarios
       if (signInError.message === 'Invalid login credentials') {
-        setError("Invalid email or password. Please check your credentials.")
+        // This could be wrong password OR user doesn't exist
+        // Show error popup for unregistered user
+        setShowErrorPopup(true)
+        setIsLoading(false)
+        setIsHappy(false)
+        
+        setTimeout(() => {
+          router.push('/auth/signup')
+        }, 3000)
+        return
       } else if (signInError.message.includes('Email not confirmed')) {
         setError("Please verify your email address before logging in.")
+        setIsLoading(false)
+        setIsHappy(false)
+        return
       } else {
         setError(signInError.message)
+        setIsLoading(false)
+        setIsHappy(false)
+        return
       }
-      setIsLoading(false)
-      setIsHappy(false)
-      return
     }
 
     // ✅ Success! Show popup
@@ -231,6 +244,43 @@ export default function LoginPage() {
         </div>
       )}
 
+      {/* ✅ Error Popup Modal for Unregistered User */}
+      {showErrorPopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-orange-500/50 rounded-2xl p-8 max-w-md w-full shadow-2xl shadow-orange-500/20 animate-in zoom-in duration-300">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-20 h-20 rounded-full bg-orange-500/20 flex items-center justify-center animate-in zoom-in duration-500 delay-100">
+                <AlertCircle size={48} className="text-orange-400 animate-in zoom-in duration-500 delay-200" />
+              </div>
+              
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-white">User Not Registered!</h2>
+                <p className="text-slate-300 text-sm">
+                  We couldn't find an account with these credentials.
+                </p>
+                <p className="text-orange-400 text-sm font-semibold">
+                  Please sign up to create an account.
+                </p>
+              </div>
+
+              <div className="pt-4">
+                <div className="flex items-center gap-2 text-slate-400 text-xs">
+                  <div className="w-4 h-4 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
+                  <span>Redirecting to signup page...</span>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => router.push('/auth/signup')}
+                className="mt-4 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-400 hover:via-amber-400 hover:to-yellow-400 text-white font-semibold px-6 py-2 rounded-lg shadow-lg shadow-orange-500/25 transition-all duration-300"
+              >
+                Go to Sign Up Now
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Back Button - Fixed Position */}
       <Link 
         href="/"
@@ -278,7 +328,7 @@ export default function LoginPage() {
       `}</style>
 
       <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-0 items-center relative z-10">
-        {/* Left Side - Characters */}
+        {/* Left Side - Characters (keep all existing characters) */}
         <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-l-3xl border-l border-t border-b border-emerald-500/20 p-12 relative overflow-visible h-[700px]">
           <div className="absolute inset-0 opacity-5">
             <div className="absolute top-0 left-0 w-full h-full" style={{
