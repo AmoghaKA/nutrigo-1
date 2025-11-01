@@ -3,6 +3,13 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import { Search, Calendar, Trash2 } from "lucide-react"
 import { useState } from "react"
 
@@ -12,12 +19,13 @@ interface ScanHistory {
   brand: string
   score: number
   category: string
-  date: string
+  date: string // Note: For real date sorting, use Date objects
   calories: number
   sugar: number
 }
 
 const mockHistory: ScanHistory[] = [
+  // ... (your mockHistory data remains the same)
   {
     id: 1,
     name: "Coca Cola",
@@ -80,23 +88,54 @@ const mockHistory: ScanHistory[] = [
   },
 ]
 
+// UPDATED: Define a type for all our sort keys
+type SortKey =
+  | "date"
+  | "score"
+  | "calories-asc"
+  | "calories-desc"
+  | "sugar-asc"
+  | "sugar-desc"
+
 export default function HistoryPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState<string | null>(null)
-  const [sortBy, setSortBy] = useState<"date" | "score">("date")
+  // UPDATED: Use the new SortKey type
+  const [sortBy, setSortBy] = useState<SortKey>("date")
+  const [selectedItem, setSelectedItem] = useState<ScanHistory | null>(null)
 
   const filteredHistory = mockHistory
     .filter((item) => {
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesSearch = item.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
       const matchesCategory = !filterCategory || item.category === filterCategory
       return matchesSearch && matchesCategory
     })
+    // UPDATED: Expanded sort logic
     .sort((a, b) => {
-      if (sortBy === "score") return b.score - a.score
-      return 0
+      switch (sortBy) {
+        case "score":
+          return b.score - a.score
+        case "calories-asc":
+          return a.calories - b.calories
+        case "calories-desc":
+          return b.calories - a.calories
+        case "sugar-asc":
+          return a.sugar - b.sugar
+        case "sugar-desc":
+          return b.sugar - b.sugar
+        case "date":
+        default:
+          // Since dates are strings, we sort by ID as a proxy for "newest"
+          // (assuming higher ID is newer)
+          return b.id - a.id
+      }
     })
 
-  const categories = Array.from(new Set(mockHistory.map((item) => item.category)))
+  const categories = Array.from(
+    new Set(mockHistory.map((item) => item.category))
+  )
 
   const getScoreColor = (score: number) => {
     if (score >= 70) return "text-accent"
@@ -113,15 +152,22 @@ export default function HistoryPage() {
   return (
     <div className="p-4 md:p-8 space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground">Scan History</h1>
-        <p className="text-muted-foreground">View all your previous food scans and nutrition analysis</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+          Scan History
+        </h1>
+        <p className="text-muted-foreground">
+          View all your previous food scans and nutrition analysis
+        </p>
       </div>
 
       {/* Search and Filters */}
       <Card className="p-6 border-border bg-card/50 backdrop-blur-sm space-y-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 text-muted-foreground" size={18} />
+            <Search
+              className="absolute left-3 top-3 text-muted-foreground"
+              size={18}
+            />
             <Input
               placeholder="Search by product name..."
               value={searchTerm}
@@ -131,18 +177,30 @@ export default function HistoryPage() {
           </div>
 
           <div className="flex gap-2">
+            {/* UPDATED: New select dropdown with more options */}
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as "date" | "score")}
+              onChange={(e) => setSortBy(e.target.value as SortKey)}
               className="px-4 py-2 rounded-lg bg-background/50 border border-border text-foreground"
             >
-              <option value="date">Sort by Date</option>
-              <option value="score">Sort by Score</option>
+              <option value="date">Sort by Date (Newest)</option>
+              <option value="score">Sort by Score (High to Low)</option>
+              <optgroup label="Calories">
+                <option value="calories-asc">Sort by Calories (Low to High)</option>
+                <option value="calories-desc">
+                  Sort by Calories (High to Low)
+                </option>
+              </optgroup>
+              <optgroup label="Sugar">
+                <option value="sugar-asc">Sort by Sugar (Low to High)</option>
+                <option value="sugar-desc">Sort by Sugar (High to Low)</option>
+              </optgroup>
             </select>
           </div>
         </div>
 
         {/* Category Filter */}
+        {/* ... (category filter is unchanged) ... */}
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilterCategory(null)}
@@ -171,17 +229,21 @@ export default function HistoryPage() {
       </Card>
 
       {/* History List */}
+      {/* ... (history list is unchanged) ... */}
       <div className="space-y-3">
         {filteredHistory.length > 0 ? (
           filteredHistory.map((item) => (
             <Card
               key={item.id}
-              className="p-4 border-border bg-card/50 backdrop-blur-sm hover:border-primary/30 transition"
+              onClick={() => setSelectedItem(item)}
+              className="p-4 border-border bg-card/50 backdrop-blur-sm hover:border-primary/30 transition cursor-pointer"
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-foreground">{item.name}</h3>
+                    <h3 className="font-semibold text-foreground">
+                      {item.name}
+                    </h3>
                     <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
                       {item.category}
                     </span>
@@ -198,7 +260,9 @@ export default function HistoryPage() {
 
                 <div className="flex items-center gap-4">
                   <div
-                    className={`px-4 py-2 rounded-lg font-bold text-lg ${getScoreBg(item.score)} ${getScoreColor(item.score)}`}
+                    className={`px-4 py-2 rounded-lg font-bold text-lg ${getScoreBg(
+                      item.score
+                    )} ${getScoreColor(item.score)}`}
                   >
                     {item.score}
                   </div>
@@ -206,6 +270,11 @@ export default function HistoryPage() {
                     variant="ghost"
                     size="sm"
                     className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      // Add your delete logic here
+                      console.log("Delete item:", item.id)
+                    }}
                   >
                     <Trash2 size={18} />
                   </Button>
@@ -215,17 +284,22 @@ export default function HistoryPage() {
           ))
         ) : (
           <Card className="p-12 border-border bg-card/50 backdrop-blur-sm text-center">
-            <p className="text-muted-foreground">No scans found. Start scanning to build your history!</p>
+            <p className="text-muted-foreground">
+              No scans found. Start scanning to build your history!
+            </p>
           </Card>
         )}
       </div>
 
       {/* Stats Summary */}
+      {/* ... (stats summary is unchanged) ... */}
       <div className="grid md:grid-cols-3 gap-4">
         <Card className="p-6 border-border bg-card/50 backdrop-blur-sm">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Total Scans</p>
-            <p className="text-3xl font-bold text-foreground">{mockHistory.length}</p>
+            <p className="text-3xl font-bold text-foreground">
+              {mockHistory.length}
+            </p>
           </div>
         </Card>
 
@@ -233,7 +307,10 @@ export default function HistoryPage() {
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Average Score</p>
             <p className="text-3xl font-bold text-accent">
-              {Math.round(mockHistory.reduce((sum, item) => sum + item.score, 0) / mockHistory.length)}
+              {Math.round(
+                mockHistory.reduce((sum, item) => sum + item.score, 0) /
+                  mockHistory.length
+              )}
             </p>
           </div>
         </Card>
@@ -241,10 +318,74 @@ export default function HistoryPage() {
         <Card className="p-6 border-border bg-card/50 backdrop-blur-sm">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Healthy Choices</p>
-            <p className="text-3xl font-bold text-accent">{mockHistory.filter((item) => item.score >= 70).length}</p>
+            <p className="text-3xl font-bold text-accent">
+              {mockHistory.filter((item) => item.score >= 70).length}
+            </p>
           </div>
         </Card>
       </div>
+
+      {/* Details Modal */}
+      {/* ... (modal is unchanged) ... */}
+      <Dialog
+        open={!!selectedItem}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setSelectedItem(null)
+          }
+        }}
+      >
+        <DialogContent className="bg-card border-border">
+          {selectedItem && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl text-foreground">
+                  {selectedItem.name}
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  {selectedItem.brand}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Score</span>
+                  <span
+                    className={`font-bold text-3xl ${getScoreColor(
+                      selectedItem.score
+                    )}`}
+                  >
+                    {selectedItem.score}
+                  </span>
+                </div>
+                <div className="space-y-2 pt-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Category</span>
+                    <span className="text-foreground">
+                      {selectedItem.category}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Calories</span>
+                    <span className="text-foreground">
+                      {selectedItem.calories} cal
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Sugar</span>
+                    <span className="text-foreground">
+                      {selectedItem.sugar}g sugar
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Scanned</span>
+                    <span className="text-foreground">{selectedItem.date}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
