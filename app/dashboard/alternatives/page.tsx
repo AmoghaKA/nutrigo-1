@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, TrendingUp, ShoppingCart } from "lucide-react"
+import { Search, TrendingUp, ShoppingCart, X, Sparkles, CheckCircle, ArrowRight, Lightbulb } from "lucide-react"
 import { useState } from "react"
 
 interface Alternative {
@@ -108,232 +108,254 @@ export default function AlternativesPage() {
     })
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-accent"
-    if (score >= 60) return "text-primary"
-    return "text-destructive"
+    if (score >= 80) return "text-emerald-400"
+    if (score >= 60) return "text-cyan-400"
+    return "text-red-400"
   }
 
   const getScoreBg = (score: number) => {
-    if (score >= 80) return "bg-accent/20"
-    if (score >= 60) return "bg-primary/20"
-    return "bg-destructive/20"
+    if (score >= 80) return "bg-emerald-500/20 border border-emerald-500/40"
+    if (score >= 60) return "bg-cyan-500/20 border border-cyan-500/40"
+    return "bg-red-500/20 border border-red-500/40"
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground">Healthier Alternatives</h1>
-        <p className="text-muted-foreground">Discover better options for your favorite products</p>
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "2s" }}></div>
       </div>
 
-      {/* Search and Sort */}
-      <Card className="p-6 border-border bg-card/50 backdrop-blur-sm space-y-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 text-muted-foreground" size={18} />
-            <Input
-              placeholder="Search alternatives..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-background/50 border-border"
-            />
-          </div>
-
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as "score" | "improvement" | "price")}
-            className="px-4 py-2 rounded-lg bg-background/50 border border-border text-foreground"
-          >
-            <option value="score">Sort by Health Score</option>
-            <option value="improvement">Sort by Improvement</option>
-            <option value="price">Sort by Price</option>
-          </select>
-        </div>
-      </Card>
-
-      {/* Alternatives Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAlternatives.map((alt) => (
-          <Card
-            key={alt.id}
-            className="p-6 border-border bg-card/50 backdrop-blur-sm hover:border-primary/50 transition cursor-pointer group"
-            onClick={() => setSelectedProduct(alt)}
-          >
-            <div className="space-y-4">
-              {/* Header */}
-              <div className="flex items-start justify-between">
-                <div className="space-y-1 flex-1">
-                  <h3 className="font-semibold text-foreground group-hover:text-primary transition">{alt.name}</h3>
-                  <p className="text-sm text-muted-foreground">{alt.brand}</p>
-                </div>
-                <div
-                  className={`px-3 py-1 rounded-lg font-bold text-lg ${getScoreBg(alt.score)} ${getScoreColor(alt.score)}`}
-                >
-                  {alt.score}
-                </div>
-              </div>
-
-              {/* Improvement Badge */}
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/10 border border-accent/30">
-                <TrendingUp size={16} className="text-accent" />
-                <span className="text-sm font-semibold text-accent">+{alt.improvement}% Better</span>
-              </div>
-
-              {/* Nutrition Info */}
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="p-2 rounded bg-background/50">
-                  <p className="text-muted-foreground text-xs">Calories</p>
-                  <p className="font-semibold text-foreground">{alt.calories}</p>
-                </div>
-                <div className="p-2 rounded bg-background/50">
-                  <p className="text-muted-foreground text-xs">Sugar</p>
-                  <p className="font-semibold text-foreground">{alt.sugar}g</p>
-                </div>
-              </div>
-
-              {/* Price and Action */}
-              <div className="flex items-center justify-between pt-2 border-t border-border">
-                <span className="font-semibold text-foreground">{alt.price}</span>
-                <Button
-                  size="sm"
-                  className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground gap-1"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                  }}
-                >
-                  <ShoppingCart size={16} /> Buy
-                </Button>
-              </div>
+      <div className="p-4 md:p-8 lg:p-12 space-y-8 relative z-10">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center shadow-xl shadow-emerald-500/25">
+              <Sparkles size={28} className="text-white" />
             </div>
-          </Card>
-        ))}
-      </div>
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black text-white">
+                Healthier Alternatives
+              </h1>
+              <p className="text-slate-400 text-lg">Discover better options for your favorite products</p>
+            </div>
+          </div>
+        </div>
 
-      {/* Comparison Section */}
-      {selectedProduct && (
-        <Card className="p-8 border-border bg-card/50 backdrop-blur-sm space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-bold text-foreground">Detailed Comparison</h3>
-            <Button
-              variant="ghost"
-              onClick={() => setSelectedProduct(null)}
-              className="text-muted-foreground hover:text-foreground"
+        {/* Search and Sort */}
+        <Card className="p-6 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-emerald-500/20 shadow-xl space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-4 text-slate-500" size={20} />
+              <Input
+                placeholder="Search alternatives..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-12 h-14 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-xl text-base"
+              />
+            </div>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "score" | "improvement" | "price")}
+              className="px-4 py-3.5 h-14 rounded-xl bg-slate-800/50 border border-slate-700 text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all appearance-none cursor-pointer"
             >
-              ✕
-            </Button>
+              <option value="score">Sort by Health Score</option>
+              <option value="improvement">Sort by Improvement</option>
+              <option value="price">Sort by Price</option>
+            </select>
           </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Original Product */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Original Product</p>
-                <h4 className="text-xl font-bold text-foreground">Coca Cola</h4>
-                <p className="text-sm text-muted-foreground">The Coca-Cola Company</p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground">Health Score</span>
-                  <span className="font-bold text-destructive">25</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground">Calories</span>
-                  <span className="font-bold text-foreground">140</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground">Sugar</span>
-                  <span className="font-bold text-destructive">39g</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground">Price</span>
-                  <span className="font-bold text-foreground">₹50</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Alternative Product */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Recommended Alternative</p>
-                <h4 className="text-xl font-bold text-foreground">{selectedProduct.name}</h4>
-                <p className="text-sm text-muted-foreground">{selectedProduct.brand}</p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground">Health Score</span>
-                  <span className={`font-bold ${getScoreColor(selectedProduct.score)}`}>{selectedProduct.score}</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground">Calories</span>
-                  <span className="font-bold text-accent">{selectedProduct.calories}</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground">Sugar</span>
-                  <span className="font-bold text-accent">{selectedProduct.sugar}g</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground">Price</span>
-                  <span className="font-bold text-foreground">{selectedProduct.price}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Benefits */}
-          <div className="p-6 rounded-lg bg-accent/10 border border-accent/30 space-y-3">
-            <h4 className="font-semibold text-foreground">Why This Alternative?</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex gap-2">
-                <span className="text-accent font-bold">✓</span>
-                <span>{selectedProduct.improvement}% healthier based on nutritional analysis</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-accent font-bold">✓</span>
-                <span>Significantly lower sugar content ({selectedProduct.sugar}g vs 39g)</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-accent font-bold">✓</span>
-                <span>Fewer calories ({selectedProduct.calories} vs 140)</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-accent font-bold">✓</span>
-                <span>No artificial sweeteners or harmful additives</span>
-              </li>
-            </ul>
-          </div>
-
-          <Button className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground gap-2">
-            <ShoppingCart size={18} /> Buy {selectedProduct.name} Now
-          </Button>
         </Card>
-      )}
 
-      {/* Tips Section */}
-      <Card className="p-6 border-border bg-card/50 backdrop-blur-sm space-y-4">
-        <h3 className="text-lg font-semibold text-foreground">Tips for Choosing Healthier Alternatives</h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-lg bg-background/50 space-y-2">
-            <p className="font-semibold text-foreground">Read Labels Carefully</p>
-            <p className="text-sm text-muted-foreground">
-              Check the nutrition facts panel for sugar, sodium, and calories
-            </p>
-          </div>
-          <div className="p-4 rounded-lg bg-background/50 space-y-2">
-            <p className="font-semibold text-foreground">Compare Serving Sizes</p>
-            <p className="text-sm text-muted-foreground">Make sure you're comparing the same serving sizes</p>
-          </div>
-          <div className="p-4 rounded-lg bg-background/50 space-y-2">
-            <p className="font-semibold text-foreground">Check Ingredients</p>
-            <p className="text-sm text-muted-foreground">Fewer ingredients usually means a healthier product</p>
-          </div>
-          <div className="p-4 rounded-lg bg-background/50 space-y-2">
-            <p className="font-semibold text-foreground">Look for Certifications</p>
-            <p className="text-sm text-muted-foreground">Organic, non-GMO, and other certifications matter</p>
-          </div>
+        {/* Alternatives Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredAlternatives.map((alt) => (
+            <Card
+              key={alt.id}
+              className="group p-6 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-slate-700 hover:border-emerald-500/40 shadow-xl transition-all duration-300 cursor-pointer"
+              onClick={() => setSelectedProduct(alt)}
+            >
+              <div className="space-y-5">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1 flex-1">
+                    <h3 className="font-bold text-white text-lg group-hover:text-emerald-400 transition">{alt.name}</h3>
+                    <p className="text-sm text-slate-400">{alt.brand}</p>
+                  </div>
+                  <div
+                    className={`px-4 py-2 rounded-xl font-black text-xl ${getScoreBg(alt.score)} ${getScoreColor(alt.score)} shadow-lg`}
+                  >
+                    {alt.score}
+                  </div>
+                </div>
+
+                {/* Improvement Badge */}
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
+                  <TrendingUp size={18} className="text-emerald-400" />
+                  <span className="text-sm font-bold text-emerald-400">+{alt.improvement}% Better</span>
+                </div>
+
+                {/* Nutrition Info */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700">
+                    <p className="text-slate-500 text-xs mb-1">Calories</p>
+                    <p className="font-bold text-white text-lg">{alt.calories}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700">
+                    <p className="text-slate-500 text-xs mb-1">Sugar</p>
+                    <p className="font-bold text-white text-lg">{alt.sugar}g</p>
+                  </div>
+                </div>
+
+                {/* Price and Action */}
+                <div className="flex items-center justify-between pt-3 border-t border-slate-700">
+                  <span className="font-black text-white text-xl">{alt.price}</span>
+                  <Button
+                    size="sm"
+                    className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold shadow-lg shadow-emerald-500/30 transition-all px-4 py-2"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                    }}
+                  >
+                    <ShoppingCart size={16} className="mr-1" /> Buy
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
-      </Card>
+
+        {/* Comparison Section */}
+        {selectedProduct && (
+          <Card className="p-8 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-teal-500/20 shadow-xl space-y-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center">
+                  <CheckCircle size={24} className="text-white" />
+                </div>
+                <h3 className="text-3xl font-black text-white">Detailed Comparison</h3>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => setSelectedProduct(null)}
+                className="text-slate-400 hover:text-white hover:bg-slate-800 p-3 rounded-xl"
+              >
+                <X size={24} />
+              </Button>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Original Product */}
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-500 font-semibold">Original Product</p>
+                  <h4 className="text-2xl font-black text-white">Coca Cola</h4>
+                  <p className="text-sm text-slate-400">The Coca-Cola Company</p>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    { label: "Health Score", value: "25", color: "text-red-400" },
+                    { label: "Calories", value: "140", color: "text-white" },
+                    { label: "Sugar", value: "39g", color: "text-red-400" },
+                    { label: "Price", value: "₹50", color: "text-white" }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                      <span className="text-slate-400">{item.label}</span>
+                      <span className={`font-black text-lg ${item.color}`}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Alternative Product */}
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <p className="text-sm text-emerald-400 font-semibold">Recommended Alternative</p>
+                  <h4 className="text-2xl font-black text-white">{selectedProduct.name}</h4>
+                  <p className="text-sm text-slate-400">{selectedProduct.brand}</p>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    { label: "Health Score", value: selectedProduct.score.toString(), color: getScoreColor(selectedProduct.score) },
+                    { label: "Calories", value: selectedProduct.calories.toString(), color: "text-emerald-400" },
+                    { label: "Sugar", value: `${selectedProduct.sugar}g`, color: "text-emerald-400" },
+                    { label: "Price", value: selectedProduct.price, color: "text-white" }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-800/50 border border-emerald-500/30">
+                      <span className="text-slate-400">{item.label}</span>
+                      <span className={`font-black text-lg ${item.color}`}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Benefits */}
+            <div className="p-6 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 space-y-4">
+              <h4 className="font-black text-white text-lg">Why This Alternative?</h4>
+              <ul className="space-y-3">
+                {[
+                  `${selectedProduct.improvement}% healthier based on nutritional analysis`,
+                  `Significantly lower sugar content (${selectedProduct.sugar}g vs 39g)`,
+                  `Fewer calories (${selectedProduct.calories} vs 140)`,
+                  "No artificial sweeteners or harmful additives"
+                ].map((benefit, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <CheckCircle size={20} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-slate-300">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <Button className="w-full h-14 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 border-0 text-lg">
+              <ShoppingCart size={20} className="mr-2" /> Buy {selectedProduct.name} Now
+              <ArrowRight size={20} className="ml-2" />
+            </Button>
+          </Card>
+        )}
+
+        {/* Tips Section */}
+        <Card className="p-8 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-cyan-500/20 shadow-xl space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+              <Lightbulb size={24} className="text-white" />
+            </div>
+            <h3 className="text-2xl font-black text-white">Tips for Choosing Healthier Alternatives</h3>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            {[
+              {
+                title: "Read Labels Carefully",
+                description: "Check the nutrition facts panel for sugar, sodium, and calories"
+              },
+              {
+                title: "Compare Serving Sizes",
+                description: "Make sure you're comparing the same serving sizes"
+              },
+              {
+                title: "Check Ingredients",
+                description: "Fewer ingredients usually means a healthier product"
+              },
+              {
+                title: "Look for Certifications",
+                description: "Organic, non-GMO, and other certifications matter"
+              }
+            ].map((tip, idx) => (
+              <div key={idx} className="group p-5 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-cyan-500/40 transition-all duration-300 space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={18} className="text-cyan-400" />
+                  <p className="font-bold text-white">{tip.title}</p>
+                </div>
+                <p className="text-sm text-slate-400 leading-relaxed">{tip.description}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
     </div>
   )
 }
