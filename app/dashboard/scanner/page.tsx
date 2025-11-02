@@ -25,24 +25,67 @@ export default function ScannerPage() {
   const [scanMode, setScanMode] = useState<"camera" | "upload" | null>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [scanResult, setScanResult] = useState<ScanData | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const router = useRouter()
 
-  // ✅ Use Next.js API proxy for scans (safer and avoids CORS)
+  // API endpoint for getting scan results from an image
   const SCAN_API_URL = "/api/scan/image"
+  // ✅ CORRECTED: API endpoint for saving the scan to history
+  const HISTORY_API_URL = "/api/scans"
 
-
-  // ✅ Auto-load last scan if available
   useEffect(() => {
     const scanData = localStorage.getItem("lastScan")
     if (scanData) {
       setScanResult(JSON.parse(scanData))
     }
   }, [])
+  
+  // ✅ ADDED: Function to save the scan result to your persistent history
+  const saveScanToHistory = async (dataToSave: ScanData) => {
+    if (isSaving) return;
+    setIsSaving(true);
+    console.log("Attempting to save scan to history:", dataToSave); // Debug log
 
-  // 🎥 Start camera mode
+    try {
+      // Format the payload to match what the /api/scans POST endpoint expects
+      const payload = {
+        productName: dataToSave.name,
+        brand: dataToSave.brand,
+        healthScore: dataToSave.healthScore,
+        calories: dataToSave.calories,
+        sugar: dataToSave.sugar,
+        protein: dataToSave.protein,
+        fat: dataToSave.fat,
+        carbs: dataToSave.carbs,
+        ingredients: dataToSave.ingredients,
+        warnings: dataToSave.warnings,
+      };
+      
+      const response = await fetch(HISTORY_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        // If the server response is not OK, log the error details
+        const errorData = await response.text();
+        throw new Error(`Failed to save scan. Status: ${response.status}. Details: ${errorData}`);
+      }
+      
+      console.log("Scan successfully saved to history."); // Success log
+
+    } catch (error) {
+      console.error("Error saving scan to history:", error);
+      // We don't alert the user here to avoid interruption, but we log the error.
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleCameraStart = async () => {
     setScanMode("camera")
     try {
@@ -57,7 +100,6 @@ export default function ScannerPage() {
     }
   }
 
-  // 📸 Capture frame and send to backend
   const handleCapture = async () => {
     if (!videoRef.current || !canvasRef.current) return
     const context = canvasRef.current.getContext("2d")
@@ -78,24 +120,21 @@ export default function ScannerPage() {
         });
 
         const resText = await response.text()
-        const contentType = response.headers.get("content-type") || ""
-
-        if (!contentType.includes("application/json")) {
-          console.error("Scan response was not JSON:", resText)
-          alert("Scan failed: server returned non-JSON response. Check backend logs.")
-        } else {
-          const data = JSON.parse(resText)
-          if (response.ok) {
-            setScanResult(data)
-            localStorage.setItem("lastScan", JSON.stringify(data))
-          } else {
-            console.error("Scan error response:", data)
-            alert(data.error || data.message || "Scan failed")
-          }
+        
+        if (!response.ok) {
+          throw new Error(`Scan failed: ${resText}`);
         }
+        
+        const data = JSON.parse(resText);
+        setScanResult(data);
+        localStorage.setItem("lastScan", JSON.stringify(data));
+        
+        // ✅ ADDED: Call the function to save the result
+        await saveScanToHistory(data);
+        
       } catch (err) {
-        console.error("Error sending image:", err)
-        alert("Failed to process the image.")
+        console.error("Error during capture or scan:", err)
+        alert((err as Error).message || "Failed to process the image.")
       } finally {
         stopCamera()
         setIsScanning(false)
@@ -103,7 +142,6 @@ export default function ScannerPage() {
     }, "image/jpeg")
   }
 
-  // 📤 Upload image
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -119,25 +157,22 @@ export default function ScannerPage() {
         body: formData,
       })
 
-      const resText = await response.text()
-      const contentType = response.headers.get("content-type") || ""
+      const resText = await response.text();
 
-      if (!contentType.includes("application/json")) {
-        console.error("Upload response was not JSON:", resText)
-        alert("Upload failed: server returned non-JSON response. Check backend logs.")
-      } else {
-        const data = JSON.parse(resText)
-        if (response.ok) {
-          setScanResult(data)
-          localStorage.setItem("lastScan", JSON.stringify(data))
-        } else {
-          console.error("Upload error response:", data)
-          alert(data.error || data.message || "No match found")
-        }
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${resText}`);
       }
+
+      const data = JSON.parse(resText);
+      setScanResult(data);
+      localStorage.setItem("lastScan", JSON.stringify(data));
+      
+      // ✅ ADDED: Call the function to save the result
+      await saveScanToHistory(data);
+
     } catch (err) {
-      console.error(err)
-      alert("Upload failed")
+      console.error("Error during file upload or scan:", err)
+      alert((err as Error).message || "Upload failed.")
     } finally {
       setIsScanning(false)
       setScanMode(null)

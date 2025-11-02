@@ -1,0 +1,100 @@
+[
+  {
+    "id": "scan_1762087867590",
+    "userId": "user_123",
+    "brand": "Lay's",
+    "healthScore": 25,
+    "warnings": [],
+    "scannedAt": "2025-11-02T12:51:07.590Z"
+  },
+  {
+    "id": "scan_1762087830695",
+    "userId": "user_123",
+    "brand": "Fresh Produce",
+    "healthScore": 95,
+    "warnings": [],
+    "scannedAt": "2025-11-02T12:50:30.695Z"
+  },
+  {
+    "id": "scan_1762087795060",
+    "userId": "user_123",
+    "brand": "Lay's",
+    "healthScore": 25,
+    "warnings": [],
+    "scannedAt": "2025-11-02T12:49:55.060Z"
+  },
+  {
+    "id": "scan_1762087429424",
+    "userId": "user_123",
+    "brand": "None",
+    "healthScore": 95,
+    "warnings": [],
+    "scannedAt": "2025-11-02T12:43:49.424Z"
+  },
+  {
+    "id": "scan_1762087400886",
+    "userId": "user_123",
+    "brand": "Generic",
+    "healthScore": 95,
+    "warnings": [],
+    "scannedAt": "2025-11-02T12:43:20.886Z"
+  },
+  {
+    "id": "scan_1762087126376",
+    "userId": "user_123",
+    "brand": "Generic",
+    "healthScore": 95,
+    "warnings": [],
+    "scannedAt": "2025-11-02T12:38:46.376Z"
+  },
+  {
+    "id": "scan_1762086992918",
+    "userId": "user_123",
+    "productName": "Test Product",
+    "brand": "Test Brand",
+    "healthScore": 75,
+    "calories": 150,
+    "sugar": 10,
+    "scannedAt": "2025-11-02T12:36:32.918Z"
+  },
+  {
+    "id": "scan_1762086904300",
+    "userId": "user_123",
+    "productName": "Granola Bar",
+    "brand": "Nature Valley",
+    "healthScore": 45,
+    "calories": 190,
+    "sugar": 12,
+    "protein": 3,
+    "fat": 7,
+    "carbs": 29,
+    "ingredients": [
+      "Whole Grain Oats",
+      "Sugar",
+      "Canola Oil",
+      "Honey"
+    ],
+    "warnings": [],
+    "scannedAt": "2025-11-02T12:35:04.300Z"
+  },
+  {
+    "id": "scan_1762086898796",
+    "userId": "user_123",
+    "productName": "Granola Bar",
+    "brand": "Nature Valley",
+    "healthScore": 45,
+    "calories": 190,
+    "sugar": 12,
+    "protein": 3,
+    "fat": 7,
+    "carbs": 29,
+    "ingredients": [
+      "Whole Grain Oats",
+      "Sugar",
+      "Canola Oil",
+      "Honey"
+    ],
+    "warnings": [],
+    "scannedAt": "2025-11-02T12:34:58.796Z"
+  }
+]
