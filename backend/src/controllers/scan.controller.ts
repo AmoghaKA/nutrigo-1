@@ -7,9 +7,19 @@ import fetch from "node-fetch";
 import dotenv from "dotenv";
 dotenv.config();
 
+// Initialize Supabase client with validation
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+  throw new Error("Missing Supabase environment variables");
+}
+
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_KEY!
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY,
+  {
+    auth: {
+      persistSession: false
+    }
+  }
 );
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
