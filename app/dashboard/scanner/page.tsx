@@ -30,8 +30,8 @@ export default function ScannerPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const router = useRouter()
 
-  // ✅ Backend base URL (only one definition now)
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000/api/scan";
+  // ✅ Use Next.js API proxy for scans (safer and avoids CORS)
+  const SCAN_API_URL = "/api/scan/image"
 
 
   // ✅ Auto-load last scan if available
@@ -72,17 +72,26 @@ export default function ScannerPage() {
         const formData = new FormData()
         formData.append("image", blob, "capture.jpg")
 
-        const response = await fetch(`${BACKEND_URL}/image`, {
+        const response = await fetch(SCAN_API_URL, {
           method: "POST",
           body: formData,
         });
 
-        const data = await response.json()
-        if (response.ok) {
-          setScanResult(data)
-          localStorage.setItem("lastScan", JSON.stringify(data))
+        const resText = await response.text()
+        const contentType = response.headers.get("content-type") || ""
+
+        if (!contentType.includes("application/json")) {
+          console.error("Scan response was not JSON:", resText)
+          alert("Scan failed: server returned non-JSON response. Check backend logs.")
         } else {
-          alert(data.error || "Scan failed")
+          const data = JSON.parse(resText)
+          if (response.ok) {
+            setScanResult(data)
+            localStorage.setItem("lastScan", JSON.stringify(data))
+          } else {
+            console.error("Scan error response:", data)
+            alert(data.error || data.message || "Scan failed")
+          }
         }
       } catch (err) {
         console.error("Error sending image:", err)
@@ -105,17 +114,26 @@ export default function ScannerPage() {
       const formData = new FormData()
       formData.append("image", file)
 
-      const response = await fetch(`${BACKEND_URL}/image`, {
+      const response = await fetch(SCAN_API_URL, {
         method: "POST",
         body: formData,
       })
 
-      const data = await response.json()
-      if (response.ok) {
-        setScanResult(data)
-        localStorage.setItem("lastScan", JSON.stringify(data))
+      const resText = await response.text()
+      const contentType = response.headers.get("content-type") || ""
+
+      if (!contentType.includes("application/json")) {
+        console.error("Upload response was not JSON:", resText)
+        alert("Upload failed: server returned non-JSON response. Check backend logs.")
       } else {
-        alert(data.error || "No match found")
+        const data = JSON.parse(resText)
+        if (response.ok) {
+          setScanResult(data)
+          localStorage.setItem("lastScan", JSON.stringify(data))
+        } else {
+          console.error("Upload error response:", data)
+          alert(data.error || data.message || "No match found")
+        }
       }
     } catch (err) {
       console.error(err)
