@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Card } from "@/components/ui/card"
@@ -50,15 +51,17 @@ export default function HistoryPage() {
 
         if (apiResponse.success) {
           // Map the API data to the structure used by this component
+          // Prefer the actual product name from multiple possible fields
           const mappedData: ScanHistory[] = apiResponse.data.map((item: any) => ({
             id: item.id,
-            name: item.productName,
-            brand: item.brand,
-            score: item.healthScore,
-            category: item.category || "General", // Use a fallback category
-            date: item.scannedAt,
-            calories: item.calories,
-            sugar: item.sugar,
+            // Prefer productName, then detected_name (backend), then name, then product_name
+            name: item.productName || item.detected_name || item.name || item.product_name || "",
+            brand: item.brand || "",
+            score: item.healthScore || item.health_score || 0,
+            category: item.category || item.nutrition?.category || "General", // Use a fallback category
+            date: item.scannedAt || item.created_at || item.date || new Date().toISOString(),
+            calories: item.calories || item.nutrition?.calories || 0,
+            sugar: item.sugar || item.nutrition?.sugar || 0,
           }));
           setHistory(mappedData)
         }
@@ -210,11 +213,13 @@ export default function HistoryPage() {
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="font-bold text-white text-lg">{item.brand || 'Unnamed Product'}</h3>
+                      <h3 className="font-bold text-white text-lg">{item.name || 'Unnamed Product'}</h3>
                       <span className="px-3 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-xs font-semibold">
                         {item.category}
                       </span>
                     </div>
+                    {/* Show brand on its own line, but do not use it as the displayed product name */}
+                    {item.brand && <p className="text-sm text-slate-400">{item.brand}</p>}
                     <div className="flex flex-wrap gap-4 text-sm text-slate-500 pt-2">
                       <span className="flex items-center gap-2">
                         <Calendar size={16} className="text-emerald-400" />
@@ -240,6 +245,21 @@ export default function HistoryPage() {
                       variant="ghost"
                       size="sm"
                       className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all p-3 rounded-xl"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/scans', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: item.id }),
+                          })
+                          if (!res.ok) throw new Error('Failed to delete')
+                          // Optimistically remove from UI
+                          setHistory((prev) => prev.filter((h) => h.id !== item.id))
+                        } catch (err) {
+                          console.error('Delete failed', err)
+                          alert('Could not delete the scan. Please try again.')
+                        }
+                      }}
                     >
                       <Trash2 size={20} />
                     </Button>
