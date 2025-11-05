@@ -1,5 +1,15 @@
 [
   {
+    "id": "scan_1762350268918",
+    "userId": "user_123",
+    "productName": "Garden Salad",
+    "brand": "Generic",
+    "healthScore": 90,
+    "ingredients": [],
+    "warnings": [],
+    "scannedAt": "2025-11-05T13:44:28.918Z"
+  },
+  {
     "id": "scan_1762276709351",
     "userId": "user_123",
     "brand": "Coca-Cola",
