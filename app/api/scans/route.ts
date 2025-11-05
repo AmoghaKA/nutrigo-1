@@ -1,3 +1,4 @@
+
 import { type NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
@@ -44,6 +45,33 @@ export async function GET() {
 }
 
 /**
+ * Handles DELETE requests to remove a scan by id.
+ * Expects a JSON body: { id: string }
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const idToDelete = body?.id;
+    if (!idToDelete) {
+      return NextResponse.json({ success: false, error: 'Missing id' }, { status: 400 });
+    }
+
+    const allScans = readScansFromFile();
+    const filtered = allScans.filter((s: any) => s.id !== idToDelete);
+
+    if (filtered.length === allScans.length) {
+      return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+    }
+
+    writeScansToFile(filtered);
+    return NextResponse.json({ success: true, data: { id: idToDelete } });
+  } catch (error) {
+    console.error('Error deleting scan:', error);
+    return NextResponse.json({ success: false, error: 'Failed to delete' }, { status: 500 });
+  }
+}
+
+/**
  * Handles POST requests to add a new scan to the history.
  */
 export async function POST(request: NextRequest) {
@@ -59,7 +87,9 @@ export async function POST(request: NextRequest) {
     const newScan = {
       id: `scan_${Date.now()}`,
       userId: "user_123", // In a real app, this would be dynamic
+      // Normalize incoming scan data to always include productName
       ...scanData,
+      productName: scanData.productName || scanData.detected_name || scanData.name || scanData.product_name || scanData.brand || "",
       ingredients: formatArray(scanData.ingredients),
       warnings: formatArray(scanData.warnings),
       scannedAt: new Date().toISOString(),
