@@ -52,9 +52,19 @@ export default function ScannerPage() {
 
     try {
       // Format the payload to match what the /api/scans POST endpoint expects
+      // Normalize product name from multiple possible keys we might get from the backend
+      const resolvedName =
+        (dataToSave as any).productName ||
+        (dataToSave as any).name ||
+        (dataToSave as any).product_name ||
+        (dataToSave as any).detected_name ||
+        dataToSave.brand ||
+        "";
+
       const payload = {
-        productName: dataToSave.name,
-        brand: dataToSave.brand,
+        productName: resolvedName,
+        // keep brand separate
+        brand: dataToSave.brand || "",
         healthScore: dataToSave.healthScore,
         calories: dataToSave.calories,
         sugar: dataToSave.sugar,
