@@ -2,7 +2,16 @@
 
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Share2, Heart, AlertCircle, CheckCircle, Sparkles, TrendingUp, ArrowRight } from "lucide-react"
+import {
+  ArrowLeft,
+  Share2,
+  Heart,
+  AlertCircle,
+  CheckCircle,
+  Sparkles,
+  TrendingUp,
+  ArrowRight
+} from "lucide-react"
 import Link from "next/link"
 
 interface ScanResultProps {
@@ -23,6 +32,9 @@ interface ScanResultProps {
     fat?: number
     carbs?: number
     ingredients?: string[] | string
+    ingredients_list?: string
+    ingredientsText?: string
+    metadata?: { ingredients?: string[] }
     warnings?: string[] | string
     timestamp?: string
   }
@@ -30,7 +42,7 @@ interface ScanResultProps {
 }
 
 export default function ScanResult({ data, onReset }: ScanResultProps) {
-  // 🧠 Normalize nutrition data (support flat responses too)
+  // 🧠 Normalize nutrition data (handles both nested + flat)
   const nutrition = data.nutrition ?? {
     calories: data.calories ?? 0,
     sugar: data.sugar ?? 0,
@@ -39,20 +51,28 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     carbs: data.carbs ?? 0,
   }
 
-  // 🧪 Normalize ingredients (handle string or array)
-  const ingredients =
-    typeof data.ingredients === "string"
-      ? data.ingredients
-          .split(/[.,;•\n]/)
-          .map((i) => i.trim())
-          .filter(Boolean)
-      : data.ingredients ?? []
+  // 🧪 Universal ingredients normalization
+  let ingredients: string[] = []
 
-  // 🚨 Generate meaningful warnings if API doesn’t provide
+  if (Array.isArray(data.ingredients)) {
+    ingredients = data.ingredients
+  } else if (typeof data.ingredients === "string") {
+    ingredients = data.ingredients.split(/[.,;•\n]/).map(i => i.trim()).filter(Boolean)
+  } else if (typeof data.ingredients_list === "string") {
+    ingredients = data.ingredients_list.split(/[.,;•\n]/).map(i => i.trim()).filter(Boolean)
+  } else if (typeof data.ingredientsText === "string") {
+    ingredients = data.ingredientsText.split(/[.,;•\n]/).map(i => i.trim()).filter(Boolean)
+  } else if (Array.isArray(data.metadata?.ingredients)) {
+    ingredients = data.metadata?.ingredients
+  } else {
+    ingredients = []
+  }
+
+  // 🚨 Generate or use warnings
   let warnings: string[] = []
   const providedWarnings =
     typeof data.warnings === "string"
-      ? data.warnings.split(/[.,\n]/).map((w) => w.trim()).filter(Boolean)
+      ? data.warnings.split(/[.,\n]/).map(w => w.trim()).filter(Boolean)
       : Array.isArray(data.warnings)
       ? data.warnings
       : []
@@ -68,7 +88,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     if (warnings.length === 0) warnings.push("No significant health warnings detected ✅")
   }
 
-  // 🌈 Health score gradient helpers
+  // 🌈 Helper functions for gradients
   const getScoreColor = (score: number) => {
     if (score >= 70) return "text-emerald-400"
     if (score >= 50) return "text-cyan-400"
@@ -92,7 +112,10 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
       {/* Glow Effects */}
       <div className="absolute inset-0 -z-10 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-teal-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }}></div>
+        <div
+          className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-teal-500/15 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8 relative z-10">
