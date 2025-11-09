@@ -32,9 +32,6 @@ interface ScanResultProps {
     fat?: number
     carbs?: number
     ingredients?: string[] | string
-    ingredients_list?: string
-    ingredientsText?: string
-    metadata?: { ingredients?: string[] }
     warnings?: string[] | string
     timestamp?: string
   }
@@ -42,7 +39,7 @@ interface ScanResultProps {
 }
 
 export default function ScanResult({ data, onReset }: ScanResultProps) {
-  // 🧠 Normalize nutrition data (handles both nested + flat)
+  // 🧠 Normalize nutrition
   const nutrition = data.nutrition ?? {
     calories: data.calories ?? 0,
     sugar: data.sugar ?? 0,
@@ -51,44 +48,43 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     carbs: data.carbs ?? 0,
   }
 
-  // 🧪 Universal ingredients normalization
+  // 🧩 Normalize or infer ingredients
   let ingredients: string[] = []
 
   if (Array.isArray(data.ingredients)) {
     ingredients = data.ingredients
   } else if (typeof data.ingredients === "string") {
     ingredients = data.ingredients.split(/[.,;•\n]/).map(i => i.trim()).filter(Boolean)
-  } else if (typeof data.ingredients_list === "string") {
-    ingredients = data.ingredients_list.split(/[.,;•\n]/).map(i => i.trim()).filter(Boolean)
-  } else if (typeof data.ingredientsText === "string") {
-    ingredients = data.ingredientsText.split(/[.,;•\n]/).map(i => i.trim()).filter(Boolean)
-  } else if (Array.isArray(data.metadata?.ingredients)) {
-    ingredients = data.metadata?.ingredients
-  } else {
-    ingredients = []
+  } else if (typeof data.warnings === "string" && data.warnings.toLowerCase().includes("contains")) {
+    // infer from warnings text
+    const containsPart = data.warnings
+      .split(/contains[:\-]/i)[1]
+      ?.split(/may|can|excessive|avoid/i)[0] || ""
+    ingredients = containsPart
+      .split(/[.,;•\n]/)
+      .map(i => i.replace(/(and|or)/gi, "").trim())
+      .filter(i => i && i.length > 1)
   }
 
-  // 🚨 Generate or use warnings
+  // 🚨 Normalize warnings
   let warnings: string[] = []
-  const providedWarnings =
-    typeof data.warnings === "string"
-      ? data.warnings.split(/[.,\n]/).map(w => w.trim()).filter(Boolean)
-      : Array.isArray(data.warnings)
-      ? data.warnings
-      : []
-
-  if (providedWarnings.length > 0) {
-    warnings = providedWarnings
-  } else {
-    if (nutrition.sugar > 25) warnings.push("High sugar content — may contribute to weight gain.")
-    if (nutrition.fat > 17) warnings.push("High fat content — limit consumption if watching calories.")
-    if (nutrition.protein < 5) warnings.push("Low protein content — may not be filling or nutritious.")
-    if (nutrition.calories > 400) warnings.push("High calorie product — consider moderation.")
-    if (ingredients.length === 0) warnings.push("Ingredients list not found — scan label more clearly.")
-    if (warnings.length === 0) warnings.push("No significant health warnings detected ✅")
+  if (typeof data.warnings === "string") {
+    warnings = data.warnings.split(/[.,\n]/).map(w => w.trim()).filter(Boolean)
+  } else if (Array.isArray(data.warnings)) {
+    warnings = data.warnings
   }
 
-  // 🌈 Helper functions for gradients
+  // 🧮 Auto-generate if missing
+  if (warnings.length === 0) {
+    if (nutrition.sugar > 25) warnings.push("High sugar content — may contribute to weight gain.")
+    if (nutrition.fat > 17) warnings.push("High fat content — limit consumption.")
+    if (nutrition.protein < 5) warnings.push("Low protein — may not be filling or nutritious.")
+    if (nutrition.calories > 400) warnings.push("High calorie product — consume in moderation.")
+    if (ingredients.length === 0) warnings.push("Ingredients info unavailable — scan again clearly.")
+    if (warnings.length === 0) warnings.push("No significant warnings ✅")
+  }
+
+  // 🌈 Health score visuals
   const getScoreColor = (score: number) => {
     if (score >= 70) return "text-emerald-400"
     if (score >= 50) return "text-cyan-400"
@@ -109,7 +105,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-      {/* Glow Effects */}
       <div className="absolute inset-0 -z-10 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
         <div
@@ -171,7 +166,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
 
         {/* Nutrition Facts + Warnings */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Nutrition */}
           <Card className="p-6 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-teal-500/20">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center">
