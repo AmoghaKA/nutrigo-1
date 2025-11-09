@@ -13,12 +13,13 @@ import {
   ArrowRight
 } from "lucide-react"
 import Link from "next/link"
+import { useEffect } from "react"
 
 interface ScanResultProps {
   data: {
-    name: string
-    brand: string
-    healthScore: number
+    name?: string
+    brand?: string
+    healthScore?: number
     nutrition?: {
       calories?: number
       sugar?: number
@@ -39,6 +40,11 @@ interface ScanResultProps {
 }
 
 export default function ScanResult({ data, onReset }: ScanResultProps) {
+  // ✅ Log the data structure once — helps debug
+  useEffect(() => {
+    console.log("📦 ScanResult received data:", data)
+  }, [data])
+
   // 🧠 Normalize nutrition
   const nutrition = data.nutrition ?? {
     calories: data.calories ?? 0,
@@ -48,7 +54,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     carbs: data.carbs ?? 0,
   }
 
-  // 🧩 Normalize or infer ingredients
+  // 🧩 Extract or infer ingredients
   let ingredients: string[] = []
 
   if (Array.isArray(data.ingredients)) {
@@ -56,48 +62,53 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
   } else if (typeof data.ingredients === "string") {
     ingredients = data.ingredients.split(/[.,;•\n]/).map(i => i.trim()).filter(Boolean)
   } else if (typeof data.warnings === "string" && data.warnings.toLowerCase().includes("contains")) {
-    // infer from warnings text
-    const containsPart = data.warnings
-      .split(/contains[:\-]/i)[1]
-      ?.split(/may|can|excessive|avoid/i)[0] || ""
-    ingredients = containsPart
-      .split(/[.,;•\n]/)
-      .map(i => i.replace(/(and|or)/gi, "").trim())
-      .filter(i => i && i.length > 1)
+    // 🧪 extract "Contains: ..." portion
+    const match = data.warnings.match(/contains[:\s]+([^.!]+)/i)
+    if (match && match[1]) {
+      ingredients = match[1]
+        .split(/[.,;•\n]/)
+        .map(i => i.replace(/(and|or)/gi, "").trim())
+        .filter(Boolean)
+    }
   }
 
   // 🚨 Normalize warnings
   let warnings: string[] = []
   if (typeof data.warnings === "string") {
-    warnings = data.warnings.split(/[.,\n]/).map(w => w.trim()).filter(Boolean)
+    warnings = data.warnings
+      .split(/[.\n]/)
+      .map(w => w.trim())
+      .filter(Boolean)
   } else if (Array.isArray(data.warnings)) {
     warnings = data.warnings
   }
 
-  // 🧮 Auto-generate if missing
+  // 🧮 Generate auto warnings if needed
   if (warnings.length === 0) {
     if (nutrition.sugar > 25) warnings.push("High sugar content — may contribute to weight gain.")
-    if (nutrition.fat > 17) warnings.push("High fat content — limit consumption.")
+    if (nutrition.fat > 17) warnings.push("High fat content — limit consumption if watching calories.")
     if (nutrition.protein < 5) warnings.push("Low protein — may not be filling or nutritious.")
     if (nutrition.calories > 400) warnings.push("High calorie product — consume in moderation.")
-    if (ingredients.length === 0) warnings.push("Ingredients info unavailable — scan again clearly.")
-    if (warnings.length === 0) warnings.push("No significant warnings ✅")
+    if (warnings.length === 0) warnings.push("No significant health warnings detected ✅")
   }
 
-  // 🌈 Health score visuals
+  // 🌈 Score visuals
   const getScoreColor = (score: number) => {
+    if (!score) return "text-slate-400"
     if (score >= 70) return "text-emerald-400"
     if (score >= 50) return "text-cyan-400"
     return "text-red-400"
   }
 
   const getScoreBg = (score: number) => {
+    if (!score) return "bg-slate-700/40"
     if (score >= 70) return "bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-emerald-500/40"
     if (score >= 50) return "bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-cyan-500/40"
     return "bg-gradient-to-br from-red-500/20 to-orange-500/20 border-red-500/40"
   }
 
   const getScoreGradient = (score: number) => {
+    if (!score) return "from-slate-500 to-slate-700"
     if (score >= 70) return "from-emerald-400 via-teal-400 to-cyan-400"
     if (score >= 50) return "from-cyan-400 via-blue-400 to-purple-400"
     return "from-red-400 via-orange-400 to-yellow-400"
@@ -139,33 +150,27 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
             </p>
 
             <div className="flex flex-col md:flex-row gap-6 items-center">
-              <div className={`relative w-36 h-36 rounded-2xl ${getScoreBg(data.healthScore)} border flex items-center justify-center`}>
-                <div className={`text-6xl font-black bg-gradient-to-r ${getScoreGradient(data.healthScore)} bg-clip-text text-transparent`}>
-                  {data.healthScore}
+              <div className={`relative w-36 h-36 rounded-2xl ${getScoreBg(data.healthScore ?? 0)} border flex items-center justify-center`}>
+                <div className={`text-6xl font-black bg-gradient-to-r ${getScoreGradient(data.healthScore ?? 0)} bg-clip-text text-transparent`}>
+                  {data.healthScore ?? "—"}
                 </div>
               </div>
               <div className="space-y-2 text-slate-300">
-                <p className={`text-xl font-bold ${getScoreColor(data.healthScore)}`}>
-                  {data.healthScore >= 70
+                <p className={`text-xl font-bold ${getScoreColor(data.healthScore ?? 0)}`}>
+                  {data.healthScore && data.healthScore >= 70
                     ? "Excellent Choice ⭐"
-                    : data.healthScore >= 50
+                    : data.healthScore && data.healthScore >= 50
                     ? "Moderate ⚠️"
                     : "Not Recommended ❌"}
-                </p>
-                <p className="text-sm">
-                  {data.healthScore >= 70
-                    ? "This product meets high nutritional standards."
-                    : data.healthScore >= 50
-                    ? "Some nutritional concerns. Limit consumption."
-                    : "Consider healthier alternatives."}
                 </p>
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Nutrition Facts + Warnings */}
+        {/* Nutrition + Warnings */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Nutrition */}
           <Card className="p-6 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-teal-500/20">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center">
@@ -173,7 +178,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
               </div>
               <h3 className="text-xl font-black text-white">Nutrition Facts</h3>
             </div>
-
             <div className="space-y-3">
               {[
                 { label: "Calories", value: `${nutrition.calories ?? 0} kcal`, color: "text-slate-200", icon: "⚡" },
@@ -201,7 +205,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
               </div>
               <h3 className="text-xl font-black text-white">Health Warnings</h3>
             </div>
-
             <div className="space-y-3">
               {warnings.map((warning, i) => (
                 <div key={i} className="flex items-start gap-3 p-4 rounded-lg bg-red-500/10 border border-red-500/30">
