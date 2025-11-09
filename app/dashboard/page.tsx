@@ -23,6 +23,8 @@ import {
   Activity,
   Flame,
   Zap,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react"
 import Link from "next/link"
 import { RecentScans } from "./RecentScans"
@@ -248,139 +250,333 @@ export default function DashboardPage() {
 
   if (authError) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
-        <div className="p-8 border border-red-500/40 bg-slate-900 rounded-xl">
-          <p>{authError}</p>
-          <p className="text-slate-500 text-sm">Redirecting to login...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+        <Card className="p-8 border border-red-500/40 bg-slate-900/80 backdrop-blur-md rounded-xl shadow-xl max-w-md w-full">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+              <Activity className="text-red-400" size={32} />
+            </div>
+            <div>
+              <p className="text-white text-lg font-semibold mb-2">{authError}</p>
+              <p className="text-slate-400 text-sm">Redirecting to login...</p>
+            </div>
+          </div>
+        </Card>
       </div>
     )
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-300">
-        Loading your dashboard...
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
+          <p className="text-slate-300 text-lg">Loading your dashboard...</p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+      {/* Enhanced Background Effects */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
         <div
           className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-teal-500/15 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "1s", animationDuration: "4s" }}
         ></div>
+        <div
+          className="absolute bottom-0 left-1/2 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s", animationDuration: "5s" }}
+        ></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12 space-y-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12 space-y-8 relative z-10">
+        {/* Enhanced Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center shadow-lg">
-            <Sparkles className="text-white" size={28} />
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <Sparkles className="text-white" size={24} />
           </div>
           <div>
-            <h1 className="text-4xl font-black text-white">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
               Welcome back,{" "}
               <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
                 {userName}
               </span>
               !
             </h1>
-            <p className="text-slate-400 mt-1">Here’s your health journey overview</p>
+            <p className="text-slate-400 mt-1 text-sm sm:text-base">Here's your health journey overview</p>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Scans" value={dashboardStats.totalScans} icon={<Zap />} color="emerald" />
-          <StatCard title="Healthy Choices" value={dashboardStats.healthyChoices} icon={<Target />} color="teal" />
-          <StatCard title="Avg Health Score" value={dashboardStats.averageScore} icon={<Activity />} color="cyan" />
-          <StatCard title="Current Streak" value={dashboardStats.streak} icon={<Flame />} color="emerald" />
+        {/* Enhanced Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <StatCard 
+            title="Total Scans" 
+            value={dashboardStats.totalScans}
+            mainStat="Scanned Items"
+            description="Products tracked"
+            icon={<Zap />} 
+            color="emerald"
+            trend={dashboardStats.totalScans > 0 ? "up" : "neutral"}
+            trendValue={dashboardStats.totalScans}
+          />
+          <StatCard
+            title="Healthy Choices"
+            value={dashboardStats.healthyChoices}
+            mainStat="Nutritious Picks"
+            description={`${Math.round(
+              (dashboardStats.healthyChoices / (dashboardStats.totalScans || 1)) * 100
+            )}% success rate`}
+            icon={<Target />}
+            color="teal"
+            trend="up"
+            trendValue={Math.round(
+              (dashboardStats.healthyChoices / (dashboardStats.totalScans || 1)) * 100
+            )}
+          />
+          <StatCard
+            title="Avg Health Score"
+            value={dashboardStats.averageScore}
+            mainStat="Health Metric"
+            description="Out of 100 points"
+            icon={<Activity />}
+            color="cyan"
+            trend={dashboardStats.averageScore >= 70 ? "up" : dashboardStats.averageScore >= 50 ? "neutral" : "down"}
+            trendValue={dashboardStats.averageScore}
+          />
+          <StatCard
+            title="Current Streak"
+            value={dashboardStats.streak}
+            mainStat={dashboardStats.streak > 0 ? "Days in a Row" : "No Streak Yet"}
+            description={dashboardStats.streak > 0 ? "Keep it going! 🔥" : "Start scanning to build momentum"}
+            icon={<Flame />}
+            color="emerald"
+            trend={dashboardStats.streak > 0 ? "up" : "neutral"}
+            trendValue={dashboardStats.streak}
+          />
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartCard title="Weekly Activity" subtitle="Your scan frequency this week">
+        {/* Enhanced Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <ChartCard title="Weekly Activity" subtitle="Scan patterns over the last 7 days">
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={dashboardStats.weeklyData}>
+              <BarChart 
+                data={dashboardStats.weeklyData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} />
-                <XAxis dataKey="day" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
-                <Tooltip contentStyle={{ background: "#0f172a", borderRadius: 12 }} />
-                <Bar dataKey="scans" fill="#10b981" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="healthy" fill="#06b6d4" radius={[8, 8, 0, 0]} />
+                <XAxis 
+                  dataKey="day" 
+                  stroke="#94a3b8" 
+                  fontSize={11} 
+                  tickLine={false}
+                />
+                <YAxis 
+                  stroke="#94a3b8" 
+                  fontSize={11} 
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    background: "rgba(15, 23, 42, 0.9)", 
+                    borderRadius: 12,
+                    border: "1px solid rgba(148, 163, 184, 0.2)",
+                    backdropFilter: "blur(10px)"
+                  }}
+                  cursor={{ fill: "rgba(16, 185, 129, 0.1)" }}
+                />
+                <Bar 
+                  dataKey="scans" 
+                  fill="#10b981" 
+                  radius={[8, 8, 0, 0]}
+                  name="Total Scans"
+                />
+                <Bar 
+                  dataKey="healthy" 
+                  fill="#06b6d4" 
+                  radius={[8, 8, 0, 0]}
+                  name="Healthy"
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Health Score Trend" subtitle="Average health scores">
+          <ChartCard title="Health Score Trend" subtitle="Your average health score over time">
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={dashboardStats.weeklyData}>
+              <LineChart 
+                data={dashboardStats.weeklyData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} />
-                <XAxis dataKey="day" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
-                <Tooltip contentStyle={{ background: "#0f172a", borderRadius: 12 }} />
+                <XAxis 
+                  dataKey="day" 
+                  stroke="#94a3b8" 
+                  fontSize={11}
+                  tickLine={false}
+                />
+                <YAxis 
+                  stroke="#94a3b8" 
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    background: "rgba(15, 23, 42, 0.9)", 
+                    borderRadius: 12,
+                    border: "1px solid rgba(148, 163, 184, 0.2)",
+                    backdropFilter: "blur(10px)"
+                  }}
+                  cursor={{ stroke: "rgba(20, 184, 166, 0.3)", strokeWidth: 2 }}
+                />
                 <Line
                   type="monotone"
                   dataKey="avgScore"
                   stroke="#14b8a6"
                   strokeWidth={3}
-                  dot={{ fill: "#14b8a6", r: 5 }}
+                  dot={{ fill: "#14b8a6", r: 5, strokeWidth: 2, stroke: "#0f172a" }}
+                  activeDot={{ r: 7, strokeWidth: 2 }}
+                  name="Avg Score"
                 />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
         </div>
 
-        {/* ✅ Recent Scans with fixed date */}
         <RecentScans scans={dashboardStats.recentScans} />
 
-        <div className="p-8 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg">
-          <div>
-            <h3 className="text-2xl font-bold text-white">Ready to scan more?</h3>
-            <p className="text-slate-400">Start scanning your food items for instant insights.</p>
+        {/* CTA Banner */}
+        <div className="relative p-8 md:p-10 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 overflow-hidden shadow-xl">
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl"></div>
           </div>
-          <Link href="/dashboard/scanner">
-            <Button className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white font-bold px-6 py-4">
-              Open Scanner <ArrowRight size={18} />
-            </Button>
-          </Link>
+          <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-2 flex-1">
+              <h3 className="text-3xl font-black text-white">Ready to scan now?</h3>
+              <p className="text-slate-400 text-lg">Start analyzing your food instantly for nutrition insights</p>
+            </div>
+            <Link href="/dashboard/scanner">
+              <Button className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold px-8 py-6 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 border-0 text-lg whitespace-nowrap">
+                Scan Now
+                <ArrowRight size={20} className="ml-2" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-// --- Reusable Components ---
-function StatCard({ title, value, icon, color }: any) {
+// 🧩 Enhanced Stat Card Component
+function StatCard({ 
+  title, 
+  value, 
+  mainStat,
+  description,
+  icon, 
+  color,
+  trend,
+  trendValue
+}: {
+  title: string
+  value: number
+  mainStat: string
+  description: string
+  icon: React.ReactNode
+  color: "emerald" | "teal" | "cyan"
+  trend: "up" | "down" | "neutral"
+  trendValue: number
+}) {
   const colorMap: any = {
-    emerald: { gradient: "from-emerald-500 to-teal-600" },
-    teal: { gradient: "from-teal-500 to-cyan-600" },
-    cyan: { gradient: "from-cyan-500 to-blue-600" },
+    emerald: {
+      gradient: "from-emerald-500 to-teal-600",
+      glow: "group-hover:shadow-emerald-500/20",
+      border: "group-hover:border-emerald-500/30",
+      bg: "bg-emerald-500/10",
+      text: "text-emerald-400"
+    },
+    teal: {
+      gradient: "from-teal-500 to-cyan-600",
+      glow: "group-hover:shadow-teal-500/20",
+      border: "group-hover:border-teal-500/30",
+      bg: "bg-teal-500/10",
+      text: "text-teal-400"
+    },
+    cyan: {
+      gradient: "from-cyan-500 to-blue-600",
+      glow: "group-hover:shadow-cyan-500/20",
+      border: "group-hover:border-cyan-500/30",
+      bg: "bg-cyan-500/10",
+      text: "text-cyan-400"
+    },
   }
 
   return (
-    <Card className="p-6 bg-slate-900/70 backdrop-blur-md border border-slate-700/50 hover:border-emerald-500/30 shadow-lg transition-all">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold text-slate-400">{title}</span>
-        <div
-          className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colorMap[color].gradient} flex items-center justify-center text-white`}
-        >
-          {icon}
+    <Card className={`group p-5 sm:p-6 bg-slate-900/70 backdrop-blur-md border border-slate-700/50 ${colorMap[color].border} ${colorMap[color].glow} hover:shadow-lg transition-all duration-300 relative overflow-hidden`}>
+      {/* Card Background Glow */}
+      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${colorMap[color].bg} -z-10`}></div>
+
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-widest">{title}</span>
+          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${colorMap[color].gradient} flex items-center justify-center shadow-md`}>
+            <div className="text-white [&>svg]:w-4 [&>svg]:h-4 sm:[&>svg]:w-5 sm:[&>svg]:h-5">
+              {icon}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Value and Stat Name */}
+        <div className="mb-3">
+          <p className="text-4xl sm:text-5xl font-black bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent mb-1">
+            {value}
+          </p>
+          <p className="text-sm font-semibold text-slate-300">{mainStat}</p>
+        </div>
+
+        {/* Description and Trend */}
+        <div className="flex items-center justify-between pt-3 border-t border-slate-700/50">
+          <p className="text-xs text-slate-400">{description}</p>
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold ${
+            trend === "up" ? "bg-emerald-500/20 text-emerald-400" :
+            trend === "down" ? "bg-red-500/20 text-red-400" :
+            "bg-slate-500/20 text-slate-400"
+          }`}>
+            {trend === "up" && <ArrowUpRight size={14} />}
+            {trend === "down" && <ArrowDownRight size={14} />}
+            {trend === "neutral" && <Activity size={14} />}
+            <span>{trendValue}</span>
+          </div>
         </div>
       </div>
-      <p className="text-4xl font-black text-white">{value}</p>
     </Card>
   )
 }
 
-function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+// 🧩 Enhanced Chart Card Component
+function ChartCard({ 
+  title, 
+  subtitle,
+  children 
+}: { 
+  title: string
+  subtitle?: string
+  children: React.ReactNode 
+}) {
   return (
-    <Card className="p-6 bg-slate-900/70 backdrop-blur-md border border-slate-700/50 hover:border-emerald-500/20 transition-all">
-      <h3 className="text-xl font-bold text-white mb-1">{title}</h3>
-      {subtitle && <p className="text-sm text-slate-400 mb-3">{subtitle}</p>}
+    <Card className="p-4 sm:p-6 bg-slate-900/70 backdrop-blur-md border border-slate-700/50 hover:border-emerald-500/20 shadow-lg hover:shadow-emerald-500/5 transition-all duration-300">
+      <div className="mb-4">
+        <h3 className="text-lg sm:text-xl font-bold text-white">{title}</h3>
+        {subtitle && (
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">{subtitle}</p>
+        )}
+      </div>
       {children}
     </Card>
   )
