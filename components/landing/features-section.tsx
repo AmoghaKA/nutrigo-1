@@ -46,9 +46,9 @@ const features = [
   },
   {
     icon: Shield,
-    title: "Allergen Detection",
+    title: "Advanced UI",
     description:
-      "Automatically identify potential allergens and dietary restrictions. Stay safe with personalized warnings tailored to your health profile.",
+      "Experience a sleek, intuitive interface designed for effortless navigation. Focus on what matters most—your health.",
     color: "from-cyan-500 to-emerald-400",
     emoji: "🛡️",
   },

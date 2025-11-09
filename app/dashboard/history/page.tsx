@@ -38,7 +38,7 @@ export default function HistoryPage() {
   const [filterCategory, setFilterCategory] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<SortKey>("date")
 
-  // Get current user ID (Supabase first, fallback localStorage)
+  // Get current user ID
   const getCurrentUserId = async (): Promise<string | null> => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -60,6 +60,7 @@ export default function HistoryPage() {
     return null
   }
 
+  // Fetch scan history
   useEffect(() => {
     const fetchHistory = async () => {
       setLoading(true)
@@ -76,16 +77,40 @@ export default function HistoryPage() {
 
         const data = await res.json()
         if (data.success) {
-          const formatted: ScanHistory[] = data.data.map((item: any) => ({
-            id: item.id,
-            name: item.productName || item.detected_name || item.name || item.product_name || "Unnamed Product",
-            brand: item.brand || "",
-            score: item.health_score || 0,
-            category: item.category || "General",
-            date: item.scannedAt || new Date().toISOString(),
-            calories: item.calories || 0,
-            sugar: item.sugar || 0,
-          }))
+          const formatted: ScanHistory[] = data.data.map((item: any) => {
+            // ✅ Fixed: pick the right date field
+            const rawDate =
+              item.scanned_at ||
+              item.scannedAt ||
+              item.created_at ||
+              item.createdAt ||
+              item.timestamp ||
+              item.updated_at ||
+              item.updatedAt ||
+              null
+
+            const parsedDate = rawDate ? new Date(rawDate) : null
+            const date =
+              parsedDate && !isNaN(parsedDate.getTime())
+                ? parsedDate.toISOString()
+                : new Date().toISOString()
+
+            return {
+              id: item.id,
+              name:
+                item.productName ||
+                item.detected_name ||
+                item.name ||
+                item.product_name ||
+                "Unnamed Product",
+              brand: item.brand || "",
+              score: item.health_score || item.score || 0,
+              category: item.category || "General",
+              date, // ✅ real scan date now
+              calories: item.calories || 0,
+              sugar: item.sugar || 0,
+            }
+          })
           setHistory(formatted)
         }
       } catch (err) {
@@ -160,7 +185,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-      {/* Enhanced Background Effects */}
+      {/* Background Effects */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
         <div 
@@ -174,7 +199,7 @@ export default function HistoryPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8 relative z-10">
-        {/* Enhanced Header */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <BarChart3 className="text-white" size={24} />
@@ -190,7 +215,7 @@ export default function HistoryPage() {
           </div>
         </div>
 
-        {/* Stats Summary - Mobile First */}
+        {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="p-4 sm:p-6 bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 hover:border-emerald-500/30 transition-all duration-300">
             <div className="flex items-center gap-3 mb-2">
@@ -229,14 +254,11 @@ export default function HistoryPage() {
           </Card>
         </div>
 
-        {/* Enhanced Filters Section */}
+        {/* Filters */}
         <Card className="p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md border border-slate-700/50">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1">
-              <Search
-                size={18}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500"
-              />
+              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" />
               <Input
                 type="text"
                 placeholder="Search products..."
@@ -280,7 +302,7 @@ export default function HistoryPage() {
           </div>
         </Card>
 
-        {/* History List - Enhanced Mobile Layout */}
+        {/* History List */}
         <div className="space-y-4">
           {loading ? (
             <Card className="p-12 sm:p-16 flex justify-center items-center bg-slate-900/60 backdrop-blur-md border border-slate-700/50">
@@ -333,7 +355,13 @@ export default function HistoryPage() {
                   <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-slate-400 pt-2 border-t border-slate-800/50">
                     <span className="flex items-center gap-2">
                       <Calendar size={14} className="text-emerald-400 flex-shrink-0" />
-                      <span>{new Date(item.date).toLocaleDateString()}</span>
+                      <span>
+                        {new Date(item.date).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
                     </span>
                     <span className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
