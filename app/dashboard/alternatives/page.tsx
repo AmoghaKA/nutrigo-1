@@ -3,7 +3,8 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Leaf, Sparkles, Apple, Coffee, Cookie, Milk, Wheat, Fish, ArrowRight, Star } from "lucide-react"
+import { Leaf, Apple, Coffee, Cookie, Milk, Wheat, Fish, ExternalLink, ShoppingBag } from "lucide-react"
+import Image from "next/image"
 import {
   Dialog,
   DialogContent,
@@ -11,10 +12,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { healthyAlternatives } from "@/lib/mockAlternatives"
+
 
 interface Alternative {
   name: string
@@ -26,18 +27,24 @@ interface Alternative {
   }
   benefits: string[]
   description: string
-  purchaseLink?: string
+  purchaseLinks?: {
+    blinkit?: string
+    zepto?: string
+    swiggy?: string
+    bigbasket?: string
+  }
 }
+
 
 export default function AlternativesPage() {
   const [currentCategory, setCurrentCategory] = useState("snacks")
   const [alternatives, setAlternatives] = useState<Alternative[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [openDialogs, setOpenDialogs] = useState<{ [key: string]: boolean }>({})
 
   useEffect(() => {
     try {
-      // Get alternatives for the current category
       const categoryAlternatives = healthyAlternatives[currentCategory as keyof typeof healthyAlternatives] || []
       setAlternatives(categoryAlternatives)
       setLoading(false)
@@ -55,7 +62,48 @@ export default function AlternativesPage() {
     dairy: Milk,
     grains: Wheat,
     proteins: Fish,
+    breakfast: Apple,
+    condiments: Cookie,
   }
+
+  const quickCommercePlatforms = [
+    {
+      name: "Blinkit",
+      logo: "/logos/blinkit.png",
+      color: "from-yellow-500 to-yellow-600",
+      hoverColor: "hover:from-yellow-400 hover:to-yellow-500",
+      tagline: "10-20 min delivery",
+      bgColor: "bg-yellow-50",
+      key: "blinkit" as const
+    },
+    {
+      name: "Zepto",
+      logo: "/logos/zepto.png",
+      color: "from-purple-500 to-purple-600",
+      hoverColor: "hover:from-purple-400 hover:to-purple-500",
+      tagline: "10 min delivery",
+      bgColor: "bg-purple-50",
+      key: "zepto" as const
+    },
+    {
+      name: "Swiggy Instamart",
+      logo: "/logos/swiggy.png",
+      color: "from-orange-500 to-orange-600",
+      hoverColor: "hover:from-orange-400 hover:to-orange-500",
+      tagline: "15-30 min delivery",
+      bgColor: "bg-orange-50",
+      key: "swiggy" as const
+    },
+    {
+      name: "BigBasket",
+      logo: "/logos/bigbasket.png",
+      color: "from-green-500 to-green-600",
+      hoverColor: "hover:from-green-400 hover:to-green-500",
+      tagline: "Express delivery",
+      bgColor: "bg-green-50",
+      key: "bigbasket" as const
+    }
+  ]
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return "from-emerald-400 to-teal-400"
@@ -110,7 +158,7 @@ export default function AlternativesPage() {
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white">Healthy Alternatives</h1>
-              <p className="text-slate-400 text-base sm:text-lg mt-1">Discover nutritious options for your favorite foods</p>
+              <p className="text-slate-400 text-base sm:text-lg mt-1">Discover nutritious Indian packaged foods</p>
             </div>
           </div>
         </div>
@@ -210,7 +258,7 @@ export default function AlternativesPage() {
                         {/* Action Buttons */}
                         <div className="flex gap-3 pt-4 border-t border-slate-700/50">
                           {/* Learn More Dialog */}
-                          <Dialog>
+                          <Dialog open={openDialogs[`learn-${i}`]} onOpenChange={(open) => setOpenDialogs({...openDialogs, [`learn-${i}`]: open})}>
                             <DialogTrigger asChild>
                               <Button 
                                 variant="outline" 
@@ -236,10 +284,8 @@ export default function AlternativesPage() {
                                 </div>
                               </DialogHeader>
                               <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                                {/* Description */}
                                 <p className="text-sm text-slate-300">{alt.description}</p>
 
-                                {/* Nutrition */}
                                 <div>
                                   <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">Nutrition</h4>
                                   <div className="grid grid-cols-2 gap-2">
@@ -252,7 +298,6 @@ export default function AlternativesPage() {
                                   </div>
                                 </div>
 
-                                {/* Benefits */}
                                 <div>
                                   <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">Benefits</h4>
                                   <div className="flex flex-wrap gap-1.5">
@@ -264,7 +309,6 @@ export default function AlternativesPage() {
                                   </div>
                                 </div>
 
-                                {/* Health Score Info */}
                                 <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
                                   <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Score: {alt.health_score}/100</p>
                                   <p className="text-xs text-slate-300">
@@ -276,48 +320,86 @@ export default function AlternativesPage() {
                               </div>
 
                               <DialogFooter className="mt-4">
-                                <DialogClose asChild>
-                                  <Button 
-                                    variant="outline"
-                                    className="w-full border border-slate-700 bg-slate-800/50 text-slate-300 hover:text-white hover:bg-slate-700 transition-all duration-300 rounded-lg text-sm"
-                                  >
-                                    Close
-                                  </Button>
-                                </DialogClose>
+                                <Button 
+                                  onClick={() => setOpenDialogs({...openDialogs, [`learn-${i}`]: false})}
+                                  variant="outline"
+                                  className="w-full border border-slate-700 bg-slate-800/50 text-slate-300 hover:text-white hover:bg-slate-700 transition-all duration-300 rounded-lg text-sm"
+                                >
+                                  Close
+                                </Button>
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>
 
-                          {/* Buy Button */}
-                          <Dialog>
+                          {/* Buy Now - Platform Selection Dialog */}
+                          <Dialog open={openDialogs[`buy-${i}`]} onOpenChange={(open) => setOpenDialogs({...openDialogs, [`buy-${i}`]: open})}>
                             <DialogTrigger asChild>
                               <Button className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 rounded-lg text-sm">
-                                Buy
+                                <ShoppingBag className="w-4 h-4 mr-1.5" />
+                                Buy Now
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="bg-slate-900/95 backdrop-blur-xl border border-emerald-500/20 max-w-md">
+                            <DialogContent className="bg-slate-900/95 backdrop-blur-xl border border-emerald-500/20 max-w-lg">
                               <DialogHeader>
-                                <DialogTitle className="text-xl font-black bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">
-                                  Buy — Coming Soon
+                                <DialogTitle className="text-2xl font-black bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">
+                                  Choose Your Platform
                                 </DialogTitle>
                                 <DialogDescription className="text-slate-400 text-sm">
-                                  Purchase integration is not available yet.
+                                  Select your preferred quick commerce platform to buy <span className="font-bold text-emerald-400">{alt.name}</span>
                                 </DialogDescription>
                               </DialogHeader>
-                              <div className="py-4">
-                                <p className="text-sm text-slate-300">
-                                  We're working on adding in-app purchases for <span className="font-bold text-emerald-400">{alt.name}</span>.
-                                </p>
-                              </div>
-                              <DialogFooter>
-                                <DialogClose asChild>
-                                  <Button 
-                                    variant="outline" 
-                                    className="w-full border border-slate-700 bg-slate-800/50 text-slate-300 hover:text-white hover:bg-slate-700 transition-all duration-300 rounded-lg text-sm"
+                              
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+                                {quickCommercePlatforms.map((platform) => (
+                                  <a
+                                    key={platform.key}
+                                    href={alt.purchaseLinks?.[platform.key] || "#"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => setOpenDialogs({...openDialogs, [`buy-${i}`]: false})}
+                                    className="group"
                                   >
-                                    Close
-                                  </Button>
-                                </DialogClose>
+                                    <div className={`relative p-6 rounded-xl bg-gradient-to-br ${platform.color} ${platform.hoverColor} transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 cursor-pointer overflow-hidden`}>
+                                      <div className="text-center space-y-3">
+                                        {/* Logo */}
+                                        <div className="flex justify-center">
+                                          <div className={`w-16 h-16 ${platform.bgColor} rounded-xl flex items-center justify-center p-2`}>
+                                            <Image
+                                              src={platform.logo}
+                                              alt={`${platform.name} logo`}
+                                              width={48}
+                                              height={48}
+                                              className="object-contain"
+                                            />
+                                          </div>
+                                        </div>
+                                        
+                                        <div>
+                                          <h3 className="text-lg font-black text-white">{platform.name}</h3>
+                                          <p className="text-xs text-white/80 mt-1">{platform.tagline}</p>
+                                        </div>
+                                        
+                                        <div className="flex items-center justify-center gap-1.5 text-white/90 text-xs font-medium">
+                                          <span>Shop Now</span>
+                                          <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Shimmer effect on hover */}
+                                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
+                                    </div>
+                                  </a>
+                                ))}
+                              </div>
+
+                              <DialogFooter>
+                                <Button 
+                                  onClick={() => setOpenDialogs({...openDialogs, [`buy-${i}`]: false})}
+                                  variant="outline" 
+                                  className="w-full border border-slate-700 bg-slate-800/50 text-slate-300 hover:text-white hover:bg-slate-700 transition-all duration-300 rounded-lg text-sm"
+                                >
+                                  Cancel
+                                </Button>
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>
