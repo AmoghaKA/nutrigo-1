@@ -40,8 +40,9 @@ router.get('/health', (req: Request, res: Response) => {
   res.json({ 
     status: 'ok',
     message: 'Chatbot service is running',
-    knowledgeBaseLoaded: chatbot.knowledgeBase.length > 0
+    knowledgeBaseLoaded: chatbot.knowledgeBase.length > 0,
+    knowledgeBaseSize: chatbot.knowledgeBase.length
   });
 });
 
-module.exports = router;
+export default router;

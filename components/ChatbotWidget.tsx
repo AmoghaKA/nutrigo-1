@@ -80,23 +80,61 @@ export default function ChatbotWidget() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chatbot/chat`, {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      const endpoint = `${backendUrl}/api/chatbot/chat`;
+      
+      console.log('🔍 Sending request to:', endpoint);
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({ message: textToSend }),
       });
 
-      const data = await response.json();
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.response }]);
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Content-Type:', response.headers.get('content-type'));
 
+      const contentType = response.headers.get('content-type');
+      
+      // Check if response is HTML (error page)
+      if (contentType && contentType.includes('text/html')) {
+        const htmlText = await response.text();
+        console.error('❌ Received HTML instead of JSON:', htmlText.substring(0, 200));
+        throw new Error(`Server returned HTML instead of JSON. The chatbot endpoint might not be available. Status: ${response.status}`);
+      }
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ Backend error:', errorData);
+        throw new Error(errorData.error || `Request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Response data:', data);
+      
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.response }]);
       speakResponse(data.response);
     } catch (error) {
-      console.error('Chat error:', error);
+      console.error('❌ Chat error:', error);
+      
+      let errorMessage = 'Sorry, I encountered an error. ';
+      
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        errorMessage += `Cannot connect to the chatbot server. Please check if the backend is running at ${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}.`;
+      } else if (error instanceof Error) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += 'Please try again!';
+      }
+      
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again!',
+          content: errorMessage,
         },
       ]);
     } finally {
