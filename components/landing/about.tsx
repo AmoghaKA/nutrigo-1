@@ -42,7 +42,7 @@ const team = [
     name: "PRANAV RAO K",
     role: "Frontend Developer",
     skills: "React & Next.js",
-    image: "/team/PR.png",
+    image: "/team/PR.jpg",
     color: "from-purple-400 to-violet-500",
     
   },
