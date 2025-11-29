@@ -1,5 +1,6 @@
 "use client"
 
+
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
@@ -8,15 +9,18 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Menu, X, LogOut, Settings, User, Home, Zap, BarChart3, Crown, Sparkles } from "lucide-react"
 
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+
   const handleLogout = () => {
     router.push("/")
   }
+
 
   const navItems = [
     { icon: Home, label: "Overview", href: "/dashboard" },
@@ -25,12 +29,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
   ]
 
+
   const isActive = (href: string) => {
     if (href === "/dashboard") {
       return pathname === "/dashboard"
     }
     return pathname?.startsWith(href)
   }
+
 
   return (
     <div className="min-h-screen bg-slate-950 relative overflow-hidden">
@@ -40,9 +46,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl"></div>
       </div>
 
+
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur-xl border-b border-emerald-500/20 flex items-center justify-between px-4 h-16 shadow-xl">
-        <Link href="/" className="flex items-center gap-3" aria-label="NutriGo home">
+        <div className="flex items-center gap-3" aria-label="NutriGo">
           <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg">
             <Image
               src="/logo.png"
@@ -52,7 +59,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               priority
             />
           </div>
-        </Link>
+        </div>
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
@@ -60,6 +67,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {mobileMenuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
         </button>
       </div>
+
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
@@ -126,6 +134,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
 
+
       {/* Sidebar - Desktop */}
       <aside
         className={`fixed left-0 top-0 h-screen bg-slate-900/90 backdrop-blur-xl border-r border-emerald-500/20 transition-all duration-300 z-30 shadow-2xl ${
@@ -135,7 +144,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Sidebar Header - Reduced padding */}
         <div className="p-4 border-b border-emerald-500/20 flex items-center justify-between">
           {sidebarOpen ? (
-            <Link href="/" className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <div className="relative w-45 h-45">
                 <Image
                   src="/logo.png"
@@ -145,7 +154,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   priority
                 />
               </div>
-            </Link>
+            </div>
           ) : (
             <div className="relative w-45 h-45 mx-auto">
               <Image
@@ -166,6 +175,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           )}
         </div>
+
 
         {/* Navigation - Removed overflow-y-auto and adjusted spacing */}
         <nav className="flex-1 p-3 space-y-1.5">
@@ -202,6 +212,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           )}
 
+
           {/* Upgrade Card - Desktop (Expanded) - Reduced padding and margin */}
           {sidebarOpen && (
             <div className="mt-4 p-3 rounded-2xl bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-red-500/20 border border-amber-500/30 hover:border-amber-500/50 transition-all duration-300">
@@ -237,6 +248,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           )}
 
+
           {/* Upgrade Icon - Desktop (Collapsed) */}
           {!sidebarOpen && (
             <Link href="/pricing" title="Upgrade to Pro">
@@ -246,6 +258,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
           )}
         </nav>
+
 
         {/* Sidebar Footer - Reduced padding */}
         <div className="p-3 border-t border-emerald-500/20 space-y-1.5">
@@ -274,6 +287,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Button>
         </div>
       </aside>
+
 
       {/* Main Content */}
       <main className={`transition-all duration-300 pt-16 md:pt-0 ${sidebarOpen ? "md:ml-64" : "md:ml-20"}`}>

@@ -318,61 +318,6 @@ export default function ProfilePage() {
           )}
         </Card>
 
-        {/* Preferences */}
-        <Card className="p-6 sm:p-8 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 backdrop-blur-xl border border-cyan-500/20 hover:border-cyan-500/30 transition-all duration-300 shadow-xl space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
-              <Sparkles size={20} className="text-white" />
-            </div>
-            <h3 className="text-xl font-black text-white">Preferences</h3>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              {
-                icon: Bell,
-                title: "Email Notifications",
-                description: "Get updates about your health insights",
-                checked: true
-              },
-              {
-                icon: FileText,
-                title: "Weekly Reports",
-                description: "Receive weekly nutrition summaries",
-                checked: true
-              },
-              {
-                icon: Moon,
-                title: "Dark Mode",
-                description: "Always enabled for this account",
-                checked: true,
-                disabled: true
-              }
-            ].map((pref, idx) => (
-              <div key={idx} className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-5 rounded-lg border border-slate-700/50 bg-slate-800/50 hover:border-emerald-500/40 hover:bg-slate-800/70 transition-all duration-300">
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                  <div className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
-                    <pref.icon size={18} className="sm:w-5 sm:h-5 text-emerald-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-sm sm:text-base text-white truncate">{pref.title}</p>
-                    <p className="text-xs sm:text-sm text-slate-400">{pref.description}</p>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                  <input 
-                    type="checkbox" 
-                    defaultChecked={pref.checked}
-                    disabled={pref.disabled}
-                    className="sr-only peer" 
-                  />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 disabled:opacity-50"></div>
-                </label>
-              </div>
-            ))}
-          </div>
-        </Card>
-
         {/* Subscription Section */}
         {currentPlan !== 'nutripro' ? (
           <Card className="p-6 sm:p-8 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 backdrop-blur-xl border border-amber-500/30 hover:border-amber-500/40 transition-all duration-300 shadow-xl">

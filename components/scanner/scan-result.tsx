@@ -1,5 +1,6 @@
 "use client"
 
+
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,7 +14,8 @@ import {
   ArrowRight
 } from "lucide-react"
 import Link from "next/link"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+
 
 interface ScanResultProps {
   data: {
@@ -39,11 +41,74 @@ interface ScanResultProps {
   onReset: () => void
 }
 
+
 export default function ScanResult({ data, onReset }: ScanResultProps) {
+  const [shareSuccess, setShareSuccess] = useState(false)
+  const [isSaved, setIsSaved] = useState(false)
+  const [saveLoading, setSaveLoading] = useState(false)
+
   // ✅ Log the data structure once — helps debug
   useEffect(() => {
     console.log("📦 ScanResult received data:", data)
+    // Check if already saved
+    checkIfSaved()
   }, [data])
+
+  // 🔖 Check if product is already saved
+  const checkIfSaved = () => {
+    try {
+      const savedScans = JSON.parse(localStorage.getItem("savedScans") || "[]")
+      const exists = savedScans.some((scan: any) => 
+        scan.name === data.name && scan.brand === data.brand
+      )
+      setIsSaved(exists)
+    } catch (error) {
+      console.error("Error checking saved status:", error)
+    }
+  }
+
+  // 💾 Save functionality
+  const handleSave = async () => {
+    if (saveLoading) return
+    setSaveLoading(true)
+
+    try {
+      // Get existing saved scans from localStorage
+      const savedScans = JSON.parse(localStorage.getItem("savedScans") || "[]")
+      
+      // Check if already saved
+      const alreadySaved = savedScans.some((scan: any) => 
+        scan.name === data.name && scan.brand === data.brand
+      )
+
+      if (alreadySaved) {
+        // Remove from saved (unsave)
+        const filtered = savedScans.filter((scan: any) => 
+          !(scan.name === data.name && scan.brand === data.brand)
+        )
+        localStorage.setItem("savedScans", JSON.stringify(filtered))
+        setIsSaved(false)
+        alert("❌ Removed from saved scans!")
+      } else {
+        // Add to saved
+        const scanToSave = {
+          ...data,
+          savedAt: new Date().toISOString(),
+          id: Date.now().toString()
+        }
+        savedScans.unshift(scanToSave) // Add to beginning
+        localStorage.setItem("savedScans", JSON.stringify(savedScans))
+        setIsSaved(true)
+        alert("✅ Scan saved successfully!")
+      }
+    } catch (error) {
+      console.error("Error saving scan:", error)
+      alert("❌ Failed to save scan. Please try again.")
+    } finally {
+      setSaveLoading(false)
+    }
+  }
+
 
   // 🧠 Normalize nutrition
   const nutrition = data.nutrition ?? {
@@ -54,8 +119,10 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     carbs: data.carbs ?? 0,
   }
 
+
   // 🧩 Extract or infer ingredients
   let ingredients: string[] = []
+
 
   if (Array.isArray(data.ingredients)) {
     ingredients = data.ingredients
@@ -72,6 +139,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     }
   }
 
+
   // 🚨 Normalize warnings
   let warnings: string[] = []
   if (typeof data.warnings === "string") {
@@ -83,6 +151,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     warnings = data.warnings
   }
 
+
   // 🧮 Generate auto warnings if needed
   if (warnings.length === 0) {
     if (nutrition.sugar > 25) warnings.push("High sugar content — may contribute to weight gain.")
@@ -92,6 +161,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     if (warnings.length === 0) warnings.push("No significant health warnings detected ✅")
   }
 
+
   // 🌈 Score visuals
   const getScoreColor = (score: number) => {
     if (!score) return "text-slate-400"
@@ -100,6 +170,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     return "text-red-400"
   }
 
+
   const getScoreBg = (score: number) => {
     if (!score) return "bg-slate-700/40"
     if (score >= 70) return "bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-emerald-500/40"
@@ -107,12 +178,46 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     return "bg-gradient-to-br from-red-500/20 to-orange-500/20 border-red-500/40"
   }
 
+
   const getScoreGradient = (score: number) => {
     if (!score) return "from-slate-500 to-slate-700"
     if (score >= 70) return "from-emerald-400 via-teal-400 to-cyan-400"
     if (score >= 50) return "from-cyan-400 via-blue-400 to-purple-400"
     return "from-red-400 via-orange-400 to-yellow-400"
   }
+
+  // 📤 Share functionality
+  const handleShare = async () => {
+    const shareData = {
+      title: `${data.name || "Packaged Food Product"} - Health Score: ${data.healthScore || "N/A"}`,
+      text: `I just scanned ${data.name || "a packaged food product"} with NutriGo!\n\nHealth Score: ${data.healthScore || "N/A"}/100\nCalories: ${nutrition.calories}kcal\nSugar: ${nutrition.sugar}g\nProtein: ${nutrition.protein}g\n\nCheck it out on NutriGo - Your Packaged Food Scanner!`,
+      url: typeof window !== "undefined" ? window.location.href : "",
+    }
+
+    try {
+      // Check if Web Share API is available
+      if (navigator.share) {
+        await navigator.share(shareData)
+        setShareSuccess(true)
+        setTimeout(() => setShareSuccess(false), 3000)
+      } else {
+        // Fallback: Copy to clipboard
+        const textToShare = `${shareData.title}\n\n${shareData.text}\n\n${shareData.url}`
+        await navigator.clipboard.writeText(textToShare)
+        setShareSuccess(true)
+        setTimeout(() => setShareSuccess(false), 3000)
+        alert("✅ Scan details copied to clipboard!")
+      }
+    } catch (error) {
+      console.error("Error sharing:", error)
+      // Final fallback: just copy product name
+      try {
+        await navigator.clipboard.writeText(`${data.name} - Health Score: ${data.healthScore}/100`)
+        alert("✅ Product name copied to clipboard!")
+      } catch {}
+    }
+  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
@@ -124,30 +229,48 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
         ></div>
       </div>
 
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8 relative z-10">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <Button onClick={onReset} variant="ghost" className="gap-2 text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
-            <ArrowLeft size={20} /> Back
+            <ArrowLeft size={20} /> Back to Scanner
           </Button>
           <div className="flex gap-2 sm:gap-3">
-            <Button variant="outline" className="border border-slate-700 hover:border-emerald-500/50 bg-slate-800/50 hover:bg-emerald-500/10 text-slate-300 hover:text-emerald-400">
-              <Heart size={16} /> Save
+            <Button 
+              onClick={handleSave}
+              disabled={saveLoading}
+              variant="outline" 
+              className={`border ${isSaved ? 'border-emerald-500/50 bg-emerald-500/20 text-emerald-400' : 'border-slate-700 hover:border-emerald-500/50 bg-slate-800/50 hover:bg-emerald-500/10 text-slate-300 hover:text-emerald-400'} transition-all`}
+            >
+              {saveLoading ? (
+                <div className="w-4 h-4 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+              ) : (
+                <Heart size={16} className={isSaved ? "fill-emerald-400" : ""} />
+              )}
+              {isSaved ? "Saved" : "Save"}
             </Button>
-            <Button variant="outline" className="border border-slate-700 hover:border-teal-500/50 bg-slate-800/50 hover:bg-teal-500/10 text-slate-300 hover:text-teal-400">
-              <Share2 size={16} /> Share
+            <Button 
+              onClick={handleShare}
+              variant="outline" 
+              className={`border border-slate-700 ${shareSuccess ? 'border-teal-500/50 bg-teal-500/20' : 'hover:border-teal-500/50 bg-slate-800/50 hover:bg-teal-500/10'} text-slate-300 hover:text-teal-400 transition-all`}
+            >
+              {shareSuccess ? <CheckCircle size={16} /> : <Share2 size={16} />} 
+              {shareSuccess ? "Shared!" : "Share"}
             </Button>
           </div>
         </div>
 
+
         {/* Product Info */}
         <Card className="p-6 sm:p-8 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-emerald-500/20">
           <div className="space-y-4">
-            <p className="text-xs text-slate-500 uppercase">{data.brand}</p>
-            <h1 className="text-4xl font-black text-white">{data.name}</h1>
+            <p className="text-xs text-slate-500 uppercase tracking-wider">{data.brand || "Unknown Brand"}</p>
+            <h1 className="text-4xl md:text-5xl font-black text-white">{data.name}</h1>
             <p className="text-sm text-slate-400 flex items-center gap-2">
               <Sparkles size={14} className="text-emerald-400" /> Scanned {data.timestamp ?? "just now"}
             </p>
+
 
             <div className="flex flex-col md:flex-row gap-6 items-center">
               <div className={`relative w-36 h-36 rounded-2xl ${getScoreBg(data.healthScore ?? 0)} border flex items-center justify-center`}>
@@ -167,6 +290,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
             </div>
           </div>
         </Card>
+
 
         {/* Nutrition + Warnings */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -197,6 +321,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
             </div>
           </Card>
 
+
           {/* Warnings */}
           <Card className="p-6 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-red-500/20">
             <div className="flex items-center gap-3 mb-6">
@@ -216,6 +341,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
           </Card>
         </div>
 
+
         {/* Ingredients */}
         <Card className="p-6 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-cyan-500/20">
           <div className="flex items-center gap-3 mb-6">
@@ -224,6 +350,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
             </div>
             <h3 className="text-xl font-black text-white">Ingredients</h3>
           </div>
+
 
           {ingredients.length > 0 ? (
             <div className="flex flex-wrap gap-3">
@@ -234,16 +361,17 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
               ))}
             </div>
           ) : (
-            <p className="text-slate-400 italic">No ingredients info available</p>
+            <p className="text-slate-400 italic">No ingredients info available for this packaged product</p>
           )}
         </Card>
+
 
         {/* CTA */}
         <div className="p-8 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 shadow-xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              <h3 className="text-2xl font-bold text-white">Want healthier alternatives?</h3>
-              <p className="text-slate-400">Discover products with better nutritional value.</p>
+              <h3 className="text-2xl font-bold text-white">Want healthier packaged food alternatives?</h3>
+              <p className="text-slate-400">Discover packaged products with better nutritional value.</p>
             </div>
             <Link href="/dashboard/alternatives">
               <Button className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white font-bold px-6 py-4">

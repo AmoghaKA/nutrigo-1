@@ -1,5 +1,6 @@
 "use client"
 
+
 import React, { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
@@ -8,6 +9,7 @@ import { Camera, Upload, X, Sparkles, Zap, CheckCircle } from "lucide-react"
 import ScanResult from "@/components/scanner/scan-result"
 import ScanLoadingPortal from "@/components/scanner/scan-loading-portal"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+
 
 interface ScanData {
   name: string
@@ -26,6 +28,7 @@ interface ScanData {
   product_name?: string
 }
 
+
 export default function ScannerPage() {
   const supabase = createClientComponentClient()
   const [scanMode, setScanMode] = useState<"camera" | "upload" | null>(null)
@@ -37,8 +40,10 @@ export default function ScannerPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const router = useRouter()
 
+
   const SCAN_API_URL = "/api/scan/image"
   const HISTORY_API_URL = "/api/scans"
+
 
   // ✅ Reset scanner state whenever you open this page
   useEffect(() => {
@@ -52,6 +57,7 @@ export default function ScannerPage() {
       console.warn("Could not clear old scan data:", err)
     }
   }, [])
+
 
   // 🔑 Helper to get current user ID
   const getCurrentUserId = async (): Promise<string | null> => {
@@ -75,10 +81,12 @@ export default function ScannerPage() {
     return null
   }
 
+
   const saveScanToHistory = async (dataToSave: ScanData) => {
     if (isSaving) return
     setIsSaving(true)
     console.log("Attempting to save scan to history:", dataToSave)
+
 
     try {
       const resolvedName =
@@ -89,12 +97,14 @@ export default function ScannerPage() {
         dataToSave.brand ||
         ""
 
+
       const userId = await getCurrentUserId()
       if (!userId) {
         console.warn("⚠️ No userId found — scan not linked to any account.")
         localStorage.setItem("lastScan", JSON.stringify(dataToSave))
         return
       }
+
 
       const payload = {
         userId,
@@ -110,16 +120,19 @@ export default function ScannerPage() {
         warnings: dataToSave.warnings || [],
       }
 
+
       const response = await fetch(HISTORY_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
 
+
       if (!response.ok) {
         const errorData = await response.text()
         throw new Error(`Failed to save scan. Status: ${response.status}. Details: ${errorData}`)
       }
+
 
       console.log("✅ Scan successfully saved to history.")
     } catch (error) {
@@ -128,6 +141,7 @@ export default function ScannerPage() {
       setIsSaving(false)
     }
   }
+
 
   const handleCameraStart = async () => {
     setScanMode("camera")
@@ -141,10 +155,12 @@ export default function ScannerPage() {
     }
   }
 
+
   const handleCapture = async () => {
     if (!videoRef.current || !canvasRef.current) return
     const context = canvasRef.current.getContext("2d")
     if (!context) return
+
 
     context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
     canvasRef.current.toBlob(async (blob) => {
@@ -154,9 +170,11 @@ export default function ScannerPage() {
         const formData = new FormData()
         formData.append("image", blob, "capture.jpg")
 
+
         const response = await fetch(SCAN_API_URL, { method: "POST", body: formData })
         const resText = await response.text()
         if (!response.ok) throw new Error(`Scan failed: ${resText}`)
+
 
         const data = JSON.parse(resText)
         setScanResult(data)
@@ -172,6 +190,7 @@ export default function ScannerPage() {
     }, "image/jpeg")
   }
 
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -181,10 +200,12 @@ export default function ScannerPage() {
       const formData = new FormData()
       formData.append("image", file)
 
+
       const response = await fetch(SCAN_API_URL, { method: "POST", body: formData })
       const resText = await response.text()
       if (!response.ok) throw new Error(`Upload failed: ${resText}`)
       const data = JSON.parse(resText)
+
 
       setScanResult(data)
       localStorage.setItem("lastScan", JSON.stringify(data))
@@ -198,12 +219,14 @@ export default function ScannerPage() {
     }
   }
 
+
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
       const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
       tracks.forEach((track) => track.stop())
     }
   }
+
 
   const handleReset = () => {
     stopCamera()
@@ -215,27 +238,35 @@ export default function ScannerPage() {
     } catch {}
   }
 
+
   if (scanResult) {
     return <ScanResult data={scanResult} onReset={handleReset} />
   }
 
+
   return (
-    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       <ScanLoadingPortal
         open={isScanning}
-        message="Analyzing label..."
+        message="Analyzing packaged food label..."
         submessage="AI is processing your image"
         onCancel={handleReset}
       />
 
-      {/* Background Glow */}
+
+      {/* Enhanced Background Effects - Matching Dashboard */}
       <div className="absolute inset-0 -z-10 pointer-events-none">
-        <div className="absolute top-20 left-20 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
         <div
-          className="absolute bottom-20 right-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse-slow"
-          style={{ animationDelay: "2s" }}
+          className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-teal-500/15 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s", animationDuration: "4s" }}
+        ></div>
+        <div
+          className="absolute bottom-0 left-1/2 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s", animationDuration: "5s" }}
         ></div>
       </div>
+
 
       <div className="p-4 md:p-8 lg:p-12 space-y-8 relative z-10">
         <div className="space-y-4">
@@ -244,13 +275,14 @@ export default function ScannerPage() {
               <Zap size={28} className="text-white" />
             </div>
             <div>
-              <h1 className="text-4xl md:text-5xl font-black text-white">Food Scanner</h1>
+              <h1 className="text-4xl md:text-5xl font-black text-white">Packaged Food Scanner</h1>
               <p className="text-slate-400 text-lg">
-                Scan any food or beverage to get instant nutrition insights
+                Scan any packaged food product to get instant nutrition insights
               </p>
             </div>
           </div>
         </div>
+
 
         {/* Main Options */}
         {!scanMode ? (
@@ -264,9 +296,10 @@ export default function ScannerPage() {
                   <Camera size={40} className="text-white" />
                 </div>
                 <h3 className="text-2xl font-black text-white">Use Camera</h3>
-                <p className="text-slate-400">Point your camera at the food label</p>
+                <p className="text-slate-400">Point your camera at the packaged food label</p>
               </button>
             </Card>
+
 
             <Card className="group relative p-8 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-teal-500/20 hover:border-teal-500/40 transition-all duration-300 shadow-xl cursor-pointer overflow-hidden">
               <button
@@ -295,7 +328,7 @@ export default function ScannerPage() {
               <div className="space-y-6">
                 <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden border-2 border-emerald-500/30">
                   <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                  <canvas ref={canvasRef} className="hidden" width={640} height={480} />
+                  <canvas ref={canvasRef} className="hidden" width={640} height={4800} />
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="max-w-[70%] sm:w-64 max-h-[70%] sm:h-80 border-4 border-emerald-400/50 rounded-2xl shadow-lg shadow-emerald-500/25"></div>
                   </div>
@@ -321,6 +354,7 @@ export default function ScannerPage() {
           </Card>
         )}
 
+
         {/* Tips Section */}
         <Card className="max-w-4xl mx-auto p-8 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-cyan-500/20 shadow-xl">
           <div className="flex items-center gap-3 mb-6">
@@ -331,10 +365,10 @@ export default function ScannerPage() {
           </div>
           <ul className="space-y-4">
             {[
-              "Ensure the nutrition label is clearly visible and well-lit",
+              "Ensure the packaged food & nutrition label is clearly visible and well-lit",
               "Hold the camera steady for 2–3 seconds",
-              "Make sure the entire label fits within the frame",
-              "Avoid shadows and glare on the label",
+              "Make sure the entire label/product fits within the frame",
+              "Avoid shadows and glare on the label/product",
             ].map((tip, idx) => (
               <li key={idx} className="flex items-start gap-4 group">
                 <div className="shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">

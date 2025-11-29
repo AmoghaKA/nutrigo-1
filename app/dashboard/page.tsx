@@ -457,7 +457,7 @@ export default function DashboardPage() {
           <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2 flex-1">
               <h3 className="text-3xl font-black text-white">Ready to scan now?</h3>
-              <p className="text-slate-400 text-lg">Start analyzing your food instantly for nutrition insights</p>
+              <p className="text-slate-400 text-lg">Start analyzing your packaged food instantly for nutrition insights</p>
             </div>
             <Link href="/dashboard/scanner">
               <Button className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold px-8 py-6 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 border-0 text-lg whitespace-nowrap">
