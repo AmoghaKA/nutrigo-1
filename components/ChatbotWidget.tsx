@@ -21,15 +21,16 @@ export default function ChatbotWidget() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Initialize speech recognition
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-US';
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognition.continuous = false; // auto-stop after pause
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event: any) => {
         let interimTranscript = '';
         let finalTranscript = '';
 
@@ -45,11 +46,12 @@ export default function ChatbotWidget() {
         setInput(finalTranscript || interimTranscript);
       };
 
-      recognitionRef.current.onerror = () => {
+      recognition.onerror = () => {
         setIsListening(false);
       };
 
-      recognitionRef.current.onend = () => {
+      recognition.onend = () => {
+        // called when user stops speaking / auto timeout
         setIsListening(false);
       };
     }
@@ -87,7 +89,6 @@ export default function ChatbotWidget() {
 
       const contentType = response.headers.get('content-type');
 
-      // Check if response is HTML (error page)
       if (contentType && contentType.includes('text/html')) {
         const htmlText = await response.text();
         console.error('❌ Received HTML instead of JSON:', htmlText.substring(0, 200));
@@ -107,7 +108,6 @@ export default function ChatbotWidget() {
 
       setMessages((prev) => [...prev, { role: 'assistant', content: data.response }]);
 
-      // Use Sarvam TTS for response
       await speakResponseSarvam(data.response);
     } catch (error) {
       console.error('❌ Chat error:', error);
@@ -136,12 +136,10 @@ export default function ChatbotWidget() {
     }
   };
 
-  // Sarvam TTS function
   const speakResponseSarvam = async (text: string) => {
     try {
       setIsSpeaking(true);
 
-      // Call our backend API route (Sarvam)
       const response = await fetch('/api/tts/sarvam', {
         method: 'POST',
         headers: {
@@ -152,21 +150,18 @@ export default function ChatbotWidget() {
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        console.error('Sarvam TTS error:', err);
+        console.error('TTS error:', err);
         throw new Error(err.error || 'Failed to generate speech');
       }
 
-      // Get audio blob
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
 
-      // Stop any existing audio
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
 
-      // Create and play new audio
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
 
@@ -187,13 +182,10 @@ export default function ChatbotWidget() {
     } catch (error) {
       console.error('TTS error:', error);
       setIsSpeaking(false);
-
-      // Fallback to browser speech synthesis
       speakResponseBrowser(text);
     }
   };
 
-  // Fallback browser TTS
   const speakResponseBrowser = (text: string) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -223,13 +215,11 @@ export default function ChatbotWidget() {
   };
 
   const stopSpeaking = () => {
-    // Stop Sarvam audio
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
 
-    // Stop browser speech synthesis
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -239,9 +229,7 @@ export default function ChatbotWidget() {
 
   return (
     <>
-      {/* FIXED BUTTON WRAPPER */}
       <div className="fixed bottom-6 right-6 z-[999999] pointer-events-auto">
-        {/* Floating Button */}
         {!isOpen && (
           <button onClick={() => setIsOpen(true)} className="group relative">
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-full blur-xl opacity-60 group-hover:opacity-100 animate-pulse-slow transition-opacity duration-300"></div>
@@ -257,13 +245,11 @@ export default function ChatbotWidget() {
         )}
       </div>
 
-      {/* CHAT WINDOW */}
       {isOpen && (
         <div className="fixed bottom-6 right-6 w-[380px] h-[580px] max-h-[85vh] z-[999999] flex flex-col animate-slideUp">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/30 via-teal-500/30 to-cyan-500/30 rounded-3xl blur-2xl"></div>
 
           <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl border border-emerald-500/30 backdrop-blur-xl overflow-hidden flex flex-col h-full">
-            {/* Header */}
             <div className="relative bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 p-4 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-xl animate-float">
@@ -273,7 +259,7 @@ export default function ChatbotWidget() {
                   <h3 className="font-black text-base text-white">NutriGo AI</h3>
                   <p className="text-xs text-emerald-100 flex items-center gap-1">
                     <span className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></span>
-                    Sarvam AI Voice
+                    NutriGo AI Voice Assistant
                   </p>
                 </div>
               </div>
@@ -288,7 +274,6 @@ export default function ChatbotWidget() {
               <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950/50 backdrop-blur-sm">
               {messages.map((msg, idx) => (
                 <div
@@ -323,13 +308,12 @@ export default function ChatbotWidget() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
             <div className="p-4 bg-slate-900/80 backdrop-blur-xl border-t border-emerald-500/20 flex-shrink-0">
               {isSpeaking && (
                 <div className="mb-3 flex items-center justify-between bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 rounded-xl p-2.5 animate-fadeIn backdrop-blur-sm">
                   <span className="text-xs text-emerald-400 flex items-center gap-2 font-semibold">
                     <Volume2 className="w-3 h-3 animate-pulse" />
-                    AI is speaking...
+                    Voice assistant is speaking...
                   </span>
                   <button
                     onClick={stopSpeaking}
@@ -398,7 +382,7 @@ export default function ChatbotWidget() {
 
               <p className="text-xs text-slate-500 mt-2.5 text-center flex items-center justify-center gap-2">
                 <Sparkles className="w-3 h-3" />
-                Powered by Sarvam AI Voice
+                NutriGo AI Voice Assistant – speak or type your question
               </p>
             </div>
           </div>
