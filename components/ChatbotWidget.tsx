@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Mic, MicOff, X, MessageCircle, Loader2, Sparkles } from 'lucide-react';
+import { Send, Mic, MicOff, X, MessageCircle, Loader2, Sparkles, Volume2, VolumeX } from 'lucide-react';
 
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,21 +18,9 @@ export default function ChatbotWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Load voices for speech synthesis
-    if ('speechSynthesis' in window) {
-      const loadVoices = () => {
-        const availableVoices = window.speechSynthesis.getVoices();
-        setVoices(availableVoices);
-        console.log('Available voices:', availableVoices);
-      };
-
-      loadVoices();
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
-
     // Initialize speech recognition
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition;
@@ -82,14 +70,14 @@ export default function ChatbotWidget() {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
       const endpoint = `${backendUrl}/api/chatbot/chat`;
-      
+
       console.log('🔍 Sending request to:', endpoint);
-      
+
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          Accept: 'application/json',
         },
         body: JSON.stringify({ message: textToSend }),
       });
@@ -98,14 +86,16 @@ export default function ChatbotWidget() {
       console.log('📥 Content-Type:', response.headers.get('content-type'));
 
       const contentType = response.headers.get('content-type');
-      
+
       // Check if response is HTML (error page)
       if (contentType && contentType.includes('text/html')) {
         const htmlText = await response.text();
         console.error('❌ Received HTML instead of JSON:', htmlText.substring(0, 200));
-        throw new Error(`Server returned HTML instead of JSON. The chatbot endpoint might not be available. Status: ${response.status}`);
+        throw new Error(
+          `Server returned HTML instead of JSON. The chatbot endpoint might not be available. Status: ${response.status}`
+        );
       }
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error('❌ Backend error:', errorData);
@@ -114,22 +104,26 @@ export default function ChatbotWidget() {
 
       const data = await response.json();
       console.log('✅ Response data:', data);
-      
+
       setMessages((prev) => [...prev, { role: 'assistant', content: data.response }]);
-      speakResponse(data.response);
+
+      // Use Sarvam TTS for response
+      await speakResponseSarvam(data.response);
     } catch (error) {
       console.error('❌ Chat error:', error);
-      
+
       let errorMessage = 'Sorry, I encountered an error. ';
-      
+
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        errorMessage += `Cannot connect to the chatbot server. Please check if the backend is running at ${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}.`;
+        errorMessage += `Cannot connect to the chatbot server. Please check if the backend is running at ${
+          process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'
+        }.`;
       } else if (error instanceof Error) {
         errorMessage += error.message;
       } else {
         errorMessage += 'Please try again!';
       }
-      
+
       setMessages((prev) => [
         ...prev,
         {
@@ -142,38 +136,77 @@ export default function ChatbotWidget() {
     }
   };
 
-  const speakResponse = (text: string) => {
+  // Sarvam TTS function
+  const speakResponseSarvam = async (text: string) => {
+    try {
+      setIsSpeaking(true);
+
+      // Call our backend API route (Sarvam)
+      const response = await fetch('/api/tts/sarvam', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        console.error('Sarvam TTS error:', err);
+        throw new Error(err.error || 'Failed to generate speech');
+      }
+
+      // Get audio blob
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      // Stop any existing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+
+      // Create and play new audio
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+      };
+
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+        console.error('Audio playback error');
+      };
+
+      await audio.play();
+    } catch (error) {
+      console.error('TTS error:', error);
+      setIsSpeaking(false);
+
+      // Fallback to browser speech synthesis
+      speakResponseBrowser(text);
+    }
+  };
+
+  // Fallback browser TTS
+  const speakResponseBrowser = (text: string) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       setIsSpeaking(true);
 
       const utterance = new SpeechSynthesisUtterance(text);
-
-      // Find the best soothing female voice
-      const femaleVoice = voices.find(voice =>
-        // Priority order for soothing female voices
-        voice.name.includes('Samantha') || // macOS - very natural
-        voice.name.includes('Google UK English Female') ||
-        voice.name.includes('Google US English Female') ||
-        voice.name.includes('Microsoft Zira') || // Windows
-        voice.name.includes('Karen') || // macOS
-        voice.name.includes('Moira') || // macOS
-        voice.name.includes('Tessa') || // macOS
-        (voice.lang.startsWith('en') && voice.name.toLowerCase().includes('female'))
-      ) || voices.find(v => v.lang.startsWith('en-US') || v.lang.startsWith('en-GB'));
-
-      // Set voice
-      if (femaleVoice) {
-        utterance.voice = femaleVoice;
-        console.log('Using voice:', femaleVoice.name);
-      }
-
-      // Voice settings for soothing effect
-      utterance.rate = 0.9; // Slower, more relaxed (0.1 to 10)
-      utterance.pitch = 1.05; // Slightly higher, softer pitch (0 to 2)
-      utterance.volume = 0.9; // Slightly lower volume for gentleness (0 to 1)
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      utterance.volume = 0.85;
 
       utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -190,10 +223,18 @@ export default function ChatbotWidget() {
   };
 
   const stopSpeaking = () => {
+    // Stop Sarvam audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    // Stop browser speech synthesis
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      setIsSpeaking(false);
     }
+
+    setIsSpeaking(false);
   };
 
   return (
@@ -232,7 +273,7 @@ export default function ChatbotWidget() {
                   <h3 className="font-black text-base text-white">NutriGo AI</h3>
                   <p className="text-xs text-emerald-100 flex items-center gap-1">
                     <span className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></span>
-                    Always here to help
+                    Sarvam AI Voice
                   </p>
                 </div>
               </div>
@@ -287,13 +328,14 @@ export default function ChatbotWidget() {
               {isSpeaking && (
                 <div className="mb-3 flex items-center justify-between bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 rounded-xl p-2.5 animate-fadeIn backdrop-blur-sm">
                   <span className="text-xs text-emerald-400 flex items-center gap-2 font-semibold">
-                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                    <Volume2 className="w-3 h-3 animate-pulse" />
                     AI is speaking...
                   </span>
                   <button
                     onClick={stopSpeaking}
-                    className="text-xs text-emerald-400 hover:text-emerald-300 font-bold transition-colors"
+                    className="text-xs text-emerald-400 hover:text-emerald-300 font-bold transition-colors flex items-center gap-1"
                   >
+                    <VolumeX className="w-3 h-3" />
                     Stop
                   </button>
                 </div>
@@ -356,7 +398,7 @@ export default function ChatbotWidget() {
 
               <p className="text-xs text-slate-500 mt-2.5 text-center flex items-center justify-center gap-2">
                 <Sparkles className="w-3 h-3" />
-                Click 🎤 to speak or type your question
+                Powered by Sarvam AI Voice
               </p>
             </div>
           </div>

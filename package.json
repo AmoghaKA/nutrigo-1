@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@google-cloud/text-to-speech": "^6.4.0",
     "@hookform/resolvers": "^3.10.0",
     "@langchain/community": "^1.0.5",
     "@langchain/google-genai": "^2.0.0",
