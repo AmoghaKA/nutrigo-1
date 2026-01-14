@@ -132,6 +132,19 @@ export default function DashboardPage() {
     recentScans: [],
   })
 
+  // ✅ Responsive chart height based on screen size
+  const [isMobile, setIsMobile] = useState(false)
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   useEffect(() => {
     const fetchDashboardData = async (userId: string) => {
       try {
@@ -251,14 +264,14 @@ export default function DashboardPage() {
   if (authError) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-        <Card className="p-8 border border-red-500/40 bg-slate-900/80 backdrop-blur-md rounded-xl shadow-xl max-w-md w-full">
+        <Card className="p-6 sm:p-8 border border-red-500/40 bg-slate-900/80 backdrop-blur-md rounded-xl shadow-xl max-w-md w-full">
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
-              <Activity className="text-red-400" size={32} />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+              <Activity className="text-red-400" size={28} />
             </div>
             <div>
-              <p className="text-white text-lg font-semibold mb-2">{authError}</p>
-              <p className="text-slate-400 text-sm">Redirecting to login...</p>
+              <p className="text-white text-base sm:text-lg font-semibold mb-2">{authError}</p>
+              <p className="text-slate-400 text-xs sm:text-sm">Redirecting to login...</p>
             </div>
           </div>
         </Card>
@@ -268,10 +281,10 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
-          <p className="text-slate-300 text-lg">Loading your dashboard...</p>
+          <div className="w-14 h-14 sm:w-16 sm:h-16 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
+          <p className="text-slate-300 text-base sm:text-lg">Loading your dashboard...</p>
         </div>
       </div>
     )
@@ -279,39 +292,39 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-      {/* Enhanced Background Effects */}
+      {/* Enhanced Background Effects - Responsive */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-0 left-1/4 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-emerald-500/20 rounded-full blur-2xl sm:blur-3xl animate-pulse"></div>
         <div
-          className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-teal-500/15 rounded-full blur-3xl animate-pulse"
+          className="absolute top-1/3 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 lg:w-[500px] lg:h-[500px] bg-teal-500/15 rounded-full blur-2xl sm:blur-3xl animate-pulse"
           style={{ animationDelay: "1s", animationDuration: "4s" }}
         ></div>
         <div
-          className="absolute bottom-0 left-1/2 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"
+          className="absolute bottom-0 left-1/2 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 bg-cyan-500/10 rounded-full blur-2xl sm:blur-3xl animate-pulse"
           style={{ animationDelay: "2s", animationDuration: "5s" }}
         ></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12 space-y-8 relative z-10">
-        {/* Enhanced Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12 space-y-6 sm:space-y-8 relative z-10">
+        {/* Enhanced Header - Responsive */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Sparkles className="text-white" size={24} />
+            <Sparkles className="text-white" size={20} />
           </div>
           <div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight">
               Welcome back,{" "}
               <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
                 {userName}
               </span>
               !
             </h1>
-            <p className="text-slate-400 mt-1 text-sm sm:text-base">Here's your health journey overview</p>
+            <p className="text-slate-400 mt-1 text-xs sm:text-sm md:text-base">Here's your health journey overview</p>
           </div>
         </div>
 
-        {/* Enhanced Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {/* Enhanced Stats Grid - Fully Responsive */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
           <StatCard 
             title="Total Scans" 
             value={dashboardStats.totalScans}
@@ -350,7 +363,7 @@ export default function DashboardPage() {
             title="Current Streak"
             value={dashboardStats.streak}
             mainStat={dashboardStats.streak > 0 ? "Days in a Row" : "No Streak Yet"}
-            description={dashboardStats.streak > 0 ? "Keep it going! 🔥" : "Start scanning to build momentum"}
+            description={dashboardStats.streak > 0 ? "Keep it going! 🔥" : "Start scanning"}
             icon={<Flame />}
             color="emerald"
             trend={dashboardStats.streak > 0 ? "up" : "neutral"}
@@ -358,46 +371,52 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Enhanced Charts Section */}
+        {/* Enhanced Charts Section - Mobile Optimized */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <ChartCard title="Weekly Activity" subtitle="Scan patterns over the last 7 days">
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
               <BarChart 
                 data={dashboardStats.weeklyData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+                margin={{ 
+                  top: 10, 
+                  right: isMobile ? 5 : 10, 
+                  left: isMobile ? -25 : -20, 
+                  bottom: 5 
+                }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} />
                 <XAxis 
                   dataKey="day" 
                   stroke="#94a3b8" 
-                  fontSize={11} 
+                  fontSize={isMobile ? 10 : 11} 
                   tickLine={false}
                 />
                 <YAxis 
                   stroke="#94a3b8" 
-                  fontSize={11} 
+                  fontSize={isMobile ? 10 : 11} 
                   tickLine={false}
                   axisLine={false}
                 />
                 <Tooltip 
                   contentStyle={{ 
-                    background: "rgba(15, 23, 42, 0.9)", 
-                    borderRadius: 12,
+                    background: "rgba(15, 23, 42, 0.95)", 
+                    borderRadius: 8,
                     border: "1px solid rgba(148, 163, 184, 0.2)",
-                    backdropFilter: "blur(10px)"
+                    backdropFilter: "blur(10px)",
+                    fontSize: isMobile ? 11 : 12
                   }}
                   cursor={{ fill: "rgba(16, 185, 129, 0.1)" }}
                 />
                 <Bar 
                   dataKey="scans" 
                   fill="#10b981" 
-                  radius={[8, 8, 0, 0]}
+                  radius={[6, 6, 0, 0]}
                   name="Total Scans"
                 />
                 <Bar 
                   dataKey="healthy" 
                   fill="#06b6d4" 
-                  radius={[8, 8, 0, 0]}
+                  radius={[6, 6, 0, 0]}
                   name="Healthy"
                 />
               </BarChart>
@@ -405,30 +424,36 @@ export default function DashboardPage() {
           </ChartCard>
 
           <ChartCard title="Health Score Trend" subtitle="Your average health score over time">
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
               <LineChart 
                 data={dashboardStats.weeklyData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+                margin={{ 
+                  top: 10, 
+                  right: isMobile ? 5 : 10, 
+                  left: isMobile ? -25 : -20, 
+                  bottom: 5 
+                }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} />
                 <XAxis 
                   dataKey="day" 
                   stroke="#94a3b8" 
-                  fontSize={11}
+                  fontSize={isMobile ? 10 : 11}
                   tickLine={false}
                 />
                 <YAxis 
                   stroke="#94a3b8" 
-                  fontSize={11}
+                  fontSize={isMobile ? 10 : 11}
                   tickLine={false}
                   axisLine={false}
                 />
                 <Tooltip 
                   contentStyle={{ 
-                    background: "rgba(15, 23, 42, 0.9)", 
-                    borderRadius: 12,
+                    background: "rgba(15, 23, 42, 0.95)", 
+                    borderRadius: 8,
                     border: "1px solid rgba(148, 163, 184, 0.2)",
-                    backdropFilter: "blur(10px)"
+                    backdropFilter: "blur(10px)",
+                    fontSize: isMobile ? 11 : 12
                   }}
                   cursor={{ stroke: "rgba(20, 184, 166, 0.3)", strokeWidth: 2 }}
                 />
@@ -436,9 +461,9 @@ export default function DashboardPage() {
                   type="monotone"
                   dataKey="avgScore"
                   stroke="#14b8a6"
-                  strokeWidth={3}
-                  dot={{ fill: "#14b8a6", r: 5, strokeWidth: 2, stroke: "#0f172a" }}
-                  activeDot={{ r: 7, strokeWidth: 2 }}
+                  strokeWidth={isMobile ? 2 : 3}
+                  dot={{ fill: "#14b8a6", r: isMobile ? 3 : 5, strokeWidth: 2, stroke: "#0f172a" }}
+                  activeDot={{ r: isMobile ? 5 : 7, strokeWidth: 2 }}
                   name="Avg Score"
                 />
               </LineChart>
@@ -448,21 +473,21 @@ export default function DashboardPage() {
 
         <RecentScans scans={dashboardStats.recentScans} />
 
-        {/* CTA Banner */}
-        <div className="relative p-8 md:p-10 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 overflow-hidden shadow-xl">
+        {/* CTA Banner - Fully Responsive */}
+        <div className="relative p-6 sm:p-8 md:p-10 rounded-xl sm:rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 overflow-hidden shadow-xl">
           <div className="absolute inset-0 -z-10">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl"></div>
+            <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-emerald-500/20 rounded-full blur-2xl sm:blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-64 sm:h-64 bg-cyan-500/20 rounded-full blur-2xl sm:blur-3xl"></div>
           </div>
-          <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-2 flex-1">
-              <h3 className="text-3xl font-black text-white">Ready to scan now?</h3>
-              <p className="text-slate-400 text-lg">Start analyzing your packaged food instantly for nutrition insights</p>
+          <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
+            <div className="space-y-1.5 sm:space-y-2 flex-1">
+              <h3 className="text-2xl sm:text-3xl font-black text-white">Ready to scan now?</h3>
+              <p className="text-slate-400 text-sm sm:text-base md:text-lg">Start analyzing your packaged food instantly for nutrition insights</p>
             </div>
-            <Link href="/dashboard/scanner">
-              <Button className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold px-8 py-6 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 border-0 text-lg whitespace-nowrap">
+            <Link href="/dashboard/scanner" className="w-full md:w-auto">
+              <Button className="w-full md:w-auto bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold px-6 sm:px-8 py-3 sm:py-4 md:py-6 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 border-0 text-base sm:text-lg whitespace-nowrap">
                 Scan Now
-                <ArrowRight size={20} className="ml-2" />
+                <ArrowRight size={18} className="sm:w-5 sm:h-5 ml-2" />
               </Button>
             </Link>
           </div>
@@ -472,7 +497,7 @@ export default function DashboardPage() {
   )
 }
 
-// 🧩 Enhanced Stat Card Component
+// 🧩 Enhanced Stat Card Component - Mobile Optimized
 function StatCard({ 
   title, 
   value, 
@@ -517,15 +542,15 @@ function StatCard({
   }
 
   return (
-    <Card className={`group p-5 sm:p-6 bg-slate-900/70 backdrop-blur-md border border-slate-700/50 ${colorMap[color].border} ${colorMap[color].glow} hover:shadow-lg transition-all duration-300 relative overflow-hidden`}>
+    <Card className={`group p-4 sm:p-5 md:p-6 bg-slate-900/70 backdrop-blur-md border border-slate-700/50 ${colorMap[color].border} ${colorMap[color].glow} hover:shadow-lg transition-all duration-300 relative overflow-hidden`}>
       {/* Card Background Glow */}
       <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${colorMap[color].bg} -z-10`}></div>
 
       <div className="relative z-10">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-widest">{title}</span>
-          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${colorMap[color].gradient} flex items-center justify-center shadow-md`}>
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-widest">{title}</span>
+          <div className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg bg-gradient-to-br ${colorMap[color].gradient} flex items-center justify-center shadow-md`}>
             <div className="text-white [&>svg]:w-4 [&>svg]:h-4 sm:[&>svg]:w-5 sm:[&>svg]:h-5">
               {icon}
             </div>
@@ -533,24 +558,24 @@ function StatCard({
         </div>
 
         {/* Main Value and Stat Name */}
-        <div className="mb-3">
-          <p className="text-4xl sm:text-5xl font-black bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent mb-1">
+        <div className="mb-2 sm:mb-3">
+          <p className="text-3xl sm:text-4xl md:text-5xl font-black bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent mb-1">
             {value}
           </p>
-          <p className="text-sm font-semibold text-slate-300">{mainStat}</p>
+          <p className="text-xs sm:text-sm font-semibold text-slate-300">{mainStat}</p>
         </div>
 
         {/* Description and Trend */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-700/50">
-          <p className="text-xs text-slate-400">{description}</p>
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold ${
+        <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-slate-700/50">
+          <p className="text-[10px] sm:text-xs text-slate-400 truncate pr-2">{description}</p>
+          <div className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-semibold flex-shrink-0 ${
             trend === "up" ? "bg-emerald-500/20 text-emerald-400" :
             trend === "down" ? "bg-red-500/20 text-red-400" :
             "bg-slate-500/20 text-slate-400"
           }`}>
-            {trend === "up" && <ArrowUpRight size={14} />}
-            {trend === "down" && <ArrowDownRight size={14} />}
-            {trend === "neutral" && <Activity size={14} />}
+            {trend === "up" && <ArrowUpRight size={12} className="sm:w-[14px] sm:h-[14px]" />}
+            {trend === "down" && <ArrowDownRight size={12} className="sm:w-[14px] sm:h-[14px]" />}
+            {trend === "neutral" && <Activity size={12} className="sm:w-[14px] sm:h-[14px]" />}
             <span>{trendValue}</span>
           </div>
         </div>
@@ -559,7 +584,7 @@ function StatCard({
   )
 }
 
-// 🧩 Enhanced Chart Card Component
+// 🧩 Enhanced Chart Card Component - Mobile Optimized
 function ChartCard({ 
   title, 
   subtitle,
@@ -570,14 +595,15 @@ function ChartCard({
   children: React.ReactNode 
 }) {
   return (
-    <Card className="p-4 sm:p-6 bg-slate-900/70 backdrop-blur-md border border-slate-700/50 hover:border-emerald-500/20 shadow-lg hover:shadow-emerald-500/5 transition-all duration-300">
-      <div className="mb-4">
-        <h3 className="text-lg sm:text-xl font-bold text-white">{title}</h3>
+    <Card className="p-4 sm:p-5 md:p-6 bg-slate-900/70 backdrop-blur-md border border-slate-700/50 hover:border-emerald-500/20 shadow-lg hover:shadow-emerald-500/5 transition-all duration-300">
+      <div className="mb-3 sm:mb-4">
+        <h3 className="text-base sm:text-lg md:text-xl font-bold text-white">{title}</h3>
         {subtitle && (
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">{subtitle}</p>
+          <p className="text-[10px] sm:text-xs md:text-sm text-slate-400 mt-1">{subtitle}</p>
         )}
       </div>
       {children}
     </Card>
   )
 }
+

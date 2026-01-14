@@ -1,6 +1,5 @@
 "use client"
 
-
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
@@ -9,18 +8,15 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Menu, X, LogOut, Settings, User, Home, Zap, BarChart3, Crown, Sparkles } from "lucide-react"
 
-
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-
   const handleLogout = () => {
     router.push("/")
   }
-
 
   const navItems = [
     { icon: Home, label: "Overview", href: "/dashboard" },
@@ -29,14 +25,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
   ]
 
-
   const isActive = (href: string) => {
     if (href === "/dashboard") {
       return pathname === "/dashboard"
     }
     return pathname?.startsWith(href)
   }
-
 
   return (
     <div className="min-h-screen bg-slate-950 relative overflow-hidden">
@@ -46,16 +40,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl"></div>
       </div>
 
-
-      {/* Mobile Header */}
+      {/* Mobile Header - Fixed */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur-xl border-b border-emerald-500/20 flex items-center justify-between px-4 h-16 shadow-xl">
-        <div className="flex items-center gap-3" aria-label="NutriGo">
-          <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg">
+        <div className="flex items-center" aria-label="NutriGo">
+          <div className="relative w-32 h-10">
             <Image
               src="/logo.png"
               alt="NutriGo Logo"
               fill
-              className="object-contain"
+              className="object-contain object-left"
               priority
             />
           </div>
@@ -63,77 +56,87 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
+          aria-label="Toggle menu"
         >
           {mobileMenuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
         </button>
       </div>
 
-
-      {/* Mobile Menu */}
+      {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed top-16 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-xl border-b border-emerald-500/20 p-4 space-y-2 shadow-2xl max-h-[calc(100vh-4rem)] overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.href)
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  active
-                    ? "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800"
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Icon size={20} />
-                <span className="font-semibold">{item.label}</span>
-              </Link>
-            )
-          })}
+        <>
+          {/* Backdrop */}
+          <div 
+            className="md:hidden fixed inset-0 bg-black/50 z-40 top-16"
+            onClick={() => setMobileMenuOpen(false)}
+          ></div>
           
-          {/* Upgrade Card - Mobile */}
-          <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-red-500/20 border border-amber-500/30">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                <Crown size={20} className="text-white" />
+          {/* Menu */}
+          <div className="md:hidden fixed top-16 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-b border-emerald-500/20 shadow-2xl max-h-[calc(100vh-4rem)] overflow-y-auto">
+            <div className="p-4 space-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                      active
+                        ? "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800"
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Icon size={20} />
+                    <span className="font-semibold">{item.label}</span>
+                  </Link>
+                )
+              })}
+              
+              {/* Upgrade Card - Mobile */}
+              <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-red-500/20 border border-amber-500/30">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                    <Crown size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white">Upgrade to Pro</p>
+                    <p className="text-xs text-slate-400">Unlock all features</p>
+                  </div>
+                </div>
+                <Link href="/pricing" onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-400 hover:via-orange-400 hover:to-red-400 text-white font-bold shadow-lg shadow-amber-500/30 transition-all duration-300 border-0 text-sm h-10">
+                    <Sparkles size={16} className="mr-2" />
+                    Upgrade Now
+                  </Button>
+                </Link>
               </div>
-              <div>
-                <p className="text-sm font-bold text-white">Upgrade to Pro</p>
-                <p className="text-xs text-slate-400">Unlock all features</p>
+              
+              <div className="pt-4 border-t border-slate-700 space-y-2">
+                <Link href="/dashboard/profile" className="block">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 text-slate-400 hover:text-white hover:bg-slate-800 h-11"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <User size={20} />
+                    <span>Profile</span>
+                  </Button>
+                </Link>
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  className="w-full justify-start gap-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 h-11"
+                >
+                  <LogOut size={20} />
+                  <span>Logout</span>
+                </Button>
               </div>
             </div>
-            <Link href="/pricing" onClick={() => setMobileMenuOpen(false)}>
-              <Button className="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-400 hover:via-orange-400 hover:to-red-400 text-white font-bold shadow-lg shadow-amber-500/30 transition-all duration-300 border-0 text-sm">
-                <Sparkles size={16} className="mr-2" />
-                Upgrade Now
-              </Button>
-            </Link>
           </div>
-          
-          <div className="pt-4 border-t border-slate-700 space-y-2">
-            <Link href="/dashboard/profile">
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 text-slate-400 hover:text-white hover:bg-slate-800"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <User size={20} />
-                <span>Profile</span>
-              </Button>
-            </Link>
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              className="w-full justify-start gap-3 text-red-400 hover:text-red-300 hover:bg-red-500/10"
-            >
-              <LogOut size={20} />
-              <span>Logout</span>
-            </Button>
-          </div>
-        </div>
+        </>
       )}
-
 
       {/* Sidebar - Desktop */}
       <aside
@@ -141,22 +144,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           sidebarOpen ? "w-64" : "w-20"
         } hidden md:flex flex-col`}
       >
-        {/* Sidebar Header - Reduced padding */}
+        {/* Sidebar Header - Enlarged Logo */}
         <div className="p-4 border-b border-emerald-500/20 flex items-center justify-between">
           {sidebarOpen ? (
-            <div className="flex items-center gap-3">
-              <div className="relative w-45 h-45">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="relative w-50 h-20">
                 <Image
                   src="/logo.png"
                   alt="NutriGo Logo"
                   fill
-                  className="object-contain"
+                  className="object-contain object-left"
                   priority
                 />
               </div>
             </div>
           ) : (
-            <div className="relative w-45 h-45 mx-auto">
+            <div className="relative w-12 h-12 mx-auto">
               <Image
                 src="/logo.png"
                 alt="NutriGo Logo"
@@ -169,16 +172,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {sidebarOpen && (
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)} 
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-2 hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
+              aria-label="Collapse sidebar"
             >
               <X size={20} className="text-slate-400 hover:text-white" />
             </button>
           )}
         </div>
 
-
-        {/* Navigation - Removed overflow-y-auto and adjusted spacing */}
-        <nav className="flex-1 p-3 space-y-1.5">
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)
@@ -207,17 +210,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               onClick={() => setSidebarOpen(true)} 
               className="w-full p-3 hover:bg-slate-800 rounded-xl transition-colors mt-4"
               title="Expand sidebar"
+              aria-label="Expand sidebar"
             >
               <Menu size={20} className="text-slate-400 hover:text-white mx-auto" />
             </button>
           )}
 
-
-          {/* Upgrade Card - Desktop (Expanded) - Reduced padding and margin */}
+          {/* Upgrade Card - Desktop (Expanded) */}
           {sidebarOpen && (
             <div className="mt-4 p-3 rounded-2xl bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-red-500/20 border border-amber-500/30 hover:border-amber-500/50 transition-all duration-300">
               <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/25">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/25 flex-shrink-0">
                   <Crown size={18} className="text-white" />
                 </div>
                 <div>
@@ -227,15 +230,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
               <ul className="space-y-1 mb-2.5 text-[11px] text-slate-300">
                 <li className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-amber-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-amber-400 flex-shrink-0"></div>
                   <span>Unlimited scans</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-orange-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-orange-400 flex-shrink-0"></div>
                   <span>Advanced analytics</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-red-400"></div>
+                  <div className="w-1 h-1 rounded-full bg-red-400 flex-shrink-0"></div>
                   <span>Priority support</span>
                 </li>
               </ul>
@@ -248,7 +251,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           )}
 
-
           {/* Upgrade Icon - Desktop (Collapsed) */}
           {!sidebarOpen && (
             <Link href="/pricing" title="Upgrade to Pro">
@@ -259,8 +261,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           )}
         </nav>
 
-
-        {/* Sidebar Footer - Reduced padding */}
+        {/* Sidebar Footer */}
         <div className="p-3 border-t border-emerald-500/20 space-y-1.5">
           <Link href="/dashboard/profile">
             <Button
@@ -287,7 +288,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Button>
         </div>
       </aside>
-
 
       {/* Main Content */}
       <main className={`transition-all duration-300 pt-16 md:pt-0 ${sidebarOpen ? "md:ml-64" : "md:ml-20"}`}>

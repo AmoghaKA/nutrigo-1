@@ -1,8 +1,6 @@
 "use client"
 
-
 import { Heart, Dumbbell, Baby, Users, Sparkles, TrendingUp } from "lucide-react"
-
 
 const audiences = [
   {
@@ -67,31 +65,27 @@ const audiences = [
   },
 ]
 
-
 export default function ForWhomSection() {
   return (
-    <section id="for-whom" className="py-32 px-4 sm:px-6 lg:px-8 bg-slate-950 relative overflow-hidden">
-      {/* Animated Background */}
+    <section id="for-whom" className="py-16 sm:py-20 md:py-24 lg:py-32 px-4 sm:px-6 lg:px-8 bg-slate-950 relative overflow-hidden">
+      {/* Animated Background - Responsive sizing */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "2s" }}></div>
+        <div className="absolute top-0 left-1/4 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-emerald-500/10 rounded-full blur-2xl md:blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-0 right-1/4 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-teal-500/10 rounded-full blur-2xl md:blur-3xl animate-pulse-slow" style={{ animationDelay: "2s" }}></div>
       </div>
 
+      {/* Particle Grid - Smaller on mobile */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(52,211,153,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(52,211,153,0.02)_1px,transparent_1px)] bg-[size:30px_30px] sm:bg-[size:40px_40px]"></div>
 
-      {/* Particle Grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(52,211,153,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(52,211,153,0.02)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-
-
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="w-full max-w-7xl mx-auto relative z-10">
         {/* Header */}
-        <div className="text-center space-y-6 mb-20">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full backdrop-blur-xl">
-            <Sparkles size={16} className="text-emerald-400 animate-pulse" />
-            <span className="text-sm font-semibold text-emerald-400">Built for Everyone Who Cares</span>
+        <div className="text-center space-y-4 sm:space-y-5 md:space-y-6 mb-12 sm:mb-16 md:mb-20">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full backdrop-blur-xl">
+            <Sparkles size={14} className="sm:w-4 sm:h-4 text-emerald-400 animate-pulse" />
+            <span className="text-xs sm:text-sm font-semibold text-emerald-400">Built for Everyone Who Cares</span>
           </div>
 
-
-          <h2 className="text-5xl md:text-6xl font-black">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black px-4 sm:px-0">
             <span className="text-white">Your </span>
             <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
               Journey
@@ -99,15 +93,13 @@ export default function ForWhomSection() {
             <span className="text-white">, Our Mission</span>
           </h2>
 
-
-          <p className="text-xl text-slate-400 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-full sm:max-w-2xl md:max-w-3xl mx-auto leading-relaxed px-4 sm:px-6 md:px-0">
             Whether you're crushing fitness goals, managing health conditions, or simply choosing better packaged foods for your family — NutriGo adapts to your unique nutrition needs
           </p>
         </div>
 
-
         {/* Audience Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6 md:gap-8">
           {audiences.map((audience, index) => {
             const Icon = audience.icon
             return (
@@ -117,55 +109,49 @@ export default function ForWhomSection() {
               >
                 {/* Glow Effect */}
                 <div
-                  className={`absolute -inset-0.5 bg-gradient-to-r ${audience.color} rounded-3xl blur-lg opacity-0 group-hover:opacity-40 transition-all duration-500`}
+                  className={`absolute -inset-0.5 bg-gradient-to-r ${audience.color} rounded-2xl sm:rounded-2xl md:rounded-3xl blur-md sm:blur-lg opacity-0 group-hover:opacity-40 transition-all duration-500`}
                 ></div>
 
-
                 {/* Card */}
-                <div className="relative h-full p-8 rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl hover:border-emerald-500/40 transition-all duration-500 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-500/20">
+                <div className="relative h-full p-6 sm:p-7 md:p-8 rounded-2xl sm:rounded-2xl md:rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl hover:border-emerald-500/40 transition-all duration-500 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-500/20">
                   {/* Emoji Background */}
-                  <div className="absolute top-6 right-6 text-5xl opacity-10 group-hover:opacity-20 transition-opacity duration-300 group-hover:scale-110 transform">
+                  <div className="absolute top-4 right-4 sm:top-5 sm:right-5 md:top-6 md:right-6 text-3xl sm:text-4xl md:text-5xl opacity-10 group-hover:opacity-20 transition-opacity duration-300 group-hover:scale-110 transform">
                     {audience.emoji}
                   </div>
 
-
                   {/* Icon */}
-                  <div className="mb-6">
+                  <div className="mb-4 sm:mb-5 md:mb-6">
                     <div
-                      className={`w-14 h-14 bg-gradient-to-br ${audience.color} rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}
+                      className={`w-12 h-12 sm:w-13 sm:h-13 md:w-14 md:h-14 bg-gradient-to-br ${audience.color} rounded-xl sm:rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}
                     >
-                      <Icon size={24} className="text-white" />
+                      <Icon size={20} className="sm:w-[22px] sm:h-[22px] md:w-6 md:h-6 text-white" />
                     </div>
                   </div>
 
-
                   {/* Content */}
-                  <div className="space-y-4 relative">
-                    <h3 className="text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors duration-300">
+                  <div className="space-y-3 sm:space-y-3.5 md:space-y-4 relative">
+                    <h3 className="text-xl sm:text-xl md:text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors duration-300">
                       {audience.title}
                     </h3>
 
-
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <p className="text-slate-400 text-sm sm:text-sm md:text-sm leading-relaxed">
                       {audience.description}
                     </p>
 
-
                     {/* Stat Badge */}
-                    <div className={`inline-flex flex-col p-3 rounded-xl bg-gradient-to-br ${audience.gradient} border border-emerald-500/20 backdrop-blur-sm`}>
-                      <div className={`text-xl font-black bg-gradient-to-r ${audience.color} bg-clip-text text-transparent`}>
+                    <div className={`inline-flex flex-col p-2.5 sm:p-3 md:p-3 rounded-lg sm:rounded-xl md:rounded-xl bg-gradient-to-br ${audience.gradient} border border-emerald-500/20 backdrop-blur-sm`}>
+                      <div className={`text-lg sm:text-xl md:text-xl font-black bg-gradient-to-r ${audience.color} bg-clip-text text-transparent`}>
                         {audience.stat}
                       </div>
-                      <div className="text-[10px] text-slate-400 font-medium">
+                      <div className="text-[9px] sm:text-[10px] md:text-[10px] text-slate-400 font-medium">
                         {audience.statLabel}
                       </div>
                     </div>
                   </div>
 
-
                   {/* Corner Accent */}
                   <div
-                    className={`absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl ${audience.gradient} opacity-0 group-hover:opacity-100 rounded-tl-full transition-opacity duration-500`}
+                    className={`absolute bottom-0 right-0 w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 bg-gradient-to-tl ${audience.gradient} opacity-0 group-hover:opacity-100 rounded-tl-full transition-opacity duration-500`}
                   ></div>
                 </div>
               </div>
@@ -173,26 +159,22 @@ export default function ForWhomSection() {
           })}
         </div>
 
-
         {/* Bottom CTA */}
-        <div className="mt-20 text-center space-y-6">
-          <div className="inline-flex items-center gap-6 p-6 rounded-2xl bg-gradient-to-r from-slate-900/50 to-slate-800/50 border border-emerald-500/20 backdrop-blur-xl">
-            <div className="flex -space-x-4">
+        <div className="mt-12 sm:mt-16 md:mt-20 text-center space-y-4 sm:space-y-5 md:space-y-6 px-4">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-4 sm:gap-6 md:gap-6 p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-xl md:rounded-2xl bg-gradient-to-r from-slate-900/50 to-slate-800/50 border border-emerald-500/20 backdrop-blur-xl">
+            <div className="flex -space-x-3 sm:-space-x-4">
               {["😊", "🏃", "👨‍💼", "👩‍🍳", "🧘"].map((emoji, idx) => (
                 <div
                   key={idx}
-                  className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-2 border-slate-900 flex items-center justify-center text-xl"
+                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-2 border-slate-900 flex items-center justify-center text-base sm:text-lg md:text-xl"
                 >
                   {emoji}
                 </div>
               ))}
             </div>
-
-
           </div>
 
-
-          <p className="text-slate-400 text-sm max-w-2xl mx-auto">
+          <p className="text-slate-400 text-xs sm:text-sm md:text-sm max-w-full sm:max-w-xl md:max-w-2xl mx-auto px-2 sm:px-0">
             No matter where you are in your health journey, NutriGo gives you the insights to make confident decisions about every packaged food you choose.
           </p>
         </div>
