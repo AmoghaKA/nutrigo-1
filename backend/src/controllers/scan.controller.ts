@@ -223,7 +223,8 @@ async function saveScanToSupabase(product: any, barcode?: string) {
       fat: nutrition.fat_100g || product.fat || 0,
       carbs: nutrition.carbohydrates_100g || product.carbs || 0,
     },
-    warnings: (product.warnings || []).join(", "), // stored as text
+    warnings: product.warnings || [],
+    ingredients: product.ingredients || [],
     healthScore: product.healthScore || 70, // 🔥 match DB column name
     source: product.source || "gemini-vision",
     created_at: new Date().toISOString(),
@@ -257,27 +258,27 @@ export const getAlternatives = async (req: Request, res: Response) => {
     if (error) throw error;
 
     if (!scans || scans.length === 0) {
-  // fallback to openfoodfacts healthier food search
-  const response = await fetch(
-    "https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=6&sort_by=nutriscore_score"
-  );
+      // fallback to openfoodfacts healthier food search
+      const response = await fetch(
+        "https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=6&sort_by=nutriscore_score"
+      );
 
-  const offData: any = await response.json(); // ✅ <-- add ": any" to fix the unknown type
+      const offData: any = await response.json(); // ✅ <-- add ": any" to fix the unknown type
 
-  const altProducts = (offData.products || []).map((p: any) => ({
-    name: p.product_name || "Unknown Product",
-    brand: p.brands || "Unknown Brand",
-    health_score: Math.floor(Math.random() * 20) + 70,
-    nutrition: {
-      calories: p.nutriments?.["energy-kcal_100g"] || 0,
-      fat: p.nutriments?.["fat_100g"] || 0,
-      sugar: p.nutriments?.["sugars_100g"] || 0,
-      protein: p.nutriments?.["proteins_100g"] || 0,
-    },
-  }));
+      const altProducts = (offData.products || []).map((p: any) => ({
+        name: p.product_name || "Unknown Product",
+        brand: p.brands || "Unknown Brand",
+        health_score: Math.floor(Math.random() * 20) + 70,
+        nutrition: {
+          calories: p.nutriments?.["energy-kcal_100g"] || 0,
+          fat: p.nutriments?.["fat_100g"] || 0,
+          sugar: p.nutriments?.["sugars_100g"] || 0,
+          protein: p.nutriments?.["proteins_100g"] || 0,
+        },
+      }));
 
-  return res.status(200).json({ alternatives: altProducts });
-}
+      return res.status(200).json({ alternatives: altProducts });
+    }
 
 
     // Supabase results formatted cleanly

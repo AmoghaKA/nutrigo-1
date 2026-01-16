@@ -9,10 +9,14 @@ import { Label } from "@/components/ui/label"
 import { ArrowRight, Eye, EyeOff, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 
+import { FcGoogle } from "react-icons/fc"
+
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [isLoading, setIsLoading] = useState(false)
+
+
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
@@ -24,7 +28,7 @@ export default function LoginPage() {
   const [showErrorPopup, setShowErrorPopup] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  
+
   const [isPasswordFocused, setIsPasswordFocused] = useState(false)
   const [isEmailFocused, setIsEmailFocused] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
@@ -43,55 +47,75 @@ export default function LoginPage() {
     }))
   })
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+
   useEffect(() => {
     setIsMounted(true)
 
-    // ✅ Listen for auth state changes (for OAuth redirects)
+    // Check for existing session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        // Allow Google users or verified Email users
+        const isGoogleUser = session.user.app_metadata.provider === 'google'
+        if (isGoogleUser || session.user.email_confirmed_at) {
+          setIsLoggedIn(true)
+          setUserEmail(session.user.email || "User")
+        } else {
+          // Session exists but email not verified.
+          // We do NOT set isLoggedIn(true), so the form remains visible.
+        }
+      }
+    }
+    checkSession()
+
+    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, 'Session:', session)
+      console.log('Auth event:', event)
 
       if (event === 'SIGNED_IN' && session) {
-        // ✅ Show success popup for OAuth login
-        setShowSuccessPopup(true)
-        
-        // Redirect to dashboard after 2 seconds
-        setTimeout(() => {
-          router.push('/dashboard')
-          router.refresh()
-        }, 2000)
+        // We do NOT handle redirect here to avoid "auto-redirect" loops.
+        // - Manual login handles redirect in handleSubmit
+        // - Google login handles redirect via /auth/callback route
+        // - Existing session is handled by checkSession setting isLoggedIn(true)
+
+        if (!isLoggedIn) {
+          const isGoogleUser = session.user.app_metadata.provider === 'google'
+          if (isGoogleUser || session.user.email_confirmed_at) {
+            setIsLoggedIn(true)
+            setUserEmail(session.user.email || "User")
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setIsLoggedIn(false)
+        setUserEmail(null)
       }
     })
 
     return () => {
       authListener.subscription.unsubscribe()
     }
-  }, [router, supabase])
-  // ✅ This guarantees redirect after Google login (and works locally + in prod)
-useEffect(() => {
-  const handleSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    console.log("Session check:", session)
+  }, [router, supabase, isLoggedIn])
 
-    // If user already logged in → dashboard
-    if (session) {
-      router.replace("/dashboard")
-      return
-    }
-
-    // Listen for sign-in events (email or Google)
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        router.replace("/dashboard")
-      }
+  const handleGoogleLogin = async () => {
+    setIsLoading(true)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
     })
 
-    return () => {
-      authListener.subscription.unsubscribe()
+    if (error) {
+      setError(error.message)
+      setIsLoading(false)
     }
   }
-
-  handleSession()
-}, [router, supabase])
 
 
   useEffect(() => {
@@ -146,16 +170,44 @@ useEffect(() => {
     if (signInError) {
       // ✅ Handle different error scenarios
       if (signInError.message === 'Invalid login credentials') {
-        // This could be wrong password OR user doesn't exist
-        // Show error popup for unregistered user
-        setShowErrorPopup(true)
-        setIsLoading(false)
-        setIsHappy(false)
-        
-        setTimeout(() => {
-          router.push('/auth/signup')
-        }, 3000)
-        return
+        // Attempt to distinguish between "User Not Found" and "Wrong Password"
+        // purely client-side by checking if a public profile exists with this email.
+        // This requires 'profiles' table to be readable and have an 'email' column.
+        let isUserLikelyRegistered = false;
+        try {
+          // We use maybeSingle() to avoid error if 0 rows
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', formData.email)
+            .maybeSingle()
+
+          if (!profileError && profile) {
+            isUserLikelyRegistered = true;
+          }
+        } catch (err) {
+          // If checking fails (e.g. RLS or no email col), we assume ambiguous
+          console.log('Profile check failed', err);
+        }
+
+        if (isUserLikelyRegistered) {
+          // User exists, so it's a wrong password
+          setError("Incorrect password. Please try again.")
+          setIsLoading(false)
+          setIsHappy(false)
+          return
+        } else {
+          // User likely doesn't exist (or we can't tell), so we default to the "Not Registered" flow
+          // which the user explicitly requested.
+          setShowErrorPopup(true)
+          setIsLoading(false)
+          setIsHappy(false)
+
+          setTimeout(() => {
+            router.push('/auth/signup')
+          }, 3000)
+          return
+        }
       } else if (signInError.message.includes('Email not confirmed')) {
         setError("Please verify your email address before logging in.")
         setIsLoading(false)
@@ -173,12 +225,12 @@ useEffect(() => {
     if (data.session) {
       setShowSuccessPopup(true)
       setIsLoading(false)
-      
+
       // Store remember me preference
       if (rememberMe) {
         localStorage.setItem('rememberMe', 'true')
       }
-      
+
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
         router.push("/dashboard")
@@ -191,12 +243,12 @@ useEffect(() => {
 
   const calculateEyePosition = (centerX: number, centerY: number) => {
     if (isPasswordFocused) return { x: 0, y: 0 }
-    
+
     const deltaX = mousePosition.x - centerX
     const deltaY = mousePosition.y - centerY
     const angle = Math.atan2(deltaY, deltaX)
     const distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY) / 60, 3)
-    
+
     return {
       x: Math.cos(angle) * distance,
       y: Math.sin(angle) * distance
@@ -214,7 +266,7 @@ useEffect(() => {
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-500/20 flex items-center justify-center animate-in zoom-in duration-500 delay-100">
                 <CheckCircle2 size={40} className="sm:w-12 sm:h-12 text-emerald-400 animate-in zoom-in duration-500 delay-200" />
               </div>
-              
+
               {/* Success Message */}
               <div className="space-y-1.5 sm:space-y-2">
                 <h2 className="text-xl sm:text-2xl font-black text-white">Login Successful! 🎉</h2>
@@ -257,7 +309,7 @@ useEffect(() => {
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-orange-500/20 flex items-center justify-center animate-in zoom-in duration-500 delay-100">
                 <AlertCircle size={40} className="sm:w-12 sm:h-12 text-orange-400 animate-in zoom-in duration-500 delay-200" />
               </div>
-              
+
               <div className="space-y-1.5 sm:space-y-2">
                 <h2 className="text-xl sm:text-2xl font-black text-white">User Not Registered!</h2>
                 <p className="text-slate-300 text-xs sm:text-sm">
@@ -287,7 +339,7 @@ useEffect(() => {
       )}
 
       {/* Back Button - Responsive positioning */}
-      <Link 
+      <Link
         href="/"
         className="fixed top-4 left-4 sm:top-5 sm:left-5 md:top-6 md:left-6 z-50 flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all duration-300 backdrop-blur-sm group min-h-[44px]"
       >
@@ -299,7 +351,7 @@ useEffect(() => {
       <div className="absolute inset-0">
         <div className="absolute top-10 left-10 sm:top-20 sm:left-20 w-48 h-48 sm:w-72 sm:h-72 bg-emerald-500/10 rounded-full blur-2xl sm:blur-3xl animate-pulse-slow"></div>
         <div className="absolute bottom-10 right-10 sm:bottom-20 sm:right-20 w-64 h-64 sm:w-96 sm:h-96 bg-teal-500/10 rounded-full blur-2xl sm:blur-3xl animate-pulse-slow" style={{ animationDelay: "2s" }}></div>
-        
+
         {isMounted && stars.map((star) => (
           <div
             key={star.id}
@@ -344,9 +396,9 @@ useEffect(() => {
 
           <div className="relative w-full h-full flex items-center justify-center">
             <div className="relative w-[420px] h-[380px]">
-              
+
               {/* Character 1: Orange Semicircle */}
-              <div 
+              <div
                 className="absolute bottom-0 left-0 w-48 h-28 bg-gradient-to-b from-orange-400 to-orange-500 rounded-t-full shadow-2xl transition-all duration-500 z-40 flex flex-col items-center pt-7"
                 style={{
                   transform: `translateY(${isHappy ? '-15px' : '0'})`,
@@ -358,7 +410,7 @@ useEffect(() => {
                     {isPasswordFocused ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(100, 350).x * 3}px, ${1 + calculateEyePosition(100, 350).y * 3}px)`
@@ -370,7 +422,7 @@ useEffect(() => {
                     {isPasswordFocused ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(100, 350).x * 3}px, ${1 + calculateEyePosition(100, 350).y * 3}px)`
@@ -379,15 +431,14 @@ useEffect(() => {
                     )}
                   </div>
                 </div>
-                <div 
-                  className={`transition-all duration-500 mt-4 ${
-                    isHappy ? 'w-16 h-3 border-b-[3px] border-slate-900 rounded-b-full' : 'w-14 h-2 bg-slate-900 rounded-full'
-                  }`}
+                <div
+                  className={`transition-all duration-500 mt-4 ${isHappy ? 'w-16 h-3 border-b-[3px] border-slate-900 rounded-b-full' : 'w-14 h-2 bg-slate-900 rounded-full'
+                    }`}
                 ></div>
               </div>
 
               {/* Character 2: Purple Rectangle */}
-              <div 
+              <div
                 className="absolute bottom-0 left-20 w-32 h-80 bg-gradient-to-b from-purple-500 to-purple-600 rounded-t-3xl shadow-2xl transition-all duration-500 z-10 flex flex-col items-center pt-8"
                 style={{
                   transform: `translateY(${isHappy ? '-20px' : '0'})`,
@@ -399,7 +450,7 @@ useEffect(() => {
                     {isPasswordFocused ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-slate-900 rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(180, 240).x * 3}px, ${1 + calculateEyePosition(180, 240).y * 3}px)`
@@ -411,7 +462,7 @@ useEffect(() => {
                     {isPasswordFocused ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-slate-900 rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(180, 240).x * 3}px, ${1 + calculateEyePosition(180, 240).y * 3}px)`
@@ -420,15 +471,14 @@ useEffect(() => {
                     )}
                   </div>
                 </div>
-                <div 
-                  className={`transition-all duration-500 mt-4 ${
-                    isHappy ? 'w-12 h-2 bg-white rounded-full' : 'w-10 h-1 bg-white rounded-full'
-                  }`}
+                <div
+                  className={`transition-all duration-500 mt-4 ${isHappy ? 'w-12 h-2 bg-white rounded-full' : 'w-10 h-1 bg-white rounded-full'
+                    }`}
                 ></div>
               </div>
 
               {/* Character 3: WHITE Rectangle */}
-              <div 
+              <div
                 className="absolute bottom-0 left-36 w-36 h-40 bg-gradient-to-b from-white to-gray-100 rounded-t-3xl shadow-2xl border-2 border-gray-200 transition-all duration-500 z-20 flex flex-col items-center pt-16"
                 style={{
                   transform: `translateY(${isHappy ? '-16px' : '0'})`,
@@ -440,7 +490,7 @@ useEffect(() => {
                     {isPasswordFocused ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(270, 320).x * 3}px, ${1 + calculateEyePosition(270, 320).y * 3}px)`
@@ -452,7 +502,7 @@ useEffect(() => {
                     {isPasswordFocused ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(270, 320).x * 3}px, ${1 + calculateEyePosition(270, 320).y * 3}px)`
@@ -461,15 +511,14 @@ useEffect(() => {
                     )}
                   </div>
                 </div>
-                <div 
-                  className={`transition-all duration-500 mt-5 ${
-                    isHappy ? 'w-12 h-2 bg-slate-900 rounded-full' : 'w-10 h-1 bg-slate-900 rounded-full'
-                  }`}
+                <div
+                  className={`transition-all duration-500 mt-5 ${isHappy ? 'w-12 h-2 bg-slate-900 rounded-full' : 'w-10 h-1 bg-slate-900 rounded-full'
+                    }`}
                 ></div>
               </div>
 
               {/* Character 4: Yellow */}
-              <div 
+              <div
                 className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-t-3xl shadow-2xl transition-all duration-500 z-30 flex flex-col items-center pt-10"
                 style={{
                   transform: `translateY(${isHappy ? '-14px' : '0'})`,
@@ -481,7 +530,7 @@ useEffect(() => {
                     {isPasswordFocused ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-yellow-200 rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(380, 340).x * 3}px, ${1 + calculateEyePosition(380, 340).y * 3}px)`
@@ -493,7 +542,7 @@ useEffect(() => {
                     {isPasswordFocused ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-yellow-200 rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(380, 340).x * 3}px, ${1 + calculateEyePosition(380, 340).y * 3}px)`
@@ -502,10 +551,9 @@ useEffect(() => {
                     )}
                   </div>
                 </div>
-                <div 
-                  className={`transition-all duration-500 mt-5 ${
-                    isHappy ? 'w-14 h-2 border-b-[3px] border-slate-900 rounded-b-full' : 'w-12 h-1 bg-slate-900 rounded-full'
-                  }`}
+                <div
+                  className={`transition-all duration-500 mt-5 ${isHappy ? 'w-14 h-2 border-b-[3px] border-slate-900 rounded-b-full' : 'w-12 h-1 bg-slate-900 rounded-full'
+                    }`}
                 ></div>
               </div>
             </div>
@@ -515,108 +563,172 @@ useEffect(() => {
         {/* Right Side - Login Form - Fully Responsive */}
         <div className="bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl rounded-2xl lg:rounded-r-3xl lg:rounded-l-none border border-emerald-500/20 p-6 sm:p-8 md:p-10 lg:p-12 shadow-2xl min-h-[600px] sm:min-h-[650px] lg:h-[700px] flex flex-col justify-center">
           <div className="space-y-5 sm:space-y-6 lg:space-y-7 max-w-md mx-auto w-full">
-            <div className="text-center space-y-0">
-              <h1 className="text-2xl sm:text-3xl font-black text-white">Welcome back!</h1>
-              <p className="text-slate-400 text-xs sm:text-sm">Please enter your details</p>
-            </div>
+            <div className="space-y-5 sm:space-y-6 lg:space-y-7 max-w-md mx-auto w-full">
+              {isLoggedIn ? (
+                <div className="text-center space-y-6 py-8">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center animate-pulse-slow">
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/30 flex items-center justify-center">
+                      <span className="text-2xl">👋</span>
+                    </div>
+                  </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-              {error && (
-                <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs sm:text-sm">
-                  {error}
+                  <div className="space-y-2">
+                    <h1 className="text-2xl sm:text-3xl font-black text-white">Welcome back!</h1>
+                    <p className="text-emerald-400 font-medium">{userEmail}</p>
+                    <p className="text-slate-400 text-sm">You are already logged in.</p>
+                  </div>
+
+                  <div className="space-y-3 pt-4">
+                    <Button
+                      onClick={() => router.push('/dashboard')}
+                      className="w-full h-12 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 border-0"
+                    >
+                      Go to Dashboard
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      onClick={async () => {
+                        await supabase.auth.signOut()
+                        setIsLoggedIn(false)
+                        router.refresh()
+                      }}
+                      className="w-full text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  <div className="text-center space-y-0">
+                    <h1 className="text-2xl sm:text-3xl font-black text-white">Welcome back!</h1>
+                    <p className="text-slate-400 text-xs sm:text-sm">Please enter your details</p>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+                    {error && (
+                      <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs sm:text-sm">
+                        {error}
+                      </div>
+                    )}
+
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="email" className="text-slate-300 font-semibold text-xs sm:text-sm">
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        onFocus={() => setIsEmailFocused(true)}
+                        onBlur={() => setIsEmailFocused(false)}
+                        className="h-11 sm:h-12 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg sm:rounded-xl text-sm"
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="password" className="text-slate-300 font-semibold text-xs sm:text-sm">
+                        Password
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          name="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          value={formData.password}
+                          onChange={handleChange}
+                          onFocus={() => setIsPasswordFocused(true)}
+                          onBlur={() => setIsPasswordFocused(false)}
+                          className="h-11 sm:h-12 pr-12 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg sm:rounded-xl text-sm"
+                          disabled={isLoading}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-400 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+                        >
+                          {showPassword ? <EyeOff size={16} className="sm:w-[18px] sm:h-[18px]" /> : <Eye size={16} className="sm:w-[18px] sm:h-[18px]" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <input
+                          type="checkbox"
+                          id="remember"
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
+                          disabled={isLoading}
+                        />
+                        <Label htmlFor="remember" className="text-xs sm:text-sm text-slate-400 cursor-pointer">
+                          Remember me
+                        </Label>
+                      </div>
+                      <Link href="#" className="text-xs sm:text-sm text-emerald-400 hover:text-emerald-300 font-medium">
+                        Forgot?
+                      </Link>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full h-11 sm:h-12 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold rounded-lg sm:rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 border-0 text-sm sm:text-base"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>Logging in...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-2">
+                          <span>Log in</span> <ArrowRight size={18} className="sm:w-5 sm:h-5" />
+                        </div>
+                      )}
+                    </Button>
+
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-slate-700"></span>
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-slate-900 px-2 text-slate-400">Or continue with</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={handleGoogleLogin}
+                      className="w-full h-11 sm:h-12 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-lg sm:rounded-xl shadow-lg transition-all duration-300 border-0 text-sm sm:text-base flex items-center justify-center gap-2"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="w-5 h-5 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin"></div>
+                      ) : (
+                        <>
+                          <FcGoogle size={20} />
+                          <span>Sign in with Google</span>
+                        </>
+                      )}
+                    </Button>
+                  </form>
+
+                  <p className="text-center text-xs sm:text-sm text-slate-400">
+                    Don't have an account?{" "}
+                    <Link href="/auth/signup" className="text-emerald-400 hover:text-emerald-300 font-semibold">
+                      Sign Up
+                    </Link>
+                  </p>
+                </>
               )}
-
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="email" className="text-slate-300 font-semibold text-xs sm:text-sm">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  onFocus={() => setIsEmailFocused(true)}
-                  onBlur={() => setIsEmailFocused(false)}
-                  className="h-11 sm:h-12 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg sm:rounded-xl text-sm"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="password" className="text-slate-300 font-semibold text-xs sm:text-sm">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    onFocus={() => setIsPasswordFocused(true)}
-                    onBlur={() => setIsPasswordFocused(false)}
-                    className="h-11 sm:h-12 pr-12 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg sm:rounded-xl text-sm"
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-400 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
-                  >
-                    {showPassword ? <EyeOff size={16} className="sm:w-[18px] sm:h-[18px]" /> : <Eye size={16} className="sm:w-[18px] sm:h-[18px]" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <input
-                    type="checkbox"
-                    id="remember"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
-                    disabled={isLoading}
-                  />
-                  <Label htmlFor="remember" className="text-xs sm:text-sm text-slate-400 cursor-pointer">
-                    Remember me
-                  </Label>
-                </div>
-                <Link href="#" className="text-xs sm:text-sm text-emerald-400 hover:text-emerald-300 font-medium">
-                  Forgot?
-                </Link>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-11 sm:h-12 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold rounded-lg sm:rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 border-0 text-sm sm:text-base"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Logging in...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <span>Log in</span> <ArrowRight size={18} className="sm:w-5 sm:h-5" />
-                  </div>
-                )}
-              </Button>
-
-              {/* Google sign-in removed; email/password is the only auth method */}
-            </form>
-
-            <p className="text-center text-xs sm:text-sm text-slate-400">
-              Don't have an account?{" "}
-              <Link href="/auth/signup" className="text-emerald-400 hover:text-emerald-300 font-semibold">
-                Sign Up
-              </Link>
-            </p>
+            </div>
           </div>
         </div>
       </div>

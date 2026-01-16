@@ -58,7 +58,7 @@ export default function ScannerPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user?.id) return user.id
-    } catch {}
+    } catch { }
     if (typeof window !== "undefined") {
       const keys = ["nutrigo_current_user", "currentUser", "user"]
       for (const key of keys) {
@@ -212,7 +212,7 @@ export default function ScannerPage() {
     try {
       localStorage.removeItem("lastScan")
       sessionStorage.removeItem("lastScan")
-    } catch {}
+    } catch { }
   }
 
   if (scanResult) {
@@ -310,7 +310,7 @@ export default function ScannerPage() {
                 <div className="relative w-full aspect-video bg-black rounded-xl sm:rounded-2xl overflow-hidden border-2 border-emerald-500/30">
                   <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
                   <canvas ref={canvasRef} className="hidden" width={640} height={480} />
-                  
+
                   {/* Frame Overlay - Responsive */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="w-[70%] h-[70%] sm:w-64 sm:h-80 border-4 border-emerald-400/50 rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-500/25"></div>
@@ -324,7 +324,7 @@ export default function ScannerPage() {
                     disabled={isScanning}
                     className="flex-1 h-12 sm:h-14 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold text-base sm:text-lg shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Camera size={18} className="sm:w-5 sm:h-5 mr-2" /> 
+                    <Camera size={18} className="sm:w-5 sm:h-5 mr-2" />
                     Capture & Scan
                   </Button>
                   <Button
@@ -332,7 +332,7 @@ export default function ScannerPage() {
                     variant="outline"
                     className="h-12 sm:h-14 px-6 sm:px-8 border-2 border-slate-700 hover:border-red-500/50 bg-slate-800/50 hover:bg-red-500/10 text-slate-300 hover:text-red-400 transition-all"
                   >
-                    <X size={18} className="sm:w-5 sm:h-5 mr-2" /> 
+                    <X size={18} className="sm:w-5 sm:h-5 mr-2" />
                     Cancel
                   </Button>
                 </div>

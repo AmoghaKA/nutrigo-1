@@ -1,6 +1,6 @@
 "use client"
 
-import { supabase } from "@/lib/supabaseClient"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowRight, Eye, EyeOff, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { FcGoogle } from "react-icons/fc"
 
 export default function SignUpPage() {
+  const supabase = createClientComponentClient()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -25,7 +27,7 @@ export default function SignUpPage() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
   const [showErrorPopup, setShowErrorPopup] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  
+
   const [isPasswordFocused, setIsPasswordFocused] = useState(false)
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
@@ -44,68 +46,69 @@ export default function SignUpPage() {
     }))
   })
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+
   useEffect(() => {
     setIsMounted(true)
 
-    // ✅ OAuth redirect handling with duplicate user detection
+    // Check for existing session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        if (session.user.email_confirmed_at) {
+          setIsLoggedIn(true)
+          setUserEmail(session.user.email || "User")
+        }
+      }
+    }
+    checkSession()
+
+    // ✅ OAuth redirect handling
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, 'Session:', session)
+      console.log('Auth event:', event)
 
       if (event === 'SIGNED_IN' && session) {
-        try {
-          const user = session.user
-          
-          // ✅ Check if email is confirmed
-          if (!user.email_confirmed_at) {
-            console.log('Email not confirmed yet, signing out')
-            setError("Please verify your email address before accessing the dashboard.")
-            await supabase.auth.signOut()
-            setIsLoading(false)
-            return
-          }
-
-          // ✅ Check if user already existed (was created more than 5 seconds ago)
-          const userCreationTime = new Date(user.created_at).getTime()
-          const now = new Date().getTime()
-          const isNewUser = (now - userCreationTime) < 5000 // 5 seconds window for new user
-
-          if (!isNewUser) {
-            // ✅ User already registered - show error popup and redirect to login
-            console.log('User already registered, showing error popup')
-            setShowErrorPopup(true)
-            await supabase.auth.signOut()
-            
+        // If it's a Google login, we can redirect to dashboard
+        if (session.user.app_metadata.provider === 'google') {
+          if (!isLoggedIn) {
+            setShowSuccessPopup(true)
             setTimeout(() => {
-              router.push('/auth/login')
-            }, 3000)
-            return
+              router.push('/dashboard')
+              router.refresh()
+            }, 2000)
           }
-
-          // ✅ New user - show success popup
-          console.log('New user signed up successfully via OAuth')
-          setShowSuccessPopup(true)
-          
-          // Sign out the user so they can log in properly
-          await supabase.auth.signOut()
-          
-          // Redirect to login after 3 seconds
-          setTimeout(() => {
-            router.push('/auth/login')
-          }, 3000)
-          
-        } catch (err) {
-          console.error('Error handling auth state change:', err)
-          setError("An error occurred during authentication. Please try again.")
-          await supabase.auth.signOut()
-          setIsLoading(false)
         }
+        // For email/password logic, we wait for the user to verify email (handled by submit)
+      } else if (event === 'SIGNED_OUT') {
+        setIsLoggedIn(false)
+        setUserEmail(null)
       }
     })
 
     return () => {
       authListener.subscription.unsubscribe()
     }
-  }, [router])
+  }, [router, isLoggedIn])
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -166,7 +169,7 @@ export default function SignUpPage() {
         email: formData.email,
         password: formData.password,
         options: {
-          data: { 
+          data: {
             full_name: formData.name,
             display_name: formData.name,
           },
@@ -176,11 +179,11 @@ export default function SignUpPage() {
 
       if (signUpError) {
         // ✅ Handle duplicate email error
-        if (signUpError.message.includes('already registered') || 
-            signUpError.message.includes('User already registered')) {
+        if (signUpError.message.includes('already registered') ||
+          signUpError.message.includes('User already registered')) {
           setShowErrorPopup(true)
           setIsLoading(false)
-          
+
           setTimeout(() => {
             router.push('/auth/login')
           }, 3000)
@@ -197,7 +200,7 @@ export default function SignUpPage() {
         if (data.user.identities && data.user.identities.length === 0) {
           setShowErrorPopup(true)
           setIsLoading(false)
-          
+
           setTimeout(() => {
             router.push('/auth/login')
           }, 3000)
@@ -206,7 +209,7 @@ export default function SignUpPage() {
 
         // ✅ New user created successfully - show success popup
         setShowSuccessPopup(true)
-        
+
         // Clear form
         setFormData({
           name: "",
@@ -214,7 +217,7 @@ export default function SignUpPage() {
           password: "",
           confirmPassword: "",
         })
-        
+
         // Show success popup instructing user to verify email.
         // User should manually click the button to proceed to login after verifying their email.
       }
@@ -231,12 +234,12 @@ export default function SignUpPage() {
 
   const calculateEyePosition = (centerX: number, centerY: number) => {
     if (isPasswordFocused || isConfirmPasswordFocused) return { x: 0, y: 0 }
-    
+
     const deltaX = mousePosition.x - centerX
     const deltaY = mousePosition.y - centerY
     const angle = Math.atan2(deltaY, deltaX)
     const distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY) / 60, 3)
-    
+
     return {
       x: Math.cos(angle) * distance,
       y: Math.sin(angle) * distance
@@ -249,39 +252,39 @@ export default function SignUpPage() {
     <div ref={containerRef} className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
       {/* ✅ Success Popup Modal */}
       {showSuccessPopup && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-emerald-500/50 rounded-2xl p-8 max-w-md w-full shadow-2xl shadow-emerald-500/20 animate-in zoom-in duration-300">
-              <div className="flex flex-col items-center text-center space-y-4">
-                <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center animate-in zoom-in duration-500 delay-100">
-                  <CheckCircle2 size={48} className="text-emerald-400 animate-in zoom-in duration-500 delay-200" />
-                </div>
-
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-black text-white">Account Created! 🎉</h2>
-                  <p className="text-slate-300 text-sm">
-                    Your account has been created. Please check your email for a verification link.
-                  </p>
-                  <p className="text-emerald-400 text-sm font-semibold">
-                    Verify your email before proceeding to login.
-                  </p>
-                </div>
-
-                <div className="pt-4">
-                  <div className="flex items-center gap-2 text-slate-400 text-xs">
-                    <div className="w-4 h-4 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full"></div>
-                    <span>When you've verified your email, click the button below to go to the login page.</span>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => router.push('/auth/login')}
-                  className="mt-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-semibold px-6 py-2 rounded-lg shadow-lg shadow-emerald-500/25 transition-all duration-300"
-                >
-                  Go to Login
-                </Button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-emerald-500/50 rounded-2xl p-8 max-w-md w-full shadow-2xl shadow-emerald-500/20 animate-in zoom-in duration-300">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center animate-in zoom-in duration-500 delay-100">
+                <CheckCircle2 size={48} className="text-emerald-400 animate-in zoom-in duration-500 delay-200" />
               </div>
+
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-white">Account Created! 🎉</h2>
+                <p className="text-slate-300 text-sm">
+                  Your account has been created. Please check your email for a verification link.
+                </p>
+                <p className="text-emerald-400 text-sm font-semibold">
+                  Verify your email before proceeding to login.
+                </p>
+              </div>
+
+              <div className="pt-4">
+                <div className="flex items-center gap-2 text-slate-400 text-xs">
+                  <div className="w-4 h-4 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full"></div>
+                  <span>When you've verified your email, click the button below to go to the login page.</span>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => router.push('/auth/login')}
+                className="mt-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-semibold px-6 py-2 rounded-lg shadow-lg shadow-emerald-500/25 transition-all duration-300"
+              >
+                Go to Login
+              </Button>
             </div>
           </div>
+        </div>
       )}
 
       {/* ✅ Error Popup Modal for Duplicate User */}
@@ -292,7 +295,7 @@ export default function SignUpPage() {
               <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center animate-in zoom-in duration-500 delay-100">
                 <AlertCircle size={48} className="text-red-400 animate-in zoom-in duration-500 delay-200" />
               </div>
-              
+
               <div className="space-y-2">
                 <h2 className="text-2xl font-black text-white">Already Registered!</h2>
                 <p className="text-slate-300 text-sm">
@@ -322,7 +325,7 @@ export default function SignUpPage() {
       )}
 
       {/* Back Button - Fixed Position */}
-      <Link 
+      <Link
         href="/"
         className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all duration-300 backdrop-blur-sm group"
       >
@@ -334,7 +337,7 @@ export default function SignUpPage() {
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "2s" }}></div>
-        
+
         {isMounted && stars.map((star) => (
           <div
             key={star.id}
@@ -379,9 +382,9 @@ export default function SignUpPage() {
 
           <div className="relative w-full h-full flex items-center justify-center">
             <div className="relative w-[420px] h-[380px]">
-              
+
               {/* Character 1: Orange Semicircle */}
-              <div 
+              <div
                 className="absolute bottom-0 left-0 w-48 h-28 bg-gradient-to-b from-orange-400 to-orange-500 rounded-t-full shadow-2xl transition-all duration-500 z-40 flex flex-col items-center pt-7"
                 style={{
                   transform: `translateY(${isHappy ? '-15px' : '0'})`,
@@ -393,7 +396,7 @@ export default function SignUpPage() {
                     {areEyesClosed ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(100, 350).x * 3}px, ${1 + calculateEyePosition(100, 350).y * 3}px)`
@@ -405,7 +408,7 @@ export default function SignUpPage() {
                     {areEyesClosed ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(100, 350).x * 3}px, ${1 + calculateEyePosition(100, 350).y * 3}px)`
@@ -414,15 +417,14 @@ export default function SignUpPage() {
                     )}
                   </div>
                 </div>
-                <div 
-                  className={`transition-all duration-500 mt-4 ${
-                    isHappy ? 'w-16 h-3 border-b-[3px] border-slate-900 rounded-b-full' : 'w-14 h-2 bg-slate-900 rounded-full'
-                  }`}
+                <div
+                  className={`transition-all duration-500 mt-4 ${isHappy ? 'w-16 h-3 border-b-[3px] border-slate-900 rounded-b-full' : 'w-14 h-2 bg-slate-900 rounded-full'
+                    }`}
                 ></div>
               </div>
 
               {/* Character 2: Purple Rectangle */}
-              <div 
+              <div
                 className="absolute bottom-0 left-20 w-32 h-80 bg-gradient-to-b from-purple-500 to-purple-600 rounded-t-3xl shadow-2xl transition-all duration-500 z-10 flex flex-col items-center pt-8"
                 style={{
                   transform: `translateY(${isHappy ? '-20px' : '0'})`,
@@ -434,7 +436,7 @@ export default function SignUpPage() {
                     {areEyesClosed ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-slate-900 rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(180, 240).x * 3}px, ${1 + calculateEyePosition(180, 240).y * 3}px)`
@@ -446,7 +448,7 @@ export default function SignUpPage() {
                     {areEyesClosed ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-slate-900 rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(180, 240).x * 3}px, ${1 + calculateEyePosition(180, 240).y * 3}px)`
@@ -455,15 +457,14 @@ export default function SignUpPage() {
                     )}
                   </div>
                 </div>
-                <div 
-                  className={`transition-all duration-500 mt-4 ${
-                    isHappy ? 'w-12 h-2 bg-white rounded-full' : 'w-10 h-1 bg-white rounded-full'
-                  }`}
+                <div
+                  className={`transition-all duration-500 mt-4 ${isHappy ? 'w-12 h-2 bg-white rounded-full' : 'w-10 h-1 bg-white rounded-full'
+                    }`}
                 ></div>
               </div>
 
               {/* Character 3: WHITE Rectangle */}
-              <div 
+              <div
                 className="absolute bottom-0 left-36 w-36 h-40 bg-gradient-to-b from-white to-gray-100 rounded-t-3xl shadow-2xl border-2 border-gray-200 transition-all duration-500 z-20 flex flex-col items-center pt-16"
                 style={{
                   transform: `translateY(${isHappy ? '-16px' : '0'})`,
@@ -475,7 +476,7 @@ export default function SignUpPage() {
                     {areEyesClosed ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(270, 320).x * 3}px, ${1 + calculateEyePosition(270, 320).y * 3}px)`
@@ -487,7 +488,7 @@ export default function SignUpPage() {
                     {areEyesClosed ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(270, 320).x * 3}px, ${1 + calculateEyePosition(270, 320).y * 3}px)`
@@ -496,15 +497,14 @@ export default function SignUpPage() {
                     )}
                   </div>
                 </div>
-                <div 
-                  className={`transition-all duration-500 mt-5 ${
-                    isHappy ? 'w-12 h-2 bg-slate-900 rounded-full' : 'w-10 h-1 bg-slate-900 rounded-full'
-                  }`}
+                <div
+                  className={`transition-all duration-500 mt-5 ${isHappy ? 'w-12 h-2 bg-slate-900 rounded-full' : 'w-10 h-1 bg-slate-900 rounded-full'
+                    }`}
                 ></div>
               </div>
 
               {/* Character 4: Yellow */}
-              <div 
+              <div
                 className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-t-3xl shadow-2xl transition-all duration-500 z-30 flex flex-col items-center pt-10"
                 style={{
                   transform: `translateY(${isHappy ? '-14px' : '0'})`,
@@ -516,7 +516,7 @@ export default function SignUpPage() {
                     {areEyesClosed ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-yellow-200 rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(380, 340).x * 3}px, ${1 + calculateEyePosition(380, 340).y * 3}px)`
@@ -528,7 +528,7 @@ export default function SignUpPage() {
                     {areEyesClosed ? (
                       <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
                     ) : (
-                      <div 
+                      <div
                         className="w-2.5 h-2.5 bg-yellow-200 rounded-full absolute transition-transform duration-200"
                         style={{
                           transform: `translate(${1 + calculateEyePosition(380, 340).x * 3}px, ${1 + calculateEyePosition(380, 340).y * 3}px)`
@@ -537,10 +537,9 @@ export default function SignUpPage() {
                     )}
                   </div>
                 </div>
-                <div 
-                  className={`transition-all duration-500 mt-5 ${
-                    isHappy ? 'w-14 h-2 border-b-[3px] border-slate-900 rounded-b-full' : 'w-12 h-1 bg-slate-900 rounded-full'
-                  }`}
+                <div
+                  className={`transition-all duration-500 mt-5 ${isHappy ? 'w-14 h-2 border-b-[3px] border-slate-900 rounded-b-full' : 'w-12 h-1 bg-slate-900 rounded-full'
+                    }`}
                 ></div>
               </div>
             </div>
@@ -550,131 +549,193 @@ export default function SignUpPage() {
         {/* Right Side - Form */}
         <div className="bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl rounded-r-3xl lg:rounded-l-none rounded-3xl border border-emerald-500/20 p-8 shadow-2xl h-[700px] flex flex-col justify-center">
           <div className="space-y-4 max-w-md mx-auto w-full">
-            <div className="text-center space-y-1 mb-4">
-              <h1 className="text-2xl font-black text-white">Create Account</h1>
-              <p className="text-slate-400 text-xs">Join NutriGo today</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {error && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
-                  {error}
-                </div>
-              )}
-
-              <div className="space-y-1">
-                <Label htmlFor="name" className="text-slate-300 text-xs">
-                  Full Name
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="John Doe"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="h-10 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg text-sm"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="email" className="text-slate-300 text-xs">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="h-10 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg text-sm"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="password" className="text-slate-300 text-xs">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    onFocus={() => setIsPasswordFocused(true)}
-                    onBlur={() => setIsPasswordFocused(false)}
-                    className="h-10 pr-10 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg text-sm"
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-400 transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="confirmPassword" className="text-slate-300 text-xs">
-                  Confirm Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    onFocus={() => setIsConfirmPasswordFocused(true)}
-                    onBlur={() => setIsConfirmPasswordFocused(false)}
-                    className="h-10 pr-10 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg text-sm"
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-400 transition-colors"
-                  >
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-10 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-semibold rounded-lg shadow-lg shadow-emerald-500/25 transition-all duration-300 border-0 mt-3 text-sm"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Processing...</span>
+            {isLoggedIn ? (
+              <div className="text-center space-y-6 py-8">
+                <div className="w-20 h-20 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center animate-pulse-slow">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/30 flex items-center justify-center">
+                    <span className="text-2xl">👋</span>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <span>Create Account</span>
-                    <ArrowRight size={16} />
+                </div>
+
+                <div className="space-y-2">
+                  <h1 className="text-2xl font-black text-white">Welcome back!</h1>
+                  <p className="text-emerald-400 font-medium">{userEmail}</p>
+                  <p className="text-slate-400 text-sm">You are already logged in.</p>
+                </div>
+
+                <div className="space-y-3 pt-4">
+                  <Button
+                    onClick={() => router.push('/dashboard')}
+                    className="w-full h-12 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 border-0"
+                  >
+                    Go to Dashboard
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    onClick={async () => {
+                      await supabase.auth.signOut()
+                      setIsLoggedIn(false)
+                      router.refresh()
+                    }}
+                    className="w-full text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  >
+                    Sign Out & Create Account
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="text-center space-y-1 mb-4">
+                  <h1 className="text-2xl font-black text-white">Create Account</h1>
+                  <p className="text-slate-400 text-xs">Join NutriGo today</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  {error && (
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    <Label htmlFor="name" className="text-slate-300 text-xs">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      placeholder="John Doe"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="h-10 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg text-sm"
+                      disabled={isLoading}
+                    />
                   </div>
-                )}
-              </Button>
 
-              {/* Google sign-up removed. Using email/password only. */}
-            </form>
+                  <div className="space-y-1">
+                    <Label htmlFor="email" className="text-slate-300 text-xs">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="h-10 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg text-sm"
+                      disabled={isLoading}
+                    />
+                  </div>
 
-            <p className="text-center text-xs text-slate-400 pt-2">
-              Already have an account?{" "}
-              <Link href="/auth/login" className="text-emerald-400 hover:text-emerald-300 font-semibold">
-                Sign In
-              </Link>
-            </p>
+                  <div className="space-y-1">
+                    <Label htmlFor="password" className="text-slate-300 text-xs">
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={handleChange}
+                        onFocus={() => setIsPasswordFocused(true)}
+                        onBlur={() => setIsPasswordFocused(false)}
+                        className="h-10 pr-10 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg text-sm"
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-400 transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="confirmPassword" className="text-slate-300 text-xs">
+                      Confirm Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        onFocus={() => setIsConfirmPasswordFocused(true)}
+                        onBlur={() => setIsConfirmPasswordFocused(false)}
+                        className="h-10 pr-10 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg text-sm"
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-400 transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full h-10 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-semibold rounded-lg shadow-lg shadow-emerald-500/25 transition-all duration-300 border-0 mt-3 text-sm"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Processing...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2">
+                        <span>Create Account</span>
+                        <ArrowRight size={16} />
+                      </div>
+                    )}
+                  </Button>
+
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-slate-700"></span>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-slate-900 px-2 text-slate-400">Or continue with</span>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="w-full h-10 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-lg shadow-lg transition-all duration-300 border-0 text-sm flex items-center justify-center gap-2"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        <FcGoogle size={20} />
+                        <span>Sign up with Google</span>
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                <p className="text-center text-xs text-slate-400 pt-2">
+                  Already have an account?{" "}
+                  <Link href="/auth/login" className="text-emerald-400 hover:text-emerald-300 font-semibold">
+                    Sign In
+                  </Link>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
