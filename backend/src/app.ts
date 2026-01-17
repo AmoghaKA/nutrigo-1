@@ -42,7 +42,7 @@ app.get("/api/health", (req: express.Request, res: express.Response) => {
 // 404 handler for unmatched routes
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.log(`❌ 404 - Route not found: ${req.method} ${req.url}`);
-  res.status(404).json({ 
+  res.status(404).json({
     error: "Route not found",
     path: req.url,
     method: req.method,
@@ -53,8 +53,8 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 // Global error handler
 app.use((error: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error("❌ Server error:", error);
-  res.status(500).json({ 
-    error: "Internal server error", 
+  res.status(500).json({
+    error: "Internal server error",
     details: error.message,
     path: req.path
   });

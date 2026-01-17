@@ -9,13 +9,44 @@ import Image from "next/image"
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [activeSection, setActiveSection] = useState("")
 
   useEffect(() => {
     const handleScroll = () => {
       if (typeof window !== "undefined") {
         setScrolled(window.scrollY > 20)
+
+        // Active section logic
+        const sections = ["features", "about", "contact"]
+        let currentSection = ""
+
+        // Check if we are on the home page for hash scrolling
+        if (window.location.pathname === "/") {
+          for (const section of sections) {
+            const element = document.getElementById(section)
+            if (element) {
+              const rect = element.getBoundingClientRect()
+              // If top of section is within viewport (with some offset)
+              if (rect.top <= 150 && rect.bottom >= 150) {
+                currentSection = section
+                break
+              }
+            }
+          }
+        }
+
+        // Special case for separate pages like Pricing
+        if (window.location.pathname === "/pricing") {
+          currentSection = "pricing"
+        }
+
+        setActiveSection(currentSection)
       }
     }
+
+    // Initial check
+    handleScroll()
+
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
@@ -32,24 +63,26 @@ export default function Navigation() {
   }, [])
 
   const menuItems = [
-    { name: "Features", href: "/#features" },
-    { name: "About Us", href: "/#about" },
-    { name: "Pricing", href: "/pricing" },
-    { name: "Contact", href: "/#contact" },
+    { name: "Features", href: "/#features", id: "features" },
+    { name: "About Us", href: "/#about", id: "about" },
+    { name: "Pricing", href: "/pricing", id: "pricing" },
+    { name: "Contact", href: "/#contact", id: "contact" }, // Contact likely footer or specific section
   ]
 
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        scrolled
-          ? "bg-slate-950/90 backdrop-blur-xl border-b border-emerald-500/20 shadow-lg shadow-emerald-500/5"
-          : "bg-transparent"
-      }`}
+      className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled
+        ? "bg-slate-950/90 backdrop-blur-xl border-b border-emerald-500/20 shadow-lg shadow-emerald-500/5"
+        : "bg-transparent"
+        }`}
     >
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 sm:h-20 md:h-24 lg:h-28">
           {/* Logo Section - Responsive positioning */}
-          <Link href="/" className="flex items-center gap-3 group -ml-12 sm:-ml-16 md:-ml-24 lg:-ml-28 xl:-ml-36">
+          <div
+            onClick={() => window.location.href = '/'}
+            className="flex items-center gap-3 group -ml-12 sm:-ml-16 md:-ml-24 lg:-ml-28 xl:-ml-36 cursor-pointer"
+          >
             <div className="relative w-[160px] h-[50px] sm:w-[180px] sm:h-[56px] md:w-[220px] md:h-[70px] lg:w-[280px] lg:h-[90px] xl:w-[350px] xl:h-[120px]">
               <Image
                 src="/logo.png"
@@ -59,20 +92,26 @@ export default function Navigation() {
                 priority
               />
             </div>
-          </Link>
+          </div>
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center gap-6 xl:gap-10">
-            {menuItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="relative text-slate-300 hover:text-emerald-400 transition-colors duration-300 font-medium group text-base lg:text-lg"
-              >
-                {item.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-400 group-hover:w-full transition-all duration-300"></span>
-              </Link>
-            ))}
+            {menuItems.map((item) => {
+              const isActive = activeSection === item.id || (item.id === 'pricing' && typeof window !== 'undefined' && window.location.pathname === '/pricing');
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`relative transition-colors duration-300 font-medium group text-base lg:text-lg ${isActive ? "text-emerald-400" : "text-slate-300 hover:text-emerald-400"
+                    }`}
+                >
+                  {item.name}
+                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-400 transition-all duration-300 ${isActive ? "w-full" : "w-0 group-hover:w-full"
+                    }`}></span>
+                </Link>
+              )
+            })}
           </div>
 
           {/* Desktop Buttons */}
@@ -106,21 +145,27 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         <div
-          className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-            isOpen ? "max-h-[500px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-5"
-          }`}
+          className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-[500px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-5"
+            }`}
         >
           <div className="pb-5 sm:pb-6 pt-3 sm:pt-4 border-t border-emerald-500/20 space-y-1 sm:space-y-2">
-            {menuItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="block text-slate-300 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all duration-300 py-3 px-3 sm:px-4 text-base sm:text-lg font-medium rounded-lg min-h-[44px] flex items-center"
-                onClick={() => setIsOpen(false)}
-              >
-                {item.name}
-              </Link>
-            ))}
+            {menuItems.map((item) => {
+              const isActive = activeSection === item.id || (item.id === 'pricing' && typeof window !== 'undefined' && window.location.pathname === '/pricing');
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`block transition-all duration-300 py-3 px-3 sm:px-4 text-base sm:text-lg font-medium rounded-lg min-h-[44px] flex items-center ${isActive
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-slate-300 hover:text-emerald-400 hover:bg-emerald-500/10"
+                    }`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              )
+            })}
+
 
             <div className="flex flex-col gap-3 pt-4 px-2 sm:px-0">
               <Link href="/auth/login" onClick={() => setIsOpen(false)} className="w-full">
