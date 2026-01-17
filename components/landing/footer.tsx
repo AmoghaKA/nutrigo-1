@@ -59,14 +59,20 @@ export default function Footer() {
               Product
             </h4>
             <ul className="space-y-3 sm:space-y-4">
-              {["Features", "Pricing", "Security", "Integrations", "API"].map((item) => (
-                <li key={item}>
+              {[
+                { name: "Features", href: "#features" },
+                { name: "Pricing", href: "#" },
+                { name: "Security", href: "#" },
+                { name: "Integrations", href: "#" },
+                { name: "API", href: "#" },
+              ].map((item) => (
+                <li key={item.name}>
                   <Link
-                    href="#"
+                    href={item.href}
                     className="text-slate-400 hover:text-emerald-400 transition-all duration-300 text-xs sm:text-sm flex items-center gap-3 group justify-center sm:justify-start min-h-[44px] sm:min-h-0 py-2 sm:py-0"
                   >
                     <span className="hidden sm:block w-0 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-400 group-hover:w-6 transition-all duration-300 rounded-full"></span>
-                    <span className="group-hover:translate-x-1 transition-transform duration-300">{item}</span>
+                    <span className="group-hover:translate-x-1 transition-transform duration-300">{item.name}</span>
                   </Link>
                 </li>
               ))}
@@ -79,14 +85,20 @@ export default function Footer() {
               Company
             </h4>
             <ul className="space-y-3 sm:space-y-4">
-              {["About", "Blog", "Careers", "Press", "Partners"].map((item) => (
-                <li key={item}>
+              {[
+                { name: "About", href: "#about" },
+                { name: "Blog", href: "#" },
+                { name: "Careers", href: "#" },
+                { name: "Press", href: "#" },
+                { name: "Partners", href: "#" },
+              ].map((item) => (
+                <li key={item.name}>
                   <Link
-                    href="#"
+                    href={item.href}
                     className="text-slate-400 hover:text-emerald-400 transition-all duration-300 text-xs sm:text-sm flex items-center gap-3 group justify-center sm:justify-start min-h-[44px] sm:min-h-0 py-2 sm:py-0"
                   >
                     <span className="hidden sm:block w-0 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-400 group-hover:w-6 transition-all duration-300 rounded-full"></span>
-                    <span className="group-hover:translate-x-1 transition-transform duration-300">{item}</span>
+                    <span className="group-hover:translate-x-1 transition-transform duration-300">{item.name}</span>
                   </Link>
                 </li>
               ))}
@@ -99,14 +111,20 @@ export default function Footer() {
               Legal
             </h4>
             <ul className="space-y-3 sm:space-y-4">
-              {["Privacy", "Terms", "Contact", "Support", "Refunds"].map((item) => (
-                <li key={item}>
+              {[
+                { name: "Privacy", href: "#" },
+                { name: "Terms", href: "#" },
+                { name: "Contact", href: "#contact" },
+                { name: "Support", href: "#contact" },
+                { name: "Refunds", href: "#" },
+              ].map((item) => (
+                <li key={item.name}>
                   <Link
-                    href="#"
+                    href={item.href}
                     className="text-slate-400 hover:text-emerald-400 transition-all duration-300 text-xs sm:text-sm flex items-center gap-3 group justify-center sm:justify-start min-h-[44px] sm:min-h-0 py-2 sm:py-0"
                   >
                     <span className="hidden sm:block w-0 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-400 group-hover:w-6 transition-all duration-300 rounded-full"></span>
-                    <span className="group-hover:translate-x-1 transition-transform duration-300">{item}</span>
+                    <span className="group-hover:translate-x-1 transition-transform duration-300">{item.name}</span>
                   </Link>
                 </li>
               ))}
