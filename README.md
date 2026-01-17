@@ -340,7 +340,7 @@ Meet the dedicated team of innovators building the future of food transparency i
       Frontend Developer
     </td>
     <td align="center">
-      <img src="https://raw.githubusercontent.com/tung-programming/nutrigo/main/public/team/PR.jpg" width="100px;" alt="Pranav Rao K"/><br />
+      <img src="https://raw.githubusercontent.com/tung-programming/nutrigo/main/public/team/PR.png" width="100px;" alt="Pranav Rao K"/><br />
       <b>Pranav Rao K</b><br />
       Frontend Developer
     </td>
