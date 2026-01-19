@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,8 @@ import {
   Award,
   BarChart3,
   Sparkles,
+  ArrowLeft,
+  Eye,
 } from "lucide-react"
 
 interface ScanHistory {
@@ -31,6 +34,7 @@ type SortKey = "date" | "score" | "calories" | "sugar"
 
 export default function HistoryPage() {
   const supabase = createClientComponentClient()
+  const router = useRouter()
 
   const [history, setHistory] = useState<ScanHistory[]>([])
   const [loading, setLoading] = useState(true)
@@ -146,6 +150,10 @@ export default function HistoryPage() {
     }
   }
 
+  const handleViewDetails = (id: string) => {
+    router.push(`/dashboard/history/${id}`)
+  }
+
   const filteredHistory = history
     .filter((item) => {
       const matchesSearch = (item.name || "").toLowerCase().includes(searchTerm.toLowerCase())
@@ -199,6 +207,7 @@ export default function HistoryPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12 space-y-6 sm:space-y-8 relative z-10">
+
         {/* Header - Responsive */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 flex-shrink-0">
@@ -317,7 +326,8 @@ export default function HistoryPage() {
             filteredHistory.map((item) => (
               <Card
                 key={item.id}
-                className="p-4 sm:p-5 md:p-6 bg-slate-900/70 backdrop-blur-md border border-slate-700/50 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300 group"
+                className="p-4 sm:p-5 md:p-6 bg-slate-900/70 backdrop-blur-md border border-slate-700/50 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300 group cursor-pointer"
+                onClick={() => handleViewDetails(item.id)}
               >
                 <div className="flex flex-col gap-3 sm:gap-4">
                   {/* Header Row */}
@@ -336,7 +346,7 @@ export default function HistoryPage() {
                       )}
                     </div>
 
-                    {/* Score and Delete Button */}
+                    {/* Score and Action Buttons */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <div
                         className={`px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 rounded-lg font-black text-lg sm:text-xl md:text-2xl ${getScoreBg(
@@ -348,8 +358,22 @@ export default function HistoryPage() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all p-2 rounded-lg"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleViewDetails(item.id)
+                        }}
+                      >
+                        <Eye size={16} className="sm:w-[18px] sm:h-[18px]" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all p-2 rounded-lg"
-                        onClick={() => handleDelete(item.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(item.id)
+                        }}
                       >
                         <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
                       </Button>

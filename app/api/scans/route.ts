@@ -58,34 +58,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log("📥 Received scan data:", scanData)
+
     // Ensure array & number safety
     const formatArray = (arr: any[] | undefined | null) =>
       Array.isArray(arr) ? arr : []
 
     const parseNum = (value: any) =>
-      value !== undefined && !isNaN(parseFloat(value))
+      value !== undefined && value !== null && !isNaN(parseFloat(value))
         ? parseFloat(value)
         : null
 
     const newScan = {
-      id: crypto.randomUUID(), // your column type is uuid
+      id: crypto.randomUUID(),
       user_id: userId,
-      product_name:
-        scanData.productName ||
-        scanData.detected_name ||
-        scanData.name ||
-        scanData.product_name ||
-        scanData.brand ||
-        "Unnamed Product",
+      product_name: scanData.productName || null,
       detected_name: scanData.detected_name || null,
       brand: scanData.brand || null,
       category: scanData.category || null,
       barcode: scanData.barcode || null,
-      health_score:
-        scanData.healthScore ??
-        scanData.health_score ??
-        scanData.healthScore ??
-        0,
+      health_score: scanData.healthScore ?? scanData.health_score ?? 0,
+      
+      // ✅ Keep flat fields for backward compatibility (can be null)
       calories: parseNum(scanData.calories),
       sugar: parseNum(scanData.sugar),
       protein: parseNum(scanData.protein),
@@ -94,17 +88,37 @@ export async function POST(request: NextRequest) {
       sodium: parseNum(scanData.sodium),
       fiber: parseNum(scanData.fiber),
       serving_size: parseNum(scanData.serving_size),
+      
       ingredients: formatArray(scanData.ingredients),
       warnings: formatArray(scanData.warnings),
+      
+      // ✅ SAVE THE NUTRITION OBJECT AS-IS (JSONB column)
       nutrition: scanData.nutrition || null,
+      
       image_url: scanData.image_url || null,
       source: scanData.source || "manual",
       scanned_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
     }
 
-    const { error } = await supabase.from("scans").insert([newScan])
-    if (error) throw error
+    console.log("💾 Saving scan to database:", {
+      id: newScan.id,
+      product_name: newScan.product_name,
+      detected_name: newScan.detected_name,
+      brand: newScan.brand,
+      nutrition: newScan.nutrition,
+      flat_calories: newScan.calories,
+      flat_sugar: newScan.sugar,
+    })
+
+    const { data, error } = await supabase.from("scans").insert([newScan]).select()
+    
+    if (error) {
+      console.error("❌ Database error:", error)
+      throw error
+    }
+
+    console.log("✅ Scan saved to Supabase:", data)
 
     return NextResponse.json({ success: true, data: newScan }, { status: 201 })
   } catch (error: any) {

@@ -24,6 +24,20 @@ interface ScanData {
   productName?: string
   detected_name?: string
   product_name?: string
+  nutrition?: {
+    calories?: number
+    sugar?: number
+    protein?: number
+    fat?: number
+    carbs?: number
+    sodium?: number
+    fiber?: number
+    serving_size?: number
+  }
+  sodium?: number
+  fiber?: number
+  serving_size?: number
+  source?: string
 }
 
 export default function ScannerPage() {
@@ -78,7 +92,7 @@ export default function ScannerPage() {
   const saveScanToHistory = async (dataToSave: ScanData) => {
     if (isSaving) return
     setIsSaving(true)
-    console.log("Attempting to save scan to history:", dataToSave)
+    console.log("📝 Attempting to save scan to history:", dataToSave)
 
     try {
       const resolvedName =
@@ -96,19 +110,33 @@ export default function ScannerPage() {
         return
       }
 
+      // ✅ KEEP THE ENTIRE RESPONSE AS-IS, INCLUDING NESTED NUTRITION
       const payload = {
         userId,
         productName: resolvedName,
+        detected_name: dataToSave.detected_name || dataToSave.name || null,
         brand: dataToSave.brand || "",
         healthScore: dataToSave.healthScore,
+        
+        // ✅ Pass the nutrition object if it exists
+        nutrition: dataToSave.nutrition || null,
+        
+        // ✅ Also pass flat fields if they exist (for backward compatibility)
         calories: dataToSave.calories,
         sugar: dataToSave.sugar,
         protein: dataToSave.protein,
         fat: dataToSave.fat,
         carbs: dataToSave.carbs,
+        sodium: dataToSave.sodium,
+        fiber: dataToSave.fiber,
+        serving_size: dataToSave.serving_size,
+        
         ingredients: dataToSave.ingredients || [],
         warnings: dataToSave.warnings || [],
+        source: dataToSave.source || "manual",
       }
+
+      console.log("💾 Saving payload:", payload)
 
       const response = await fetch(HISTORY_API_URL, {
         method: "POST",
@@ -121,7 +149,8 @@ export default function ScannerPage() {
         throw new Error(`Failed to save scan. Status: ${response.status}. Details: ${errorData}`)
       }
 
-      console.log("✅ Scan successfully saved to history.")
+      const result = await response.json()
+      console.log("✅ Scan successfully saved to history:", result)
     } catch (error) {
       console.error("❌ Error saving scan to history:", error)
     } finally {
@@ -159,6 +188,8 @@ export default function ScannerPage() {
         if (!response.ok) throw new Error(`Scan failed: ${resText}`)
 
         const data = JSON.parse(resText)
+        console.log("📊 Scan data received from backend:", data)
+        
         setScanResult(data)
         localStorage.setItem("lastScan", JSON.stringify(data))
         await saveScanToHistory(data)
@@ -186,6 +217,8 @@ export default function ScannerPage() {
       if (!response.ok) throw new Error(`Upload failed: ${resText}`)
       const data = JSON.parse(resText)
 
+      console.log("📊 Scan data received from backend:", data)
+      
       setScanResult(data)
       localStorage.setItem("lastScan", JSON.stringify(data))
       await saveScanToHistory(data)
