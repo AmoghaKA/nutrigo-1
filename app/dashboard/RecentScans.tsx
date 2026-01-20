@@ -154,21 +154,6 @@ export function RecentScans({ scans }: RecentScansProps) {
             ))}
           </div>
         )}
-
-        {/* Show More Link (if 4+ scans) */}
-        {scans.length >= 4 && (
-          <div className="pt-4 sm:pt-5 border-t border-slate-700/50">
-            <Link href="/dashboard/history">
-              <Button 
-                variant="ghost"
-                className="w-full text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                View All Scans
-                <ArrowRight size={16} />
-              </Button>
-            </Link>
-          </div>
-        )}
       </div>
     </Card>
   )

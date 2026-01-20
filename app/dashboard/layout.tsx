@@ -6,8 +6,7 @@ import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Menu, X, LogOut, Settings, User, Home, Zap, BarChart3, Crown, Sparkles, Scan } from "lucide-react"
-
+import { Menu, X, LogOut, Settings, User, Home, Zap, BarChart3, Crown, Sparkles, Scan, Heart } from "lucide-react"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -23,6 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { icon: Home, label: "Overview", href: "/dashboard" },
     { icon: Scan, label: "Scanner", href: "/dashboard/scanner" },
     { icon: BarChart3, label: "History", href: "/dashboard/history" },
+    { icon: Heart, label: "Favorites", href: "/dashboard/favorites" },
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
   ]
 
@@ -70,7 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </button>
       </div>
 
-      {/* Mobile Menu Overlay - Only Settings & Upgrade */}
+      {/* Mobile Menu Overlay - Favorites + Settings + Upgrade */}
       {mobileMenuOpen && (
         <>
           {/* Backdrop */}
@@ -79,16 +79,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             onClick={() => setMobileMenuOpen(false)}
           ></div>
 
-          {/* Menu - Only Settings & Upgrade */}
+          {/* Menu - Favorites + Settings + Upgrade */}
           <div className="md:hidden fixed top-16 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-b border-emerald-500/20 shadow-2xl">
             <div className="p-4 space-y-3">
+              {/* Favorites Link */}
+              <Link
+                href="/dashboard/favorites"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  isActive("/dashboard/favorites")
+                    ? "bg-gradient-to-r from-pink-500/20 to-rose-500/20 border border-pink-500/30 text-pink-400"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Heart size={20} />
+                <span className="font-semibold">Favorites</span>
+              </Link>
+
               {/* Settings Link */}
               <Link
                 href="/dashboard/settings"
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive("/dashboard/settings")
-                  ? "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  isActive("/dashboard/settings")
+                    ? "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Settings size={20} />
@@ -151,19 +166,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     className="relative flex flex-col items-center -mt-8"
                   >
                     {/* Elevated circular button */}
-                    <div className={`relative flex flex-col items-center transition-all duration-300 ${active ? 'scale-110' : 'scale-100'
-                      }`}>
+                    <div className={`relative flex flex-col items-center transition-all duration-300 ${
+                      active ? 'scale-110' : 'scale-100'
+                    }`}>
                       {/* Outer glow ring */}
-                      <div className={`absolute inset-0 rounded-full blur-xl transition-opacity duration-300 ${active
-                        ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 opacity-60'
-                        : 'bg-gradient-to-r from-emerald-500 to-teal-500 opacity-40'
-                        }`} style={{ width: '72px', height: '72px', top: '-4px', left: '50%', transform: 'translateX(-50%)' }}></div>
+                      <div className={`absolute inset-0 rounded-full blur-xl transition-opacity duration-300 ${
+                        active
+                          ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 opacity-60'
+                          : 'bg-gradient-to-r from-emerald-500 to-teal-500 opacity-40'
+                      }`} style={{ width: '72px', height: '72px', top: '-4px', left: '50%', transform: 'translateX(-50%)' }}></div>
 
                       {/* Main button */}
-                      <div className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 ${active
-                        ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 shadow-emerald-500/50'
-                        : 'bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 shadow-emerald-600/40'
-                        }`}>
+                      <div className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 ${
+                        active
+                          ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 shadow-emerald-500/50'
+                          : 'bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 shadow-emerald-600/40'
+                      }`}>
                         {/* Inner highlight */}
                         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
 
@@ -177,8 +195,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       </div>
 
                       {/* Label below */}
-                      <span className={`text-[11px] font-bold mt-1.5 transition-colors duration-300 ${active ? 'text-emerald-400' : 'text-slate-300'
-                        }`}>
+                      <span className={`text-[11px] font-bold mt-1.5 transition-colors duration-300 ${
+                        active ? 'text-emerald-400' : 'text-slate-300'
+                      }`}>
                         {item.label}
                       </span>
                     </div>
@@ -191,14 +210,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex flex-col items-center gap-1 px-6 py-2.5 rounded-2xl transition-all duration-300 ${active
-                    ? "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 scale-105"
-                    : "text-slate-400 hover:text-white hover:scale-105"
-                    }`}
+                  className={`flex flex-col items-center gap-1 px-6 py-2.5 rounded-2xl transition-all duration-300 ${
+                    active
+                      ? "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 scale-105"
+                      : "text-slate-400 hover:text-white hover:scale-105"
+                  }`}
                 >
                   <Icon size={24} strokeWidth={active ? 2.5 : 2} />
-                  <span className={`text-[10px] font-semibold transition-all ${active ? 'text-emerald-400' : 'text-slate-400'
-                    }`}>
+                  <span className={`text-[10px] font-semibold transition-all ${
+                    active ? 'text-emerald-400' : 'text-slate-400'
+                  }`}>
                     {item.label}
                   </span>
                 </Link>
@@ -213,8 +234,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Sidebar - Desktop */}
       <aside
-        className={`fixed left-0 top-0 h-screen bg-slate-900/90 backdrop-blur-xl border-r border-emerald-500/20 transition-all duration-300 z-30 shadow-2xl ${sidebarOpen ? "w-64" : "w-20"
-          } hidden md:flex flex-col`}
+        className={`fixed left-0 top-0 h-screen bg-slate-900/90 backdrop-blur-xl border-r border-emerald-500/20 transition-all duration-300 z-30 shadow-2xl ${
+          sidebarOpen ? "w-64" : "w-20"
+        } hidden md:flex flex-col`}
       >
         {/* Sidebar Header - Enlarged Logo */}
         <div className="p-4 border-b border-emerald-500/20 flex items-center justify-between">
@@ -257,20 +279,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {navItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)
+            
+            // Special styling for Favorites
+            const isFavorites = item.href === "/dashboard/favorites"
+            
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ${active
-                  ? "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/10"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
+                className={`group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 ${
+                  active
+                    ? isFavorites
+                      ? "bg-gradient-to-r from-pink-500/20 to-rose-500/20 border border-pink-500/30 text-pink-400 shadow-lg shadow-pink-500/10"
+                      : "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`}
                 title={!sidebarOpen ? item.label : undefined}
               >
-                <Icon size={20} className={active ? "text-emerald-400" : "group-hover:text-emerald-400 transition-colors"} />
+                <Icon 
+                  size={20} 
+                  className={
+                    active 
+                      ? isFavorites 
+                        ? "text-pink-400" 
+                        : "text-emerald-400" 
+                      : isFavorites
+                        ? "group-hover:text-pink-400 transition-colors"
+                        : "group-hover:text-emerald-400 transition-colors"
+                  } 
+                />
                 {sidebarOpen && <span className="font-semibold">{item.label}</span>}
                 {active && sidebarOpen && (
-                  <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                  <div className={`ml-auto w-2 h-2 rounded-full animate-pulse ${
+                    isFavorites ? "bg-pink-400" : "bg-emerald-400"
+                  }`}></div>
                 )}
               </Link>
             )
@@ -337,8 +379,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Link href="/dashboard/profile">
             <Button
               variant="ghost"
-              className={`w-full gap-3 text-slate-400 hover:text-white hover:bg-slate-800 transition-all h-10 ${sidebarOpen ? "justify-start" : "justify-center p-3"
-                }`}
+              className={`w-full gap-3 text-slate-400 hover:text-white hover:bg-slate-800 transition-all h-10 ${
+                sidebarOpen ? "justify-start" : "justify-center p-3"
+              }`}
               title={!sidebarOpen ? "Profile" : undefined}
             >
               <User size={20} />
@@ -348,8 +391,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Button
             onClick={handleLogout}
             variant="ghost"
-            className={`w-full gap-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all h-10 ${sidebarOpen ? "justify-start" : "justify-center p-3"
-              }`}
+            className={`w-full gap-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all h-10 ${
+              sidebarOpen ? "justify-start" : "justify-center p-3"
+            }`}
             title={!sidebarOpen ? "Logout" : undefined}
           >
             <LogOut size={20} />

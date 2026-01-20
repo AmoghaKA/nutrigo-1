@@ -99,6 +99,11 @@ export default function HistoryPage() {
                 ? parsedDate.toISOString()
                 : new Date().toISOString()
 
+            // ✅ Extract nutrition from nested object or flat fields
+            const nutrition = item.nutrition || {}
+            const calories = nutrition.calories ?? item.calories ?? 0
+            const sugar = nutrition.sugar ?? item.sugar ?? 0
+
             return {
               id: item.id,
               name:
@@ -111,8 +116,8 @@ export default function HistoryPage() {
               score: item.health_score || item.score || 0,
               category: item.category || "General",
               date, // ✅ real scan date now
-              calories: item.calories || 0,
-              sugar: item.sugar || 0,
+              calories,
+              sugar,
             }
           })
           setHistory(formatted)

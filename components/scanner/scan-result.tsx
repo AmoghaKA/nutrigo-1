@@ -1,6 +1,5 @@
 "use client"
 
-
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,11 +13,13 @@ import {
   ArrowRight
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 interface ScanResultProps {
   data: {
+    id?: string
     name?: string
     brand?: string
     healthScore?: number
@@ -41,74 +42,136 @@ interface ScanResultProps {
   onReset: () => void
 }
 
-
 export default function ScanResult({ data, onReset }: ScanResultProps) {
+  const router = useRouter()
+  const supabase = createClientComponentClient()
+  
   const [shareSuccess, setShareSuccess] = useState(false)
-  const [isSaved, setIsSaved] = useState(false)
-  const [saveLoading, setSaveLoading] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [favoriteLoading, setFavoriteLoading] = useState(false)
 
   // ✅ Log the data structure once — helps debug
   useEffect(() => {
     console.log("📦 ScanResult received data:", data)
-    // Check if already saved
-    checkIfSaved()
+    // Check if already in favorites
+    checkIfFavorite()
   }, [data])
 
-  // 🔖 Check if product is already saved
-  const checkIfSaved = () => {
+  // 🔖 Check if product is already in favorites
+  const checkIfFavorite = async () => {
     try {
-      const savedScans = JSON.parse(localStorage.getItem("savedScans") || "[]")
-      const exists = savedScans.some((scan: any) => 
-        scan.name === data.name && scan.brand === data.brand
-      )
-      setIsSaved(exists)
+      const userId = await getCurrentUserId()
+      console.log("🔍 Checking favorites for user:", userId)
+      
+      if (!userId) {
+        console.warn("⚠️ No user ID - cannot check favorites")
+        return
+      }
+
+      const favoritesKey = `favorites_${userId}`
+      const storedFavorites = localStorage.getItem(favoritesKey)
+      const favoriteIds: string[] = storedFavorites ? JSON.parse(storedFavorites) : []
+      
+      console.log("💾 Stored favorites:", favoriteIds)
+      
+      // Check if this scan's ID exists in favorites
+      const exists = data.id && favoriteIds.includes(data.id)
+      setIsFavorite(!!exists)
+      console.log("❤️ Is favorite:", exists)
     } catch (error) {
-      console.error("Error checking saved status:", error)
+      console.error("Error checking favorite status:", error)
     }
   }
 
-  // 💾 Save functionality
-  const handleSave = async () => {
-    if (saveLoading) return
-    setSaveLoading(true)
+  // Get current user ID
+  const getCurrentUserId = async (): Promise<string | null> => {
+    try {
+      // First, try Supabase auth
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.id) {
+        console.log("✅ Found user from Supabase:", user.id)
+        return user.id
+      }
+    } catch (err) {
+      console.error("❌ Supabase auth check failed:", err)
+    }
+
+    // Fallback to localStorage
+    if (typeof window !== "undefined") {
+      const keys = ["nutrigo_current_user", "currentUser", "user"]
+      for (const key of keys) {
+        const raw = localStorage.getItem(key)
+        if (!raw) continue
+        try {
+          const parsed = JSON.parse(raw)
+          if (parsed?.id) {
+            console.log(`✅ Found user from localStorage (${key}):`, parsed.id)
+            return parsed.id
+          }
+        } catch {
+          if (raw.startsWith("user_") || raw.length > 6) {
+            console.log(`✅ Found user ID from localStorage (${key}):`, raw)
+            return raw
+          }
+        }
+      }
+    }
+    
+    console.error("❌ No user ID found in Supabase or localStorage!")
+    return null
+  }
+
+  // 💖 Toggle Favorite functionality
+  const handleToggleFavorite = async () => {
+    if (favoriteLoading) return
+    setFavoriteLoading(true)
 
     try {
-      // Get existing saved scans from localStorage
-      const savedScans = JSON.parse(localStorage.getItem("savedScans") || "[]")
-      
-      // Check if already saved
-      const alreadySaved = savedScans.some((scan: any) => 
-        scan.name === data.name && scan.brand === data.brand
-      )
+      const userId = await getCurrentUserId()
+      if (!userId) {
+        alert("⚠️ Please log in to add favorites!")
+        setFavoriteLoading(false)
+        return
+      }
 
-      if (alreadySaved) {
-        // Remove from saved (unsave)
-        const filtered = savedScans.filter((scan: any) => 
-          !(scan.name === data.name && scan.brand === data.brand)
-        )
-        localStorage.setItem("savedScans", JSON.stringify(filtered))
-        setIsSaved(false)
-        alert("❌ Removed from saved scans!")
+      if (!data.id) {
+        alert("⚠️ Cannot favorite this scan - missing ID")
+        setFavoriteLoading(false)
+        return
+      }
+
+      const favoritesKey = `favorites_${userId}`
+      const storedFavorites = localStorage.getItem(favoritesKey)
+      const favoriteIds: string[] = storedFavorites ? JSON.parse(storedFavorites) : []
+
+      if (isFavorite) {
+        // Remove from favorites
+        const updatedFavorites = favoriteIds.filter((id: string) => id !== data.id)
+        localStorage.setItem(favoritesKey, JSON.stringify(updatedFavorites))
+        setIsFavorite(false)
+        
+        // Short delay then navigate
+        setTimeout(() => {
+          router.push("/dashboard/favorites")
+        }, 500)
       } else {
-        // Add to saved
-        const scanToSave = {
-          ...data,
-          savedAt: new Date().toISOString(),
-          id: Date.now().toString()
-        }
-        savedScans.unshift(scanToSave) // Add to beginning
-        localStorage.setItem("savedScans", JSON.stringify(savedScans))
-        setIsSaved(true)
-        alert("✅ Scan saved successfully!")
+        // Add to favorites
+        favoriteIds.unshift(data.id) // Add to beginning
+        localStorage.setItem(favoritesKey, JSON.stringify(favoriteIds))
+        setIsFavorite(true)
+        
+        // Short delay then navigate
+        setTimeout(() => {
+          router.push("/dashboard/favorites")
+        }, 500)
       }
     } catch (error) {
-      console.error("Error saving scan:", error)
-      alert("❌ Failed to save scan. Please try again.")
+      console.error("Error toggling favorite:", error)
+      alert("❌ Failed to update favorites. Please try again.")
     } finally {
-      setSaveLoading(false)
+      setFavoriteLoading(false)
     }
   }
-
 
   // 🧠 Normalize nutrition
   const nutrition = data.nutrition ?? {
@@ -119,10 +182,8 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     carbs: data.carbs ?? 0,
   }
 
-
   // 🧩 Extract or infer ingredients
   let ingredients: string[] = []
-
 
   if (Array.isArray(data.ingredients)) {
     ingredients = data.ingredients
@@ -139,7 +200,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     }
   }
 
-
   // 🚨 Normalize warnings
   let warnings: string[] = []
   if (typeof data.warnings === "string") {
@@ -151,16 +211,14 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     warnings = data.warnings
   }
 
-
   // 🧮 Generate auto warnings if needed
   if (warnings.length === 0) {
-    if (nutrition.sugar > 25) warnings.push("High sugar content — may contribute to weight gain.")
-    if (nutrition.fat > 17) warnings.push("High fat content — limit consumption if watching calories.")
-    if (nutrition.protein < 5) warnings.push("Low protein — may not be filling or nutritious.")
-    if (nutrition.calories > 400) warnings.push("High calorie product — consume in moderation.")
+    if ((nutrition.sugar ?? 0) > 25) warnings.push("High sugar content — may contribute to weight gain.")
+    if ((nutrition.fat ?? 0) > 17) warnings.push("High fat content — limit consumption if watching calories.")
+    if ((nutrition.protein ?? 0) < 5) warnings.push("Low protein — may not be filling or nutritious.")
+    if ((nutrition.calories ?? 0) > 400) warnings.push("High calorie product — consume in moderation.")
     if (warnings.length === 0) warnings.push("No significant health warnings detected ✅")
   }
-
 
   // 🌈 Score visuals
   const getScoreColor = (score: number) => {
@@ -170,14 +228,12 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     return "text-red-400"
   }
 
-
   const getScoreBg = (score: number) => {
     if (!score) return "bg-slate-700/40"
     if (score >= 70) return "bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-emerald-500/40"
     if (score >= 50) return "bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-cyan-500/40"
     return "bg-gradient-to-br from-red-500/20 to-orange-500/20 border-red-500/40"
   }
-
 
   const getScoreGradient = (score: number) => {
     if (!score) return "from-slate-500 to-slate-700"
@@ -218,7 +274,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     }
   }
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       <div className="absolute inset-0 -z-10 pointer-events-none">
@@ -229,7 +284,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
         ></div>
       </div>
 
-
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8 relative z-10">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -238,17 +292,17 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
           </Button>
           <div className="flex gap-2 sm:gap-3">
             <Button 
-              onClick={handleSave}
-              disabled={saveLoading}
+              onClick={handleToggleFavorite}
+              disabled={favoriteLoading}
               variant="outline" 
-              className={`border ${isSaved ? 'border-emerald-500/50 bg-emerald-500/20 text-emerald-400' : 'border-slate-700 hover:border-emerald-500/50 bg-slate-800/50 hover:bg-emerald-500/10 text-slate-300 hover:text-emerald-400'} transition-all`}
+              className={`border ${isFavorite ? 'border-pink-500/50 bg-pink-500/20 text-pink-400' : 'border-slate-700 hover:border-pink-500/50 bg-slate-800/50 hover:bg-pink-500/10 text-slate-300 hover:text-pink-400'} transition-all`}
             >
-              {saveLoading ? (
-                <div className="w-4 h-4 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+              {favoriteLoading ? (
+                <div className="w-4 h-4 border-2 border-pink-500/30 border-t-pink-500 rounded-full animate-spin" />
               ) : (
-                <Heart size={16} className={isSaved ? "fill-emerald-400" : ""} />
+                <Heart size={16} className={isFavorite ? "fill-pink-400" : ""} />
               )}
-              {isSaved ? "Saved" : "Save"}
+              {isFavorite ? "In Favorites" : "Add to Favorites"}
             </Button>
             <Button 
               onClick={handleShare}
@@ -261,7 +315,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
           </div>
         </div>
 
-
         {/* Product Info */}
         <Card className="p-6 sm:p-8 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-emerald-500/20">
           <div className="space-y-4">
@@ -270,7 +323,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
             <p className="text-sm text-slate-400 flex items-center gap-2">
               <Sparkles size={14} className="text-emerald-400" /> Scanned {data.timestamp ?? "just now"}
             </p>
-
 
             <div className="flex flex-col md:flex-row gap-6 items-center">
               <div className={`relative w-36 h-36 rounded-2xl ${getScoreBg(data.healthScore ?? 0)} border flex items-center justify-center`}>
@@ -290,7 +342,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
             </div>
           </div>
         </Card>
-
 
         {/* Nutrition + Warnings */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -321,7 +372,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
             </div>
           </Card>
 
-
           {/* Warnings */}
           <Card className="p-6 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-red-500/20">
             <div className="flex items-center gap-3 mb-6">
@@ -341,7 +391,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
           </Card>
         </div>
 
-
         {/* Ingredients */}
         <Card className="p-6 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-cyan-500/20">
           <div className="flex items-center gap-3 mb-6">
@@ -350,7 +399,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
             </div>
             <h3 className="text-xl font-black text-white">Ingredients</h3>
           </div>
-
 
           {ingredients.length > 0 ? (
             <div className="flex flex-wrap gap-3">
@@ -364,7 +412,6 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
             <p className="text-slate-400 italic">No ingredients info available for this packaged product</p>
           )}
         </Card>
-
 
         {/* CTA */}
         <div className="p-8 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 shadow-xl">

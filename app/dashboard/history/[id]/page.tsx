@@ -461,29 +461,6 @@ export default function ScanDetailPage() {
                 </div>
               </Card>
             )}
-
-            {/* Additional Details */}
-            <Card className="p-6 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border-slate-700/50 shadow-xl">
-              <h3 className="text-lg font-black text-white mb-4">Additional Details</h3>
-              <div className="space-y-3 text-sm">
-                {scan.barcode && (
-                  <div>
-                    <span className="text-slate-500">Barcode:</span>
-                    <span className="text-white ml-2 font-mono">{scan.barcode}</span>
-                  </div>
-                )}
-                {scan.source && (
-                  <div>
-                    <span className="text-slate-500">Source:</span>
-                    <span className="text-white ml-2 capitalize">{scan.source}</span>
-                  </div>
-                )}
-                <div>
-                  <span className="text-slate-500">Scan ID:</span>
-                  <span className="text-white ml-2 font-mono text-xs break-all">{scan.id}</span>
-                </div>
-              </div>
-            </Card>
           </div>
         </div>
       </div>

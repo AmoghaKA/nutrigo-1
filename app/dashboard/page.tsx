@@ -170,6 +170,11 @@ export default function DashboardPage() {
               ? parsedDate.toISOString()
               : new Date().toISOString()
 
+          // ✅ Extract nutrition from nested object or flat fields
+          const nutrition = s.nutrition || {}
+          const calories = nutrition.calories ?? s.calories ?? 0
+          const sugar = nutrition.sugar ?? s.sugar ?? 0
+
           return {
             id: s.id,
             productName:
@@ -182,8 +187,8 @@ export default function DashboardPage() {
             healthScore: s.health_score || s.healthScore || 0,
             category: s.category || "General",
             scannedAt,
-            calories: s.calories || 0,
-            sugar: s.sugar || 0,
+            calories,
+            sugar,
           }
         })
 

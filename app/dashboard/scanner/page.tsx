@@ -10,6 +10,7 @@ import ScanLoadingPortal from "@/components/scanner/scan-loading-portal"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 interface ScanData {
+  id?: string
   name: string
   brand: string
   healthScore: number
@@ -89,8 +90,8 @@ export default function ScannerPage() {
     return null
   }
 
-  const saveScanToHistory = async (dataToSave: ScanData) => {
-    if (isSaving) return
+  const saveScanToHistory = async (dataToSave: ScanData): Promise<string | null> => {
+    if (isSaving) return null
     setIsSaving(true)
     console.log("📝 Attempting to save scan to history:", dataToSave)
 
@@ -107,7 +108,7 @@ export default function ScannerPage() {
       if (!userId) {
         console.warn("⚠️ No userId found — scan not linked to any account.")
         localStorage.setItem("lastScan", JSON.stringify(dataToSave))
-        return
+        return null
       }
 
       // ✅ KEEP THE ENTIRE RESPONSE AS-IS, INCLUDING NESTED NUTRITION
@@ -151,8 +152,12 @@ export default function ScannerPage() {
 
       const result = await response.json()
       console.log("✅ Scan successfully saved to history:", result)
+      
+      // ✅ Return the ID from the saved scan
+      return result.data?.id || null
     } catch (error) {
       console.error("❌ Error saving scan to history:", error)
+      return null
     } finally {
       setIsSaving(false)
     }
@@ -190,9 +195,17 @@ export default function ScannerPage() {
         const data = JSON.parse(resText)
         console.log("📊 Scan data received from backend:", data)
         
-        setScanResult(data)
-        localStorage.setItem("lastScan", JSON.stringify(data))
-        await saveScanToHistory(data)
+        // ✅ Save to history first to get the ID from database
+        const savedId = await saveScanToHistory(data)
+        
+        // ✅ Use ID from database, or generate if needed
+        const dataWithId = {
+          ...data,
+          id: savedId || crypto.randomUUID()
+        }
+        
+        setScanResult(dataWithId)
+        localStorage.setItem("lastScan", JSON.stringify(dataWithId))
       } catch (err) {
         console.error("Error during capture or scan:", err)
         alert((err as Error).message || "Failed to process the image.")
@@ -219,9 +232,17 @@ export default function ScannerPage() {
 
       console.log("📊 Scan data received from backend:", data)
       
-      setScanResult(data)
-      localStorage.setItem("lastScan", JSON.stringify(data))
-      await saveScanToHistory(data)
+      // ✅ Save to history first to get the ID from database
+      const savedId = await saveScanToHistory(data)
+      
+      // ✅ Use ID from database, or generate if needed
+      const dataWithId = {
+        ...data,
+        id: savedId || crypto.randomUUID()
+      }
+      
+      setScanResult(dataWithId)
+      localStorage.setItem("lastScan", JSON.stringify(dataWithId))
     } catch (err) {
       console.error("Error during file upload or scan:", err)
       alert((err as Error).message || "Upload failed.")
