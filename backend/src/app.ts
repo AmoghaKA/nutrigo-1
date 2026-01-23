@@ -3,6 +3,7 @@ import cors from "cors";
 import scanRoutes from "./routes/scan.routes";
 import alternativesRoutes from "./routes/alternatives.routes";
 import chatbotRoutes from "./routes/chatbot.routes";
+import compareRoutes from "./routes/compare.routes";
 
 const app = express();
 
@@ -34,9 +35,13 @@ console.log("📍 Mounting /api/chatbot routes...");
 app.use("/api/chatbot", chatbotRoutes);
 console.log("✅ Chatbot routes mounted successfully");
 
+console.log("📍 Mounting /api/compare routes...");
+app.use("/api/compare", compareRoutes);
+console.log("✅ Compare routes mounted successfully");
+
 // Test route to verify Express is working
 app.get("/api/health", (req: express.Request, res: express.Response) => {
-  res.json({ status: "ok", routes: ["/api/scan", "/api/alternatives", "/api/chatbot"] });
+  res.json({ status: "ok", routes: ["/api/scan", "/api/alternatives", "/api/chatbot", "/api/compare"] });
 });
 
 // 404 handler for unmatched routes
@@ -46,7 +51,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
     error: "Route not found",
     path: req.url,
     method: req.method,
-    availableRoutes: ["/api/scan", "/api/alternatives", "/api/chatbot", "/api/health"]
+    availableRoutes: ["/api/scan", "/api/alternatives", "/api/chatbot", "/api/compare", "/api/health"]
   });
 });
 

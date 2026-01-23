@@ -37,36 +37,82 @@ export interface NutritionData {
 }
 
 // ============================================
+// SCORING BREAKDOWN INTERFACE
+// ============================================
+
+export interface ScoreBreakdown {
+  baseScore: number
+  finalScore: number
+  category: FoodCategory
+  penalties: {
+    name: string
+    amount: number
+    reason: string
+  }[]
+  bonuses: {
+    name: string
+    amount: number
+    reason: string
+  }[]
+  summary: string
+}
+
+// ============================================
 // MAIN ENTRY: calculateHealthScore()
 // ============================================
 
 export function calculateHealthScore(data: NutritionData): number {
-  const category = data.category
+  const breakdown = calculateHealthScoreWithBreakdown(data)
+  return breakdown.finalScore
+}
 
-  // Normalize numeric fields
+// ============================================
+// ADVANCED ENTRY: calculateHealthScoreWithBreakdown()
+// Returns detailed breakdown of scoring
+// ============================================
+
+export function calculateHealthScoreWithBreakdown(
+  data: NutritionData
+): ScoreBreakdown {
+  const category = data.category
   const normalized = normalizeData(data)
+
+  let breakdown: ScoreBreakdown
 
   // Select scoring logic by category
   switch (category) {
     case 'beverage':
-      return calculateBeverageScore(normalized)
+      breakdown = calculateBeverageScoreWithBreakdown(normalized)
+      break
     case 'snack':
-      return calculateSnackScore(normalized)
+      breakdown = calculateSnackScoreWithBreakdown(normalized)
+      break
     case 'dairy':
-      return calculateDairyScore(normalized)
+      breakdown = calculateDairyScoreWithBreakdown(normalized)
+      break
     case 'packaged_food':
-      return calculatePackagedFoodScore(normalized)
+      breakdown = calculatePackagedFoodScoreWithBreakdown(normalized)
+      break
     case 'breakfast_cereal':
-      return calculateCerealScore(normalized)
+      breakdown = calculateCerealScoreWithBreakdown(normalized)
+      break
     case 'frozen_food':
-      return calculateFrozenFoodScore(normalized)
+      breakdown = calculateFrozenFoodScoreWithBreakdown(normalized)
+      break
     case 'condiment':
-      return calculateCondimentScore(normalized)
+      breakdown = calculateCondimentScoreWithBreakdown(normalized)
+      break
     case 'dessert':
-      return calculateDessertScore(normalized)
+      breakdown = calculateDessertScoreWithBreakdown(normalized)
+      break
     default:
-      return calculateGeneralScore(normalized)
+      breakdown = calculateGeneralScoreWithBreakdown(normalized)
   }
+
+  // Generate summary
+  breakdown.summary = generateScoreSummary(breakdown)
+
+  return breakdown
 }
 
 // ============================================
@@ -351,6 +397,582 @@ function calculateGeneralScore(d: NutritionData): number {
   if (d.fiber && d.fiber > 5) s += 10
 
   return clampScore(s)
+}
+
+// ============================================
+// BEVERAGE SCORING WITH BREAKDOWN
+// ============================================
+
+function calculateBeverageScoreWithBreakdown(d: NutritionData): ScoreBreakdown {
+  let s = 100
+  const penalties: ScoreBreakdown['penalties'] = []
+  const bonuses: ScoreBreakdown['bonuses'] = []
+
+  const sugarPer100ml = (d.sugar / d.servingSize) * 100
+  const caloriesPer100ml = (d.calories / d.servingSize) * 100
+
+  // Sugar penalties
+  if (sugarPer100ml > 15) {
+    penalties.push({ name: 'High Sugar', amount: 50, reason: `${sugarPer100ml.toFixed(1)}g per 100ml` })
+    s -= 50
+  } else if (sugarPer100ml > 10) {
+    penalties.push({ name: 'High Sugar', amount: 35, reason: `${sugarPer100ml.toFixed(1)}g per 100ml` })
+    s -= 35
+  } else if (sugarPer100ml > 5) {
+    penalties.push({ name: 'Moderate Sugar', amount: 20, reason: `${sugarPer100ml.toFixed(1)}g per 100ml` })
+    s -= 20
+  } else if (sugarPer100ml > 2) {
+    penalties.push({ name: 'Some Sugar', amount: 10, reason: `${sugarPer100ml.toFixed(1)}g per 100ml` })
+    s -= 10
+  }
+
+  // Calories
+  if (caloriesPer100ml > 60) {
+    penalties.push({ name: 'High Calories', amount: 20, reason: `${caloriesPer100ml.toFixed(0)} kcal per 100ml` })
+    s -= 20
+  } else if (caloriesPer100ml > 40) {
+    penalties.push({ name: 'Moderate Calories', amount: 10, reason: `${caloriesPer100ml.toFixed(0)} kcal per 100ml` })
+    s -= 10
+  }
+
+  // Sodium
+  if (d.sodium > 100) {
+    penalties.push({ name: 'High Sodium', amount: 10, reason: `${d.sodium}mg per serving` })
+    s -= 10
+  }
+
+  // Protein bonus
+  if (d.protein > 5) {
+    bonuses.push({ name: 'Good Protein', amount: 10, reason: `${d.protein}g protein per serving` })
+    s += 10
+  } else if (d.protein > 3) {
+    bonuses.push({ name: 'Moderate Protein', amount: 5, reason: `${d.protein}g protein per serving` })
+    s += 5
+  }
+
+  // Artificial sweetener suspicion
+  if (d.addedSugar === 0 && d.calories > 5) {
+    penalties.push({ name: 'Artificial Sweetener', amount: 5, reason: 'Low sugar but calories present' })
+    s -= 5
+  }
+
+  return {
+    baseScore: 100,
+    finalScore: clampScore(s),
+    category: 'beverage',
+    penalties,
+    bonuses,
+    summary: ''
+  }
+}
+
+// ============================================
+// SNACK SCORING WITH BREAKDOWN
+// ============================================
+
+function calculateSnackScoreWithBreakdown(d: NutritionData): ScoreBreakdown {
+  let s = 100
+  const penalties: ScoreBreakdown['penalties'] = []
+  const bonuses: ScoreBreakdown['bonuses'] = []
+
+  if (d.calories > 300) {
+    penalties.push({ name: 'High Calories', amount: 25, reason: `${d.calories} kcal per serving` })
+    s -= 25
+  } else if (d.calories > 200) {
+    penalties.push({ name: 'Moderate Calories', amount: 15, reason: `${d.calories} kcal per serving` })
+    s -= 15
+  } else if (d.calories > 150) {
+    penalties.push({ name: 'Some Calories', amount: 8, reason: `${d.calories} kcal per serving` })
+    s -= 8
+  }
+
+  if (d.fat > 20) {
+    penalties.push({ name: 'High Fat', amount: 20, reason: `${d.fat}g fat per serving` })
+    s -= 20
+  } else if (d.fat > 15) {
+    penalties.push({ name: 'Moderate Fat', amount: 12, reason: `${d.fat}g fat per serving` })
+    s -= 12
+  } else if (d.fat > 10) {
+    penalties.push({ name: 'Some Fat', amount: 6, reason: `${d.fat}g fat per serving` })
+    s -= 6
+  }
+
+  if (d.saturatedFat && d.saturatedFat > 5) {
+    penalties.push({ name: 'High Saturated Fat', amount: 10, reason: `${d.saturatedFat}g saturated fat` })
+    s -= 10
+  }
+  if (d.transFat && d.transFat > 0) {
+    penalties.push({ name: 'Trans Fat Present', amount: 20, reason: `${d.transFat}g trans fat detected` })
+    s -= 20
+  }
+
+  if (d.sugar > 15) {
+    penalties.push({ name: 'High Sugar', amount: 20, reason: `${d.sugar}g sugar per serving` })
+    s -= 20
+  } else if (d.sugar > 10) {
+    penalties.push({ name: 'Moderate Sugar', amount: 12, reason: `${d.sugar}g sugar per serving` })
+    s -= 12
+  } else if (d.sugar > 5) {
+    penalties.push({ name: 'Some Sugar', amount: 6, reason: `${d.sugar}g sugar per serving` })
+    s -= 6
+  }
+
+  if (d.sodium > 600) {
+    penalties.push({ name: 'High Sodium', amount: 15, reason: `${d.sodium}mg sodium per serving` })
+    s -= 15
+  } else if (d.sodium > 400) {
+    penalties.push({ name: 'Moderate Sodium', amount: 10, reason: `${d.sodium}mg sodium per serving` })
+    s -= 10
+  } else if (d.sodium > 200) {
+    penalties.push({ name: 'Some Sodium', amount: 6, reason: `${d.sodium}mg sodium per serving` })
+    s -= 6
+  }
+
+  if (d.protein > 8) {
+    bonuses.push({ name: 'High Protein', amount: 10, reason: `${d.protein}g protein per serving` })
+    s += 10
+  } else if (d.protein > 5) {
+    bonuses.push({ name: 'Good Protein', amount: 5, reason: `${d.protein}g protein per serving` })
+    s += 5
+  }
+
+  if (d.fiber && d.fiber > 4) {
+    bonuses.push({ name: 'Good Fiber', amount: 10, reason: `${d.fiber}g fiber per serving` })
+    s += 10
+  }
+
+  return {
+    baseScore: 100,
+    finalScore: clampScore(s),
+    category: 'snack',
+    penalties,
+    bonuses,
+    summary: ''
+  }
+}
+
+// ============================================
+// DAIRY SCORING WITH BREAKDOWN
+// ============================================
+
+function calculateDairyScoreWithBreakdown(d: NutritionData): ScoreBreakdown {
+  let s = 100
+  const penalties: ScoreBreakdown['penalties'] = []
+  const bonuses: ScoreBreakdown['bonuses'] = []
+
+  if (d.sugar > 20) {
+    penalties.push({ name: 'High Sugar', amount: 30, reason: `${d.sugar}g sugar per serving` })
+    s -= 30
+  } else if (d.sugar > 12) {
+    penalties.push({ name: 'Moderate Sugar', amount: 18, reason: `${d.sugar}g sugar per serving` })
+    s -= 18
+  } else if (d.sugar > 8) {
+    penalties.push({ name: 'Some Sugar', amount: 10, reason: `${d.sugar}g sugar per serving` })
+    s -= 10
+  }
+
+  if (d.fat > 10) {
+    penalties.push({ name: 'High Fat', amount: 12, reason: `${d.fat}g fat per serving` })
+    s -= 12
+  } else if (d.fat < 1) {
+    penalties.push({ name: 'Very Low Fat', amount: 5, reason: 'May indicate additive reliance' })
+    s -= 5
+  }
+
+  if (d.saturatedFat && d.saturatedFat > 8) {
+    penalties.push({ name: 'High Saturated Fat', amount: 15, reason: `${d.saturatedFat}g saturated fat` })
+    s -= 15
+  }
+
+  if (d.sodium > 200) {
+    penalties.push({ name: 'High Sodium', amount: 10, reason: `${d.sodium}mg sodium per serving` })
+    s -= 10
+  }
+
+  if (d.protein > 15) {
+    bonuses.push({ name: 'Excellent Protein', amount: 20, reason: `${d.protein}g protein per serving` })
+    s += 20
+  } else if (d.protein > 10) {
+    bonuses.push({ name: 'High Protein', amount: 15, reason: `${d.protein}g protein per serving` })
+    s += 15
+  } else if (d.protein > 6) {
+    bonuses.push({ name: 'Good Protein', amount: 10, reason: `${d.protein}g protein per serving` })
+    s += 10
+  } else if (d.protein < 3) {
+    penalties.push({ name: 'Low Protein', amount: 10, reason: `Only ${d.protein}g protein per serving` })
+    s -= 10
+  }
+
+  return {
+    baseScore: 100,
+    finalScore: clampScore(s),
+    category: 'dairy',
+    penalties,
+    bonuses,
+    summary: ''
+  }
+}
+
+// ============================================
+// PACKAGED FOOD SCORING WITH BREAKDOWN
+// ============================================
+
+function calculatePackagedFoodScoreWithBreakdown(d: NutritionData): ScoreBreakdown {
+  let s = 100
+  const penalties: ScoreBreakdown['penalties'] = []
+  const bonuses: ScoreBreakdown['bonuses'] = []
+
+  if (d.calories > 400) {
+    penalties.push({ name: 'Very High Calories', amount: 25, reason: `${d.calories} kcal per serving` })
+    s -= 25
+  } else if (d.calories > 300) {
+    penalties.push({ name: 'High Calories', amount: 15, reason: `${d.calories} kcal per serving` })
+    s -= 15
+  }
+
+  if (d.sodium > 800) {
+    penalties.push({ name: 'Very High Sodium', amount: 25, reason: `${d.sodium}mg sodium per serving` })
+    s -= 25
+  } else if (d.sodium > 500) {
+    penalties.push({ name: 'High Sodium', amount: 15, reason: `${d.sodium}mg sodium per serving` })
+    s -= 15
+  }
+
+  if (d.fat > 25) {
+    penalties.push({ name: 'High Fat', amount: 20, reason: `${d.fat}g fat per serving` })
+    s -= 20
+  }
+  if (d.saturatedFat && d.saturatedFat > 8) {
+    penalties.push({ name: 'High Saturated Fat', amount: 10, reason: `${d.saturatedFat}g saturated fat` })
+    s -= 10
+  }
+  if (d.transFat && d.transFat > 0) {
+    penalties.push({ name: 'Trans Fat Present', amount: 25, reason: `${d.transFat}g trans fat detected` })
+    s -= 25
+  }
+
+  if (d.sugar > 12) {
+    penalties.push({ name: 'High Sugar', amount: 18, reason: `${d.sugar}g sugar per serving` })
+    s -= 18
+  } else if (d.sugar > 8) {
+    penalties.push({ name: 'Moderate Sugar', amount: 10, reason: `${d.sugar}g sugar per serving` })
+    s -= 10
+  }
+
+  if (d.protein > 15) {
+    bonuses.push({ name: 'High Protein', amount: 10, reason: `${d.protein}g protein per serving` })
+    s += 10
+  }
+  if (d.fiber && d.fiber > 6) {
+    bonuses.push({ name: 'Good Fiber', amount: 10, reason: `${d.fiber}g fiber per serving` })
+    s += 10
+  }
+
+  return {
+    baseScore: 100,
+    finalScore: clampScore(s),
+    category: 'packaged_food',
+    penalties,
+    bonuses,
+    summary: ''
+  }
+}
+
+// ============================================
+// CEREAL SCORING WITH BREAKDOWN
+// ============================================
+
+function calculateCerealScoreWithBreakdown(d: NutritionData): ScoreBreakdown {
+  let s = 100
+  const penalties: ScoreBreakdown['penalties'] = []
+  const bonuses: ScoreBreakdown['bonuses'] = []
+
+  if (d.sugar > 15) {
+    penalties.push({ name: 'Very High Sugar', amount: 40, reason: `${d.sugar}g sugar per serving` })
+    s -= 40
+  } else if (d.sugar > 10) {
+    penalties.push({ name: 'High Sugar', amount: 25, reason: `${d.sugar}g sugar per serving` })
+    s -= 25
+  } else if (d.sugar > 6) {
+    penalties.push({ name: 'Moderate Sugar', amount: 15, reason: `${d.sugar}g sugar per serving` })
+    s -= 15
+  } else if (d.sugar > 3) {
+    penalties.push({ name: 'Some Sugar', amount: 8, reason: `${d.sugar}g sugar per serving` })
+    s -= 8
+  }
+
+  if (d.fiber && d.fiber > 8) {
+    bonuses.push({ name: 'Excellent Fiber', amount: 20, reason: `${d.fiber}g fiber per serving` })
+    s += 20
+  } else if (d.fiber && d.fiber > 5) {
+    bonuses.push({ name: 'High Fiber', amount: 15, reason: `${d.fiber}g fiber per serving` })
+    s += 15
+  } else if (d.fiber && d.fiber > 3) {
+    bonuses.push({ name: 'Good Fiber', amount: 10, reason: `${d.fiber}g fiber per serving` })
+    s += 10
+  } else if (d.fiber && d.fiber < 2) {
+    penalties.push({ name: 'Low Fiber', amount: 10, reason: `Only ${d.fiber}g fiber per serving` })
+    s -= 10
+  }
+
+  if (d.protein > 8) {
+    bonuses.push({ name: 'High Protein', amount: 15, reason: `${d.protein}g protein per serving` })
+    s += 15
+  } else if (d.protein > 5) {
+    bonuses.push({ name: 'Good Protein', amount: 10, reason: `${d.protein}g protein per serving` })
+    s += 10
+  }
+
+  if (d.sodium > 300) {
+    penalties.push({ name: 'High Sodium', amount: 15, reason: `${d.sodium}mg sodium per serving` })
+    s -= 15
+  } else if (d.sodium > 200) {
+    penalties.push({ name: 'Moderate Sodium', amount: 8, reason: `${d.sodium}mg sodium per serving` })
+    s -= 8
+  }
+
+  return {
+    baseScore: 100,
+    finalScore: clampScore(s),
+    category: 'breakfast_cereal',
+    penalties,
+    bonuses,
+    summary: ''
+  }
+}
+
+// ============================================
+// FROZEN FOOD SCORING WITH BREAKDOWN
+// ============================================
+
+function calculateFrozenFoodScoreWithBreakdown(d: NutritionData): ScoreBreakdown {
+  let s = 100
+  const penalties: ScoreBreakdown['penalties'] = []
+  const bonuses: ScoreBreakdown['bonuses'] = []
+
+  if (d.sodium > 1000) {
+    penalties.push({ name: 'Very High Sodium', amount: 35, reason: `${d.sodium}mg sodium per serving` })
+    s -= 35
+  } else if (d.sodium > 700) {
+    penalties.push({ name: 'High Sodium', amount: 25, reason: `${d.sodium}mg sodium per serving` })
+    s -= 25
+  } else if (d.sodium > 500) {
+    penalties.push({ name: 'Moderate Sodium', amount: 15, reason: `${d.sodium}mg sodium per serving` })
+    s -= 15
+  }
+
+  if (d.calories > 500) {
+    penalties.push({ name: 'High Calories', amount: 20, reason: `${d.calories} kcal per serving` })
+    s -= 20
+  } else if (d.calories > 350) {
+    penalties.push({ name: 'Moderate Calories', amount: 12, reason: `${d.calories} kcal per serving` })
+    s -= 12
+  }
+
+  if (d.fat > 25) {
+    penalties.push({ name: 'High Fat', amount: 18, reason: `${d.fat}g fat per serving` })
+    s -= 18
+  }
+  if (d.saturatedFat && d.saturatedFat > 10) {
+    penalties.push({ name: 'High Saturated Fat', amount: 15, reason: `${d.saturatedFat}g saturated fat` })
+    s -= 15
+  }
+  if (d.sugar > 10) {
+    penalties.push({ name: 'High Sugar', amount: 15, reason: `${d.sugar}g sugar per serving` })
+    s -= 15
+  }
+
+  if (d.protein > 20) {
+    bonuses.push({ name: 'Excellent Protein', amount: 15, reason: `${d.protein}g protein per serving` })
+    s += 15
+  } else if (d.protein > 12) {
+    bonuses.push({ name: 'High Protein', amount: 10, reason: `${d.protein}g protein per serving` })
+    s += 10
+  }
+
+  if (d.fiber && d.fiber > 5) {
+    bonuses.push({ name: 'Good Fiber', amount: 10, reason: `${d.fiber}g fiber per serving` })
+    s += 10
+  }
+
+  return {
+    baseScore: 100,
+    finalScore: clampScore(s),
+    category: 'frozen_food',
+    penalties,
+    bonuses,
+    summary: ''
+  }
+}
+
+// ============================================
+// CONDIMENT SCORING WITH BREAKDOWN
+// ============================================
+
+function calculateCondimentScoreWithBreakdown(d: NutritionData): ScoreBreakdown {
+  let s = 100
+  const penalties: ScoreBreakdown['penalties'] = []
+  const bonuses: ScoreBreakdown['bonuses'] = []
+
+  if (d.sodium > 1000) {
+    penalties.push({ name: 'Very High Sodium', amount: 35, reason: `${d.sodium}mg sodium per serving` })
+    s -= 35
+  } else if (d.sodium > 600) {
+    penalties.push({ name: 'High Sodium', amount: 25, reason: `${d.sodium}mg sodium per serving` })
+    s -= 25
+  } else if (d.sodium > 400) {
+    penalties.push({ name: 'Moderate Sodium', amount: 15, reason: `${d.sodium}mg sodium per serving` })
+    s -= 15
+  }
+
+  if (d.sugar > 10) {
+    penalties.push({ name: 'High Sugar', amount: 25, reason: `${d.sugar}g sugar per serving` })
+    s -= 25
+  } else if (d.sugar > 5) {
+    penalties.push({ name: 'Moderate Sugar', amount: 15, reason: `${d.sugar}g sugar per serving` })
+    s -= 15
+  } else if (d.sugar > 2) {
+    penalties.push({ name: 'Some Sugar', amount: 8, reason: `${d.sugar}g sugar per serving` })
+    s -= 8
+  }
+
+  if (d.calories > 100) {
+    penalties.push({ name: 'High Calories', amount: 10, reason: `${d.calories} kcal per serving` })
+    s -= 10
+  }
+  if (d.fat > 15) {
+    penalties.push({ name: 'High Fat', amount: 10, reason: `${d.fat}g fat per serving` })
+    s -= 10
+  }
+
+  return {
+    baseScore: 100,
+    finalScore: clampScore(s),
+    category: 'condiment',
+    penalties,
+    bonuses,
+    summary: ''
+  }
+}
+
+// ============================================
+// DESSERT SCORING WITH BREAKDOWN
+// ============================================
+
+function calculateDessertScoreWithBreakdown(d: NutritionData): ScoreBreakdown {
+  let s = 70
+  const penalties: ScoreBreakdown['penalties'] = []
+  const bonuses: ScoreBreakdown['bonuses'] = []
+
+  if (d.sugar > 30) {
+    penalties.push({ name: 'Very High Sugar', amount: 30, reason: `${d.sugar}g sugar per serving` })
+    s -= 30
+  } else if (d.sugar > 20) {
+    penalties.push({ name: 'High Sugar', amount: 20, reason: `${d.sugar}g sugar per serving` })
+    s -= 20
+  } else if (d.sugar > 15) {
+    penalties.push({ name: 'Moderate Sugar', amount: 12, reason: `${d.sugar}g sugar per serving` })
+    s -= 12
+  }
+
+  if (d.calories > 400) {
+    penalties.push({ name: 'High Calories', amount: 20, reason: `${d.calories} kcal per serving` })
+    s -= 20
+  } else if (d.calories > 300) {
+    penalties.push({ name: 'Moderate Calories', amount: 12, reason: `${d.calories} kcal per serving` })
+    s -= 12
+  }
+
+  if (d.fat > 20) {
+    penalties.push({ name: 'High Fat', amount: 15, reason: `${d.fat}g fat per serving` })
+    s -= 15
+  }
+  if (d.saturatedFat && d.saturatedFat > 12) {
+    penalties.push({ name: 'High Saturated Fat', amount: 15, reason: `${d.saturatedFat}g saturated fat` })
+    s -= 15
+  }
+  if (d.transFat && d.transFat > 0) {
+    penalties.push({ name: 'Trans Fat Present', amount: 20, reason: `${d.transFat}g trans fat detected` })
+    s -= 20
+  }
+
+  if (d.protein > 5) {
+    bonuses.push({ name: 'Good Protein', amount: 10, reason: `${d.protein}g protein per serving` })
+    s += 10
+  }
+
+  return {
+    baseScore: 70,
+    finalScore: clampScore(s),
+    category: 'dessert',
+    penalties,
+    bonuses,
+    summary: ''
+  }
+}
+
+// ============================================
+// GENERAL SCORING WITH BREAKDOWN
+// ============================================
+
+function calculateGeneralScoreWithBreakdown(d: NutritionData): ScoreBreakdown {
+  let s = 100
+  const penalties: ScoreBreakdown['penalties'] = []
+  const bonuses: ScoreBreakdown['bonuses'] = []
+
+  if (d.calories > 300) {
+    penalties.push({ name: 'High Calories', amount: 15, reason: `${d.calories} kcal per serving` })
+    s -= 15
+  }
+  if (d.sugar > 15) {
+    penalties.push({ name: 'High Sugar', amount: 20, reason: `${d.sugar}g sugar per serving` })
+    s -= 20
+  }
+  if (d.sodium > 500) {
+    penalties.push({ name: 'High Sodium', amount: 20, reason: `${d.sodium}mg sodium per serving` })
+    s -= 20
+  }
+  if (d.fat > 15) {
+    penalties.push({ name: 'High Fat', amount: 15, reason: `${d.fat}g fat per serving` })
+    s -= 15
+  }
+  if (d.protein > 10) {
+    bonuses.push({ name: 'High Protein', amount: 10, reason: `${d.protein}g protein per serving` })
+    s += 10
+  }
+  if (d.fiber && d.fiber > 5) {
+    bonuses.push({ name: 'Good Fiber', amount: 10, reason: `${d.fiber}g fiber per serving` })
+    s += 10
+  }
+
+  return {
+    baseScore: 100,
+    finalScore: clampScore(s),
+    category: 'packaged_food',
+    penalties,
+    bonuses,
+    summary: ''
+  }
+}
+
+// ============================================
+// GENERATE SUMMARY
+// ============================================
+
+function generateScoreSummary(breakdown: ScoreBreakdown): string {
+  const changeAmount = breakdown.baseScore - breakdown.finalScore
+  const topPenalty = breakdown.penalties[0]?.name || 'None'
+  const topBonus = breakdown.bonuses[0]?.name || 'None'
+
+  if (breakdown.finalScore >= 85) {
+    return `Excellent score! Penalties: ${topPenalty || 'None'}. Bonuses: ${topBonus || 'None'}.`
+  } else if (breakdown.finalScore >= 70) {
+    return `Good nutritional profile. Reduced by ${changeAmount} points. Main concerns: ${topPenalty}.`
+  } else if (breakdown.finalScore >= 50) {
+    return `Moderate nutrition. ${breakdown.penalties.length} concerns identified. Consider alternatives.`
+  } else {
+    return `Poor nutritional profile. ${breakdown.penalties.length} major concerns. Limit consumption.`
+  }
 }
 
 // ============================================

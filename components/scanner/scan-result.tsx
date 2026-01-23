@@ -11,7 +11,11 @@ import {
   Sparkles,
   TrendingUp,
   ArrowRight,
-  Download
+  Download,
+  Zap,
+  Camera,
+  Upload,
+  X
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -20,6 +24,9 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
 import { useToast } from "@/hooks/use-toast"
+import ProductComparisonView from "./ProductComparisonView"
+import { ComparisonProduct } from "@/lib/comparisonContext"
+import ScanLoadingPortal from "./scan-loading-portal"
 
 interface ScanResultProps {
   data: {
@@ -50,12 +57,23 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
   const router = useRouter()
   const supabase = createClientComponentClient()
   const reportRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const { toast } = useToast()
   
   const [shareSuccess, setShareSuccess] = useState(false)
   const [isFavorite, setIsFavorite] = useState(false)
   const [favoriteLoading, setFavoriteLoading] = useState(false)
   const [downloadLoading, setDownloadLoading] = useState(false)
+  
+  // Comparison states
+  const [isComparingMode, setIsComparingMode] = useState(false)
+  const [secondProduct, setSecondProduct] = useState<ComparisonProduct | null>(null)
+  const [isLoadingSecond, setIsLoadingSecond] = useState(false)
+  const [comparisonError, setComparisonError] = useState<string | null>(null)
+  const [compareMode, setCompareMode] = useState<"camera" | "upload" | null>(null)
+  const [showCompareModal, setShowCompareModal] = useState(false)
 
   // ✅ Log the data structure once — helps debug
   useEffect(() => {
@@ -188,6 +206,168 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     } finally {
       setFavoriteLoading(false)
     }
+  }
+
+  // 🔄 Comparison Functions
+  const convertToComparisonProduct = (productData: any): ComparisonProduct => {
+    const nutrition = productData.nutrition ?? {
+      calories: productData.calories ?? 0,
+      sugar: productData.sugar ?? 0,
+      protein: productData.protein ?? 0,
+      fat: productData.fat ?? 0,
+      carbs: productData.carbs ?? 0,
+      sodium: productData.sodium,
+      fiber: productData.fiber,
+      serving_size: productData.serving_size,
+    }
+
+    let ingredients: string[] = []
+    if (Array.isArray(productData.ingredients)) {
+      ingredients = productData.ingredients
+    } else if (typeof productData.ingredients === "string") {
+      ingredients = productData.ingredients.split(/[.,;•\n]/).map((i: string) => i.trim()).filter(Boolean)
+    }
+
+    let warnings: string[] = []
+    if (typeof productData.warnings === "string") {
+      warnings = productData.warnings.split(/[.\n]/).map((w: string) => w.trim()).filter(Boolean)
+    } else if (Array.isArray(productData.warnings)) {
+      warnings = productData.warnings
+    }
+
+    return {
+      id: productData.id || crypto.randomUUID(),
+      name: productData.name || productData.productName || "Unknown Product",
+      brand: productData.brand || "Unknown Brand",
+      healthScore: productData.healthScore ?? 0,
+      nutrition,
+      ingredients,
+      warnings,
+      timestamp: productData.timestamp || new Date().toLocaleString(),
+      source: productData.source || "manual",
+    }
+  }
+
+  const handleCompareStart = async () => {
+    setShowCompareModal(true)
+    setComparisonError(null)
+  }
+
+  const handleCameraStartCompare = async () => {
+    setShowCompareModal(false)
+    setIsComparingMode(true)
+    setCompareMode("camera")
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      if (videoRef.current) videoRef.current.srcObject = stream
+    } catch (err) {
+      console.error("Error accessing camera:", err)
+      toast({
+        title: "Error",
+        description: "Unable to access camera. Please check permissions.",
+        variant: "destructive",
+      })
+      setCompareMode(null)
+      setIsComparingMode(false)
+    }
+  }
+
+  const handleCaptureCompare = async () => {
+    if (!videoRef.current || !canvasRef.current) return
+    const context = canvasRef.current.getContext("2d")
+    if (!context) return
+
+    context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
+    canvasRef.current.toBlob(async (blob) => {
+      if (!blob) return
+      setIsLoadingSecond(true)
+      try {
+        const formData = new FormData()
+        formData.append("image", blob, "capture.jpg")
+
+        const response = await fetch("/api/scan/image", { method: "POST", body: formData })
+        const resText = await response.text()
+        if (!response.ok) throw new Error(`Scan failed: ${resText}`)
+
+        const scanData = JSON.parse(resText)
+        const comparisonProduct = convertToComparisonProduct(scanData)
+        setSecondProduct(comparisonProduct)
+      } catch (err) {
+        console.error("Error during capture:", err)
+        setComparisonError((err as Error).message || "Failed to scan second product")
+        toast({
+          title: "Scan Failed",
+          description: (err as Error).message || "Failed to process the image.",
+          variant: "destructive",
+        })
+      } finally {
+        stopCameraCompare()
+        setIsLoadingSecond(false)
+      }
+    }, "image/jpeg")
+  }
+
+  const handleFileUploadCompare = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setShowCompareModal(false)
+    setIsComparingMode(true)
+    setCompareMode("upload")
+    setIsLoadingSecond(true)
+    try {
+      const formData = new FormData()
+      formData.append("image", file)
+
+      const response = await fetch("/api/scan/image", { method: "POST", body: formData })
+      const resText = await response.text()
+      if (!response.ok) throw new Error(`Upload failed: ${resText}`)
+      const scanData = JSON.parse(resText)
+
+      const comparisonProduct = convertToComparisonProduct(scanData)
+      setSecondProduct(comparisonProduct)
+    } catch (err) {
+      console.error("Error during upload:", err)
+      setComparisonError((err as Error).message || "Failed to upload and scan")
+      toast({
+        title: "Upload Failed",
+        description: (err as Error).message || "Failed to process the image.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoadingSecond(false)
+      setCompareMode(null)
+    }
+  }
+
+  const stopCameraCompare = () => {
+    if (videoRef.current?.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
+      tracks.forEach((track) => track.stop())
+    }
+  }
+
+  const handleCancelCompare = () => {
+    setShowCompareModal(false)
+    setIsComparingMode(false)
+    setSecondProduct(null)
+    setCompareMode(null)
+    setComparisonError(null)
+    stopCameraCompare()
+  }
+
+  const handleBackFromComparison = () => {
+    setIsComparingMode(false)
+    setSecondProduct(null)
+    setCompareMode(null)
+  }
+
+  const handleResetComparison = () => {
+    setIsComparingMode(false)
+    setSecondProduct(null)
+    setCompareMode(null)
+    setComparisonError(null)
+    stopCameraCompare()
+    onReset()
   }
 
   // 🧠 Normalize nutrition
@@ -625,15 +805,188 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     }
   }
 
+  // 🔀 Show comparison view if comparing
+  if (isComparingMode && secondProduct) {
+    const firstProduct = convertToComparisonProduct(data)
+    return (
+      <ProductComparisonView
+        firstProduct={firstProduct}
+        secondProduct={secondProduct}
+        onReset={handleResetComparison}
+        onBackToResult={handleBackFromComparison}
+        isLoadingSecond={false}
+      />
+    )
+  }
+
+  // 📷 Show camera/upload mode for comparison
+  if (isComparingMode && !secondProduct && compareMode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-teal-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }}></div>
+        </div>
+
+        <ScanLoadingPortal
+          open={isLoadingSecond}
+          message="Analyzing second product..."
+          submessage="AI is processing your image"
+          onCancel={handleCancelCompare}
+        />
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8 relative z-10">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <Button
+              onClick={handleCancelCompare}
+              variant="ghost"
+              className="gap-2 text-slate-400 hover:text-white hover:bg-slate-800"
+            >
+              <ArrowLeft size={20} />
+              <span className="hidden sm:inline">Back</span>
+            </Button>
+            <h1 className="text-2xl font-black text-white">Compare Second Product</h1>
+            <div className="w-[40px]"></div>
+          </div>
+
+          {/* Camera Active View */}
+          {compareMode === "camera" && (
+            <Card className="p-6 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-emerald-500/20 shadow-xl space-y-4 sm:space-y-6">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="relative w-full aspect-video bg-black rounded-xl sm:rounded-2xl overflow-hidden border-2 border-emerald-500/30">
+                  <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                  <canvas ref={canvasRef} className="hidden" width={640} height={480} />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-[70%] h-[70%] sm:w-64 sm:h-80 border-4 border-emerald-400/50 rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-500/25"></div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <Button
+                    onClick={handleCaptureCompare}
+                    disabled={isLoadingSecond}
+                    className="flex-1 h-12 sm:h-14 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold text-base sm:text-lg shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all disabled:opacity-50"
+                  >
+                    <Camera size={18} className="sm:w-5 sm:h-5 mr-2" />
+                    Capture & Scan
+                  </Button>
+                  <Button
+                    onClick={handleCancelCompare}
+                    variant="outline"
+                    className="h-12 sm:h-14 px-6 sm:px-8 border-2 border-slate-700 hover:border-red-500/50 bg-slate-800/50 hover:bg-red-500/10 text-slate-300 hover:text-red-400"
+                  >
+                    <X size={18} className="sm:w-5 sm:h-5 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Upload Option */}
+          {compareMode === "upload" && (
+            <Card className="p-8 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-teal-500/20 shadow-xl text-center">
+              <p className="text-slate-300 mb-4">File upload in progress...</p>
+            </Card>
+          )}
+
+          {/* Upload Button (if needed) */}
+          {!compareMode && (
+            <Card className="p-4 sm:p-6 bg-slate-800 border border-slate-700 cursor-pointer">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex flex-col sm:flex-row items-center justify-start gap-4 text-left"
+              >
+                <div className="w-14 h-14 rounded-lg bg-teal-600 flex-shrink-0 flex items-center justify-center">
+                  <Upload size={24} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Upload Image</h3>
+                  <p className="text-sm text-slate-400">Choose an image from your device</p>
+                </div>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUploadCompare}
+                className="hidden"
+              />
+            </Card>
+          )}
+
+          {/* Error Message */}
+          {comparisonError && (
+            <Card className="p-4 bg-red-500/10 border border-red-500/30">
+              <div className="flex items-start gap-3">
+                <AlertCircle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-red-200 font-semibold">Scan Failed</p>
+                  <p className="text-red-200/80 text-sm">{comparisonError}</p>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       <div className="absolute inset-0 -z-10 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div
-          className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-teal-500/15 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "1s" }}
-        ></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl opacity-50"></div>
+        <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-3xl opacity-50"></div>
       </div>
+
+      {/* Compare Choice Modal */}
+      {showCompareModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-xl">
+            <div className="p-6 space-y-4">
+              <div className="text-center space-y-1">
+                <h2 className="text-xl font-bold text-white">Compare Product</h2>
+                <p className="text-sm text-slate-400">Choose how to scan the second product</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={handleCameraStartCompare}
+                  className="flex flex-col items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-lg transition-colors"
+                >
+                  <Camera size={24} />
+                  <span className="text-sm">Camera</span>
+                </Button>
+
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-4 rounded-lg transition-colors"
+                >
+                  <Upload size={24} />
+                  <span className="text-sm">Upload</span>
+                </Button>
+              </div>
+
+              <Button
+                onClick={() => setShowCompareModal(false)}
+                variant="outline"
+                className="w-full border-slate-600 hover:border-slate-500 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-sm"
+              >
+                <X size={14} className="mr-2" />
+                Cancel
+              </Button>
+            </div>
+          </Card>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileUploadCompare}
+            className="hidden"
+          />
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8 relative z-10">
         {/* Header */}
@@ -647,7 +1000,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
           </div>
           
           {/* Action Buttons - Responsive Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-3">
             <Button 
               onClick={handleDownloadReport}
               disabled={downloadLoading}
@@ -659,7 +1012,8 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
               ) : (
                 <Download size={16} className="mr-2" />
               )}
-              <span>{downloadLoading ? "Generating..." : "Download"}</span>
+              <span className="hidden xs:inline">{downloadLoading ? "Generating..." : "Download"}</span>
+              <span className="xs:hidden">Download</span>
             </Button>
             
             <Button 
@@ -683,7 +1037,18 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
               className={`border w-full border-slate-700 ${shareSuccess ? 'border-teal-500/50 bg-teal-500/20' : 'hover:border-teal-500/50 bg-slate-800/50 hover:bg-teal-500/10'} text-slate-300 hover:text-teal-400 transition-all py-2 sm:py-2 text-sm sm:text-base`}
             >
               {shareSuccess ? <CheckCircle size={16} className="mr-2" /> : <Share2 size={16} className="mr-2" />}
-              <span>{shareSuccess ? "Shared!" : "Share"}</span>
+              <span className="hidden xs:inline">{shareSuccess ? "Shared!" : "Share"}</span>
+              <span className="xs:hidden">Share</span>
+            </Button>
+
+            <Button 
+              onClick={handleCompareStart}
+              variant="outline" 
+              className="border w-full border-slate-700 hover:border-emerald-500/50 bg-slate-800/50 hover:bg-emerald-500/10 text-slate-300 hover:text-emerald-400 transition-all py-2 sm:py-2 text-sm sm:text-base"
+            >
+              <Zap size={16} className="mr-2" />
+              <span className="hidden xs:inline">Compare</span>
+              <span className="xs:hidden">vs</span>
             </Button>
           </div>
         </div>

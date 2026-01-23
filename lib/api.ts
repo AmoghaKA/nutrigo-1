@@ -1,5 +1,22 @@
 // API utility functions for NutriGo backend integration
 
+export interface ScoreBreakdown {
+  baseScore: number
+  finalScore: number
+  category: string
+  penalties: {
+    name: string
+    amount: number
+    reason: string
+  }[]
+  bonuses: {
+    name: string
+    amount: number
+    reason: string
+  }[]
+  summary: string
+}
+
 export interface ApiResponse<T> {
   success: boolean
   data?: T
@@ -40,16 +57,22 @@ async function parseJsonSafely<T>(response: Response): Promise<T> {
   const text = await response.text()
   const contentType = response.headers.get("content-type") || ""
   if (!contentType.includes("application/json")) {
-    throw new Error(`Expected JSON but got ${contentType || "no content-type"} — Body: ${text.slice(0, 300)}`)
+    const errorMsg = text.includes("<!DOCTYPE") ? "Server returned HTML instead of JSON" : `Expected JSON but got ${contentType || "no content-type"}`
+    throw new Error(`${errorMsg} (Status: ${response.status})`)
   }
   try {
     const parsed = JSON.parse(text) as T
     if (!response.ok) {
-      const errMsg = (parsed as any)?.error || `HTTP ${response.status}`
+      // For non-200 responses, throw error with details for better logging
+      const errMsg = (parsed as any)?.error || (parsed as any)?.message || `HTTP ${response.status}`
+      console.warn(`⚠️ API Response Error (${response.status}):`, errMsg)
       throw new Error(errMsg)
     }
     return parsed
-  } catch {
+  } catch (e) {
+    if (e instanceof Error) {
+      throw e
+    }
     throw new Error(`Failed to parse JSON response: ${text.slice(0, 300)}`)
   }
 }
@@ -136,5 +159,34 @@ export async function deleteScan(scanId: string, userId?: string): Promise<ApiRe
     return await parseJsonSafely<ApiResponse<null>>(res)
   } catch {
     return { success: false, error: "Failed to delete scan" }
+  }
+}
+// ---------------- COMPARISONS ----------------
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000"
+
+export async function recalculateHealthScores(
+  productIds: [string, string]
+): Promise<ApiResponse<any>> {
+  try {
+    console.log("📤 Sending recalculate request with IDs:", productIds)
+    const res = await fetch(`${BACKEND_URL}/api/compare/recalculate-scores`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productIds }),
+    })
+    
+    const data = await parseJsonSafely<ApiResponse<any>>(res)
+    console.log("✅ Recalculate response received:", data)
+    return data
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "Unknown error"
+    console.error("❌ Failed to recalculate health scores:", errorMsg)
+    console.error("   This typically means the products weren't found in the database.")
+    console.error("   The comparison will continue with original scores.")
+    return { 
+      success: false, 
+      error: `Failed to recalculate health scores: ${errorMsg}`
+    }
   }
 }
