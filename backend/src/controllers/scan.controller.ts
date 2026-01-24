@@ -116,20 +116,71 @@ async function fetchGeminiAIWithImage(imagePath: string): Promise<any> {
             {
               parts: [
                 {
-                  text: `Analyze this food product image. Extract all visible information including product name, brand, nutrition facts (calories, fat, sugar, protein, carbs per 100g), ingredients, and calculate a health score (0-100). Return ONLY valid JSON with this exact structure:
+                  text: `You are a nutrition expert analyzing a food product image. Follow these instructions carefully:
+
+1. PRODUCT IDENTIFICATION (MANDATORY):
+   - Extract the product name and brand from the package
+   - Identify the specific product type (e.g., "potato chips","Bingo","Lays" ,"chocolate cookies", "energy drink")
+   - Determine the product category (snacks, beverages, dairy, bakery, etc.)
+
+2. NUTRITION FACTS EXTRACTION:
+   - First, look for the nutrition facts table/label on the package (back, side panel, near barcode)
+   - If VISIBLE, extract exact values per 100g: Calories (kcal), Fat (g), Sugar (g), Protein (g), Carbs (g), Sodium (mg)
+   - If nutrition facts are NOT visible, set "nutritionVisible": false
+
+3. NUTRITION PREDICTION (WHEN LABEL NOT VISIBLE):
+   - If you identified the product name but nutrition label is NOT visible:
+     * Use your knowledge of typical nutritional values for that specific product name
+     * Predict realistic values based on the product name and category
+     * Example: "Lays Classic Potato Chips" → ~536 kcal, 34g fat, 1g sugar, 6g protein, 53g carbs per 100g
+     * Example: "Coca Cola" → ~42 kcal, 0g fat, 10.6g sugar, 0g protein, 10.6g carbs per 100ml
+     * Mark predictions with "dataSource": "predicted from product name"
+   - NEVER return 0 or null for all values if you know the product name
+
+4. INGREDIENTS:
+   - Look for the ingredients list (usually starts with "Ingredients:")
+   - Extract all ingredients in order if visible
+   - If NOT visible but you know the product, predict typical ingredients
+   - Set "ingredientsVisible": true (if read from image) or false (if predicted)
+
+5. HEALTH ASSESSMENT:
+   - Calculate health score (0-100) based on nutritional values:
+     * Low score (0-39): High sugar (>15g/100g), high fat (>25g/100g), high sodium (>600mg/100g), ultra-processed
+     * Medium score (40-69): Moderate values, some processing
+     * High score (70-100): Low sugar/fat, high protein/fiber, minimal processing
+   - Generate specific warnings:
+     * "High fat (estimated)" if fat > 20g/100g
+     * "High sugar (estimated)" if sugar > 10g/100g
+     * "High sodium (estimated)" if sodium > 500mg/100g
+     * "Ultra-processed" for chips, soda, candy, instant noodles
+     * Add "(estimated)" suffix for predicted values
+
+6. RESPONSE FORMAT:
+Return ONLY valid JSON (no markdown, no code blocks):
 {
-  "name": "product name",
+  "name": "specific product name",
   "brand": "brand name",
-  "calories": 0,
-  "fat": 0,
-  "sugar": 0,
-  "protein": 0,
-  "carbs": 0,
-  "category": "food category",
-  "healthScore": 0,
+  "category": "product category",
+  "servingSize": "per 100g",
+  "nutritionVisible": true or false,
+  "calories": number (REQUIRED - never null),
+  "fat": number (REQUIRED - never null),
+  "sugar": number (REQUIRED - never null),
+  "protein": number (REQUIRED - never null),
+  "carbs": number (REQUIRED - never null),
+  "sodium": number (REQUIRED - never null),
+  "ingredientsVisible": true or false,
   "ingredients": ["ingredient1", "ingredient2"],
-  "warnings": ["warning1", "warning2"]
-}`,
+  "healthScore": number 0-100,
+  "warnings": ["warning 1", "warning 2"],
+  "dataSource": "nutrition label visible" OR "predicted from product name"
+}
+
+CRITICAL RULES:
+- ALWAYS provide nutritional values (never 0, never null for all fields)
+- If nutrition label is NOT visible, predict values based on the product name and type
+- Be realistic and accurate with predictions based on your knowledge
+- Add "(estimated)" to warnings when values are predicted`,
                 },
                 {
                   inline_data: {
