@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="./public/logo.png" alt="NutriGo Logo" width="120" height="120" />
-
-# 🧃 NutriGo
+<img src="./public/logo.png" alt="NutriGo Logo" width="200" height="200" />
 
 ### Smart Packaged Food Scanning Made Simple
 
@@ -27,7 +25,6 @@
 - [💻 Usage](#-usage)
 - [📱 Dashboard Features](#-dashboard-features)
 - [🤖 AI-Powered Tools](#-ai-powered-tools)
-- [💰 Pricing Plans](#-pricing-plans)
 - [👥 Our Team](#-our-team)
 - [📝 License](#-license)
 
@@ -191,7 +188,7 @@ Each product is analyzed for optimal nutrition and health impact!
 
 ---
 
-## �🛠️ Tech Stack
+## 🛠️ Tech Stack
 
 ### Frontend
 - **Next.js 14+** - React framework for production
@@ -402,36 +399,6 @@ Each product is analyzed for optimal nutrition and health impact!
 
 ---
 
-## 💰 Pricing Plans
-
-### 🌱 **NutriGo (Free)**
-- 10 scans per day
-- Basic health score
-- Scan history (30 days)
-- AI chatbot access
-- Perfect for: Getting started
-
-### 🍊 **NutriPlus (₹249/month)**
-- Unlimited scans
-- Advanced health analysis
-- 90-day scan history
-- Priority support
-- Advanced analytics dashboard
-- Health goal modes
-- Perfect for: Regular users
-
-### 🏆 **NutriPro (₹499/month)**
-- Everything in NutriPlus
-- Early access to new features
-- Priority support & feedback
-- Hydration tracker
-- Educational content
-- Advanced analytics
-- Personalized recommendations
-- Perfect for: Power users
-
----
-
 ## 👥 Our Team
 
 Meet the dedicated team of innovators building the future of food transparency:
@@ -442,25 +409,21 @@ Meet the dedicated team of innovators building the future of food transparency:
       <img src="./public/team/AR.png" width="100px;" alt="Arjun Bhat" style="border-radius: 50%;"/><br />
       <b>Arjun Bhat</b><br />
       <sub>Frontend Developer</sub><br />
-      Building beautiful UIs
     </td>
     <td align="center">
       <img src="./public/team/PR.png" width="100px;" alt="Pranav Rao K" style="border-radius: 50%;"/><br />
       <b>Pranav Rao K</b><br />
       <sub>Frontend Developer</sub><br />
-      Crafting smooth experiences
     </td>
     <td align="center">
       <img src="./public/team/TU.png" width="100px;" alt="Tushar P" style="border-radius: 50%;"/><br />
       <b>Tushar P</b><br />
       <sub>Backend Developer</sub><br />
-      Powering the engine
     </td>
     <td align="center">
       <img src="./public/team/AM.jpg" width="100px;" alt="Amogha K A" style="border-radius: 50%;"/><br />
       <b>Amogha K A</b><br />
       <sub>Backend Developer</sub><br />
-      Building robust systems
     </td>
   </tr>
 </table>
@@ -496,7 +459,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-### 🌟 Made with ❤️ by the NutriGo Team
+### 🌟 Made with ❤️ by the NutriGo Crew
 
 **Decode Your Packaged Foods, Redefine Your Health**
 
