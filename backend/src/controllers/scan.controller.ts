@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { supabase } from "../lib/supabase";
+import { detectProductCategory, getSubCategory } from "../utils/categoryDetector";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 
@@ -208,9 +209,16 @@ async function fetchGeminiAIText(input: string): Promise<any> {
 async function saveScanToSupabase(product: any, barcode?: string) {
   const nutrition = product.nutriments || {};
 
+  const productName = product.product_name || product.name || "Unknown";
+  const ingredients = product.ingredients || [];
+  
+  // Detect category
+  const category = detectProductCategory(productName, ingredients);
+  const subCategory = getSubCategory(productName, category);
+
   const record = {
     barcode: barcode || product.code || null,
-    detected_name: product.product_name || product.name || "Unknown",
+    detected_name: productName,
     brand: product.brands || product.brand || "",
     nutrition: {
       calories:
@@ -224,9 +232,11 @@ async function saveScanToSupabase(product: any, barcode?: string) {
       carbs: nutrition.carbohydrates_100g || product.carbs || 0,
     },
     warnings: product.warnings || [],
-    ingredients: product.ingredients || [],
+    ingredients: ingredients,
     healthScore: product.healthScore || 70, // 🔥 match DB column name
     source: product.source || "gemini-vision",
+    category: category,
+    subCategory: subCategory,
     created_at: new Date().toISOString(),
   };
 

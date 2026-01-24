@@ -1,13 +1,11 @@
-import express from "express";
-import { supabase } from "../lib/supabase";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
+const express = require('express');
 const router = express.Router();
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Static alternatives database (fallback)
-const alternativesDB: Record<string, any[]> = {
+const alternativesDB = {
   'chips': [
     {
       name: 'Baked Potato Chips',
@@ -116,33 +114,11 @@ const alternativesDB: Record<string, any[]> = {
   ]
 };
 
-// Debug route to test this router
-router.get("/test", (req, res) => {
-  res.json({ message: "Alternatives route is working" });
-});
-
-// Health check endpoint
-router.get("/health", (req, res) => {
-  res.json({ 
-    status: "ok", 
-    endpoint: "/api/alternatives",
-    methods: ["GET", "POST"],
-    hasGeminiKey: !!process.env.GEMINI_API_KEY,
-    databases: Object.keys(alternativesDB)
-  });
-});
-
-// POST endpoint for smart alternatives
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { category, subCategory, currentHealthScore, currentProduct, currentBrand } = req.body;
 
-    console.log('📥 Smart alternatives request:', { category, subCategory, currentProduct, currentHealthScore });
-
-    // Validate request
-    if (!category) {
-      return res.status(400).json({ error: 'Category is required', receivedBody: req.body });
-    }
+    console.log('Alternatives request:', { category, subCategory, currentProduct, currentHealthScore });
 
     // Try to get AI-generated alternatives first
     const aiAlternatives = await generateAIAlternatives(
@@ -153,71 +129,24 @@ router.post("/", async (req, res) => {
     );
 
     if (aiAlternatives && aiAlternatives.length > 0) {
-      console.log(`✅ Returning ${aiAlternatives.length} AI alternatives`);
+      console.log(`Returning ${aiAlternatives.length} AI alternatives`);
       return res.json(aiAlternatives);
     }
 
     // Fallback to static database
     const staticAlternatives = alternativesDB[subCategory] || alternativesDB[category] || [];
-    const filteredAlternatives = staticAlternatives.filter((alt: any) => alt.health_score > currentHealthScore);
+    const filteredAlternatives = staticAlternatives.filter(alt => alt.health_score > currentHealthScore);
     
-    console.log(`✅ Returning ${filteredAlternatives.length} static alternatives for category: ${category}`);
+    console.log(`Returning ${filteredAlternatives.length} static alternatives`);
     res.json(filteredAlternatives);
 
   } catch (error) {
-    console.error('❌ Error in alternatives API:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch alternatives',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
+    console.error('Error in alternatives API:', error);
+    res.status(500).json({ error: 'Failed to fetch alternatives' });
   }
 });
 
-// Get healthier alternatives (legacy GET endpoint)
-router.get("/", async (req, res) => {
-  try {
-    console.log("📥 Received alternatives request");
-    const minScore = Number(req.query.minScore || 50);
-    console.log("🎯 Min score:", minScore);
-
-    // Query Supabase for alternatives
-    const { data, error } = await supabase
-      .from("scans")
-      .select("*")
-      .gt("healthScore", minScore)
-      .order("healthScore", { ascending: false })
-      .limit(10);
-
-    if (error) {
-      console.error("❌ Supabase error:", error);
-      return res.status(500).json({ error: "Database query failed" });
-    }
-
-    if (!data || data.length === 0) {
-      console.log("ℹ️ No alternatives found");
-      return res.status(200).json({ alternatives: [] });
-    }
-
-    // Format the response
-    const alternatives = data.map(item => ({
-      name: item.detected_name || "Unknown Product",
-      brand: item.brand || "",
-      health_score: item.healthScore || 0,
-      nutrition: item.nutrition || {}
-    }));
-
-    console.log(`✅ Returning ${alternatives.length} alternatives`);
-    return res.status(200).json({ alternatives });
-  } catch (err) {
-    console.error("❌ Server error:", err);
-    return res.status(500).json({
-      error: "Failed to fetch alternatives",
-      details: err instanceof Error ? err.message : "Unknown error"
-    });
-  }
-});
-
-async function generateAIAlternatives(category: string, subCategory: string, currentProduct: string, currentScore: number) {
+async function generateAIAlternatives(category, subCategory, currentProduct, currentScore) {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
@@ -260,7 +189,7 @@ IMPORTANT:
       const alternatives = JSON.parse(jsonMatch[0]);
       
       // Add purchase links
-      return alternatives.map((alt: any) => ({
+      return alternatives.map(alt => ({
         ...alt,
         purchaseLinks: generatePurchaseLinks(alt.name, alt.brand)
       }));
@@ -268,12 +197,12 @@ IMPORTANT:
 
     return null;
   } catch (error) {
-    console.error('❌ AI alternatives generation failed:', error);
+    console.error('AI alternatives generation failed:', error);
     return null;
   }
 }
 
-function generatePurchaseLinks(productName: string, brand: string) {
+function generatePurchaseLinks(productName, brand) {
   const searchQuery = encodeURIComponent(`${brand} ${productName}`);
   return {
     blinkit: `https://blinkit.com/search?q=${searchQuery}`,
@@ -283,4 +212,4 @@ function generatePurchaseLinks(productName: string, brand: string) {
   };
 }
 
-export default router;
+module.exports = router;

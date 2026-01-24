@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Leaf, Apple, Coffee, Cookie, Milk, Wheat, Fish, ExternalLink, ShoppingBag } from "lucide-react"
 import Image from "next/image"
 import {
@@ -35,23 +34,43 @@ interface Alternative {
 }
 
 export default function AlternativesPage() {
-  const [currentCategory, setCurrentCategory] = useState("snacks")
   const [alternatives, setAlternatives] = useState<Alternative[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [openDialogs, setOpenDialogs] = useState<{ [key: string]: boolean }>({})
 
   useEffect(() => {
-    try {
-      const categoryAlternatives = healthyAlternatives[currentCategory as keyof typeof healthyAlternatives] || []
-      setAlternatives(categoryAlternatives)
-      setLoading(false)
-    } catch (err) {
-      console.error("Failed to get alternatives:", err)
-      setError("Failed to load alternatives")
-      setLoading(false)
+    const loadAlternatives = async () => {
+      setLoading(true)
+      try {
+        // Check if coming from scan with saved alternatives
+        const savedAlternatives = localStorage.getItem('alternativesData')
+        
+        if (savedAlternatives) {
+          // Use pre-loaded alternatives from scan
+          const parsedAlternatives = JSON.parse(savedAlternatives)
+          console.log("📦 Using saved alternatives from scan:", parsedAlternatives.length)
+          setAlternatives(parsedAlternatives)
+          setLoading(false)
+          return
+        }
+        
+        // Otherwise, load all healthy alternatives as fallback
+        const allAlternatives: Alternative[] = []
+        Object.values(healthyAlternatives).forEach(categoryAlts => {
+          allAlternatives.push(...categoryAlts)
+        })
+        setAlternatives(allAlternatives)
+        setLoading(false)
+      } catch (err) {
+        console.error("Failed to load alternatives:", err)
+        setError("Failed to load alternatives")
+        setLoading(false)
+      }
     }
-  }, [currentCategory])
+
+    loadAlternatives()
+  }, [])
 
   const CategoryIcon = {
     snacks: Apple,
@@ -171,35 +190,14 @@ export default function AlternativesPage() {
             <p className="text-xs sm:text-sm text-red-300">Please try again later or contact support if the issue persists.</p>
           </Card>
         ) : (
-          <Tabs defaultValue={currentCategory} onValueChange={setCurrentCategory} className="space-y-6 sm:space-y-8">
-            {/* Tabs Navigation - Fully Responsive */}
-            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-              <TabsList className="inline-flex gap-2 p-2 bg-slate-900/50 backdrop-blur-md border border-slate-700/50 rounded-xl min-w-full sm:min-w-0 sm:w-auto">
-                {Object.keys(healthyAlternatives).map((category) => {
-                  const Icon = CategoryIcon[category as keyof typeof CategoryIcon]
-                  return (
-                    <TabsTrigger
-                      key={category}
-                      value={category}
-                      className="whitespace-nowrap px-2.5 sm:px-3 md:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/20 transition-all duration-300 hover:text-emerald-400 flex items-center gap-1 sm:gap-2"
-                    >
-                      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
-                    </TabsTrigger>
-                  )
-                })}
-              </TabsList>
-            </div>
-
-            {/* Tab Content - Responsive Grid */}
-            {Object.keys(healthyAlternatives).map((category) => (
-              <TabsContent key={category} value={category} className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {alternatives.map((alt, i) => (
-                    <Card
-                      key={i}
-                      className="group relative p-4 sm:p-5 md:p-6 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 shadow-xl hover:shadow-emerald-500/20 overflow-hidden"
-                    >
+          <div className="space-y-6 sm:space-y-8">
+            {/* Alternatives Grid - Responsive */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {alternatives.map((alt, i) => (
+                <Card
+                  key={i}
+                  className="group relative p-4 sm:p-5 md:p-6 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 shadow-xl hover:shadow-emerald-500/20 overflow-hidden"
+                >
                       {/* Hover glow effect */}
                       <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
 
@@ -418,16 +416,14 @@ export default function AlternativesPage() {
                       </div>
                     </Card>
                   ))}
-                </div>
+            </div>
 
-                {alternatives.length === 0 && (
-                  <Card className="p-8 sm:p-12 text-center bg-slate-900/50 border border-slate-700/50 rounded-xl">
-                    <p className="text-slate-400 text-base sm:text-lg">No alternatives available for this category yet.</p>
-                  </Card>
-                )}
-              </TabsContent>
-            ))}
-          </Tabs>
+            {alternatives.length === 0 && (
+              <Card className="p-8 sm:p-12 col-span-full text-center bg-slate-900/50 border border-slate-700/50 rounded-xl">
+                <p className="text-slate-400 text-base sm:text-lg">No alternatives available yet. Scan a product to get personalized recommendations!</p>
+              </Card>
+            )}
+          </div>
         )}
       </div>
     </div>

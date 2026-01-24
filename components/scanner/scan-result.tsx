@@ -27,11 +27,13 @@ import { useToast } from "@/hooks/use-toast"
 import ProductComparisonView from "./ProductComparisonView"
 import { ComparisonProduct } from "@/lib/comparisonContext"
 import ScanLoadingPortal from "./scan-loading-portal"
+import { getSmartAlternatives } from "@/lib/getSmartAlternatives"
 
 interface ScanResultProps {
   data: {
     id?: string
     name?: string
+    detected_name?: string
     brand?: string
     healthScore?: number
     nutrition?: {
@@ -67,6 +69,10 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
   const [favoriteLoading, setFavoriteLoading] = useState(false)
   const [downloadLoading, setDownloadLoading] = useState(false)
   
+  // Alternatives states
+  const [alternativesCount, setAlternativesCount] = useState(0)
+  const [loadingAlternatives, setLoadingAlternatives] = useState(false)
+  
   // Comparison states
   const [isComparingMode, setIsComparingMode] = useState(false)
   const [secondProduct, setSecondProduct] = useState<ComparisonProduct | null>(null)
@@ -80,7 +86,45 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
     console.log("📦 ScanResult received data:", data)
     // Check if already in favorites
     checkIfFavorite()
+    // Load alternatives
+    loadAlternatives()
   }, [data])
+
+  // 🍎 Load smart alternatives
+  const loadAlternatives = async () => {
+    setLoadingAlternatives(true)
+    try {
+      const scannedProduct = {
+        detected_name: data.name || data.detected_name || "",
+        brand: data.brand || "",
+        health_score: data.healthScore || 0,
+        ingredients: Array.isArray(data.ingredients) ? data.ingredients : 
+                      typeof data.ingredients === 'string' ? [data.ingredients] : [],
+        nutrition: data.nutrition || { 
+          calories: data.calories, 
+          sugar: data.sugar,
+          protein: data.protein,
+          fat: data.fat,
+          carbs: data.carbs
+        }
+      }
+      
+      console.log('🔍 Loading alternatives for:', scannedProduct);
+      const alternatives = await getSmartAlternatives(scannedProduct)
+      setAlternativesCount(alternatives.length)
+      console.log('✅ Alternatives loaded:', alternatives.length);
+      
+      // Save to localStorage for alternatives page
+      localStorage.setItem("lastScan", JSON.stringify(scannedProduct))
+      localStorage.setItem("alternativesData", JSON.stringify(alternatives))
+    } catch (error) {
+      console.error("❌ Failed to load alternatives:", error)
+      // Still show count as 0, but allow fallback to work
+      setAlternativesCount(0)
+    } finally {
+      setLoadingAlternatives(false)
+    }
+  }
 
   // 🔖 Check if product is already in favorites
   const checkIfFavorite = async () => {
@@ -1154,16 +1198,37 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
           )}
         </Card>
 
-        {/* CTA */}
-        <div className="p-8 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 shadow-xl">
+        {/* Smart Alternatives CTA */}
+        <div className="p-6 sm:p-8 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 shadow-xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h3 className="text-2xl font-bold text-white">Want healthier packaged food alternatives?</h3>
-              <p className="text-slate-400">Discover packaged products with better nutritional value.</p>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                {loadingAlternatives ? (
+                  <div className="w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+                ) : (
+                  <span className="text-emerald-400 font-bold text-xl">{alternativesCount}</span>
+                )}
+              </div>
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">
+                  {loadingAlternatives ? "Finding Alternatives..." : alternativesCount > 0 ? "Found Healthier Alternatives!" : "Discover Better Options"}
+                </h3>
+                <p className="text-slate-400 text-sm sm:text-base">
+                  {loadingAlternatives 
+                    ? "AI is analyzing similar products..." 
+                    : alternativesCount > 0 
+                      ? `${alternativesCount} better options in the same category` 
+                      : "Explore healthier packaged food products"}
+                </p>
+              </div>
             </div>
             <Link href="/dashboard/alternatives">
-              <Button className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white font-bold px-6 py-4">
-                Find Alternatives <ArrowRight size={18} />
+              <Button 
+                disabled={loadingAlternatives}
+                className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-white font-bold px-6 py-3 sm:py-4 shadow-lg shadow-emerald-500/30 disabled:opacity-50"
+              >
+                {alternativesCount > 0 ? "View Alternatives" : "Find Alternatives"}
+                <ArrowRight size={18} className="ml-2" />
               </Button>
             </Link>
           </div>
