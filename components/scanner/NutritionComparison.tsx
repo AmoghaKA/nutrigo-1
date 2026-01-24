@@ -72,13 +72,13 @@ export default function NutritionComparison({
                   {/* Mobile: Stacked Values */}
                   <div className="md:hidden space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-500">{firstProduct.name}</span>
+                      <span className="text-xs text-slate-500">{firstProduct.brand || 'Product 1'}</span>
                       <span className="text-lg font-bold text-emerald-400">
                         {formatNutritionValue(diff.firstValue)} {diff.unit}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-500">{secondProduct.name}</span>
+                      <span className="text-xs text-slate-500">{secondProduct.brand || 'Product 2'}</span>
                       <span className="text-lg font-bold text-cyan-400">
                         {formatNutritionValue(diff.secondValue)} {diff.unit}
                       </span>
@@ -88,13 +88,13 @@ export default function NutritionComparison({
                   {/* Desktop: Side by Side */}
                   <div className="hidden md:grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-slate-500 mb-1">{firstProduct.name}</p>
+                      <p className="text-xs text-slate-500 mb-1">{firstProduct.brand || 'Product 1'}</p>
                       <p className="text-lg font-bold text-emerald-400">
                         {formatNutritionValue(diff.firstValue)} {diff.unit}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500 mb-1">{secondProduct.name}</p>
+                      <p className="text-xs text-slate-500 mb-1">{secondProduct.brand || 'Product 2'}</p>
                       <p className="text-lg font-bold text-cyan-400">
                         {formatNutritionValue(diff.secondValue)} {diff.unit}
                       </p>

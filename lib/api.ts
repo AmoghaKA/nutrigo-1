@@ -163,14 +163,13 @@ export async function deleteScan(scanId: string, userId?: string): Promise<ApiRe
 }
 // ---------------- COMPARISONS ----------------
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000"
-
 export async function recalculateHealthScores(
   productIds: [string, string]
 ): Promise<ApiResponse<any>> {
   try {
     console.log("📤 Sending recalculate request with IDs:", productIds)
-    const res = await fetch(`${BACKEND_URL}/api/compare/recalculate-scores`, {
+    
+    const res = await fetch(`/api/compare/recalculate-scores`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productIds }),
@@ -182,7 +181,6 @@ export async function recalculateHealthScores(
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown error"
     console.error("❌ Failed to recalculate health scores:", errorMsg)
-    console.error("   This typically means the products weren't found in the database.")
     console.error("   The comparison will continue with original scores.")
     return { 
       success: false, 

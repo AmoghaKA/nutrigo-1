@@ -27,7 +27,6 @@ import {
   generateComparisonShareText,
   isSameCategory,
 } from "@/lib/comparisonUtils"
-import { recalculateHealthScores } from "@/lib/api"
 import ComparisonCard from "./ComparisonCard"
 import NutritionComparison from "./NutritionComparison"
 import HealthScoreComparison from "./HealthScoreComparison"
@@ -53,7 +52,6 @@ export default function ProductComparisonView({
   const { toast } = useToast()
   const comparisonRef = useRef<HTMLDivElement>(null)
   const [isDownloading, setIsDownloading] = useState(false)
-  const [isRecalculatingScores, setIsRecalculatingScores] = useState(false)
   const [products, setProducts] = useState<{
     first: ComparisonProduct
     second: ComparisonProduct
@@ -61,92 +59,6 @@ export default function ProductComparisonView({
     first: firstProduct,
     second: secondProduct,
   })
-
-  // Recalculate health scores using LLM-based calculator
-  useEffect(() => {
-    const recalculateScores = async () => {
-      if (!firstProduct.id || !secondProduct.id) {
-        console.warn("⚠️ Product IDs missing, skipping health score recalculation")
-        console.warn("   First product ID:", firstProduct.id)
-        console.warn("   Second product ID:", secondProduct.id)
-        return
-      }
-
-      setIsRecalculatingScores(true)
-      try {
-        console.log("🔄 Starting health score recalculation...")
-        console.log("   Product 1 ID:", firstProduct.id)
-        console.log("   Product 2 ID:", secondProduct.id)
-
-        const response = await recalculateHealthScores([
-          firstProduct.id,
-          secondProduct.id,
-        ])
-
-        if (response.success && response.data) {
-          const { product1, product2 } = response.data.data
-          console.log("✅ Health scores recalculated successfully:", {
-            product1: {
-              name: product1.name,
-              originalScore: product1.originalScore,
-              calculatedScore: product1.calculatedScore,
-              hasBreakdown: !!product1.scoreBreakdown,
-            },
-            product2: {
-              name: product2.name,
-              originalScore: product2.originalScore,
-              calculatedScore: product2.calculatedScore,
-              hasBreakdown: !!product2.scoreBreakdown,
-            },
-          })
-
-          // Update local state with new scores and breakdown
-          setProducts({
-            first: {
-              ...firstProduct,
-              healthScore: product1.calculatedScore,
-              scoreBreakdown: product1.scoreBreakdown,
-            },
-            second: {
-              ...secondProduct,
-              healthScore: product2.calculatedScore,
-              scoreBreakdown: product2.scoreBreakdown,
-            },
-          })
-
-          toast({
-            title: "Health Scores Updated",
-            description: `Recalculated using advanced nutrition analysis`,
-          })
-        } else {
-          console.warn("⚠️ Recalculation response was not successful")
-          console.warn("   Response:", response)
-          console.warn("   Continuing with original scores...")
-          // Keep original products if recalculation fails - UI still works
-          if (response.error) {
-            toast({
-              title: "Info",
-              description: "Using original scores. Advanced analysis unavailable.",
-              variant: "default",
-            })
-          }
-        }
-      } catch (error) {
-        console.error("❌ Error recalculating health scores:", error)
-        console.error("   Comparison will continue with original scores")
-        // Keep original products if recalculation fails - don't break the UI
-        toast({
-          title: "Info",
-          description: "Using original scores. Advanced analysis unavailable.",
-          variant: "default",
-        })
-      } finally {
-        setIsRecalculatingScores(false)
-      }
-    }
-
-    recalculateScores()
-  }, [firstProduct, secondProduct, toast])
 
   const metrics = calculateComparison(products.first, products.second)
   const winner = determineWinner(products.first, products.second)
@@ -246,53 +158,60 @@ export default function ProductComparisonView({
         <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl opacity-30"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 relative z-10">
-        {/* Advanced Header Section */}
-        <div className="space-y-4">
-          {/* Top Navigation Bar */}
-          <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-700/50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8 relative z-10">
+        {/* Header */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
             <Button
               onClick={onBackToResult}
-              className="gap-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-800/50 transition-all px-3 py-2 rounded-lg"
               variant="ghost"
+              className="gap-2 text-slate-400 hover:text-white hover:bg-slate-800 transition-all px-2 sm:px-4"
             >
-              <ArrowLeft size={18} />
-              <span className="hidden sm:inline text-sm font-medium">Back</span>
+              <ArrowLeft size={20} />
+              <span className="hidden sm:inline">Back to Scanner</span>
+              <span className="sm:hidden">Back</span>
+            </Button>
+          </div>
+
+          {/* Action Buttons - Responsive Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            <Button
+              onClick={handleShare}
+              variant="outline"
+              className="border w-full border-slate-700 hover:border-teal-500/50 bg-slate-800/50 hover:bg-teal-500/10 text-slate-300 hover:text-teal-400 transition-all py-2 sm:py-2 text-sm sm:text-base"
+            >
+              <Share2 size={16} className="mr-2" />
+              <span className="hidden xs:inline">Share</span>
+              <span className="xs:hidden">Share</span>
             </Button>
 
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
-              Product Comparison
-            </h1>
+            <Button
+              onClick={handleDownloadComparison}
+              disabled={isDownloading || isLoadingSecond}
+              variant="outline"
+              className={`border w-full ${isDownloading ? 'border-violet-500/50 bg-violet-500/20' : 'border-slate-700 hover:border-violet-500/50 bg-slate-800/50 hover:bg-violet-500/10'} text-slate-300 hover:text-violet-400 transition-all py-2 sm:py-2 text-sm sm:text-base`}
+            >
+              {isDownloading ? (
+                <div className="w-4 h-4 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin mr-2" />
+              ) : (
+                <Download size={16} className="mr-2" />
+              )}
+              <span className="hidden xs:inline">{isDownloading ? "Generating..." : "Download"}</span>
+              <span className="xs:hidden">Download</span>
+            </Button>
 
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleShare}
-                className="gap-2 border border-teal-500/30 bg-slate-800/50 hover:bg-teal-600 text-slate-300 hover:text-white transition-all rounded-lg px-3 py-2 text-sm font-medium"
-                disabled={isLoadingSecond}
-              >
-                <Share2 size={16} />
-                <span className="hidden sm:inline">Share</span>
-              </Button>
-
-              <Button
-                onClick={handleDownloadComparison}
-                className="gap-2 border border-violet-500/30 bg-slate-800/50 hover:bg-violet-600 text-slate-300 hover:text-white transition-all rounded-lg px-3 py-2 text-sm font-medium"
-                disabled={isDownloading || isLoadingSecond}
-              >
-                <Download size={16} />
-                <span className="hidden sm:inline">Download</span>
-              </Button>
-
-              <Button
-                onClick={onReset}
-                className="gap-2 border border-red-500/30 bg-slate-800/50 hover:bg-red-600 text-slate-300 hover:text-white transition-all rounded-lg px-3 py-2 text-sm font-medium"
-                disabled={isLoadingSecond}
-              >
-                <RotateCcw size={16} />
-                <span className="hidden sm:inline">Reset</span>
-              </Button>
-            </div>
+            <Button
+              onClick={onReset}
+              disabled={isLoadingSecond}
+              variant="outline"
+              className="border w-full border-slate-700 hover:border-red-500/50 bg-slate-800/50 hover:bg-red-500/10 text-slate-300 hover:text-red-400 transition-all py-2 sm:py-2 text-sm sm:text-base"
+            >
+              <RotateCcw size={16} className="mr-2" />
+              <span className="hidden xs:inline">Reset</span>
+              <span className="xs:hidden">Reset</span>
+            </Button>
           </div>
+        </div>
 
         {/* Warning if different categories */}
         {!isSameProductCategory && (
@@ -375,6 +294,10 @@ export default function ProductComparisonView({
           {/* Warnings Comparison - Advanced Layout */}
           <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 md:gap-4">
             <Card className="p-6 bg-gradient-to-br from-slate-800/80 via-slate-800/50 to-slate-900/50 border border-slate-700/50 hover:border-slate-600 transition-all duration-300">
+              {/* Product name label - visible only on mobile */}
+              <p className="text-xs font-semibold text-slate-400 mb-2 md:hidden uppercase tracking-wider">
+                Product 1: {products.first.brand || 'Unknown Brand'}
+              </p>
               <h3 className="text-base font-bold text-white mb-4 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-md bg-red-500/20 border border-red-500/30 flex items-center justify-center flex-shrink-0">
                   <AlertCircle size={16} className="text-red-400" />
@@ -401,6 +324,10 @@ export default function ProductComparisonView({
             </Card>
 
             <Card className="p-6 bg-gradient-to-br from-slate-800/80 via-slate-800/50 to-slate-900/50 border border-slate-700/50 hover:border-slate-600 transition-all duration-300">
+              {/* Product name label - visible only on mobile */}
+              <p className="text-xs font-semibold text-slate-400 mb-2 md:hidden uppercase tracking-wider">
+                Product 2: {products.second.brand || 'Unknown Brand'}
+              </p>
               <h3 className="text-base font-bold text-white mb-4 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-md bg-red-500/20 border border-red-500/30 flex items-center justify-center flex-shrink-0">
                   <AlertCircle size={16} className="text-red-400" />
@@ -447,7 +374,6 @@ export default function ProductComparisonView({
           </div>
         </div>
       </div>
-    </div>
     </div>
   )
 }
