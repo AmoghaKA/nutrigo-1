@@ -1,8 +1,9 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Package } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { useEffect, useRef } from "react"
 
 export default function HeroSection() {
@@ -140,62 +141,24 @@ export default function HeroSection() {
 
           {/* Right Visual */}
           <div className="relative flex items-center justify-center mt-8 md:mt-0 md:items-start md:pt-0">
-            <div className="md:sticky md:top-24 w-full max-w-[320px] sm:max-w-[340px] md:max-w-none">
+            <div className="md:sticky md:top-24 w-full max-w-[290px] sm:max-w-[320px] md:max-w-none">
               <div className="relative mx-auto">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/30 via-teal-500/30 to-cyan-500/30 rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] blur-2xl sm:blur-3xl animate-pulse-slow"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/30 via-teal-500/30 to-cyan-500/30 rounded-[2rem] sm:rounded-[2.25rem] md:rounded-[2.5rem] blur-2xl sm:blur-3xl animate-pulse-slow"></div>
 
                 <div className="relative perspective-1000">
-                  <div className="relative w-full aspect-[4/5] sm:w-[280px] sm:h-[450px] md:w-80 md:h-[500px] mx-auto transform-gpu md:hover:rotate-y-6 transition-transform duration-700 ease-out">
-                    {/* Phone Frame */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] border-2 sm:border-3 md:border-4 border-emerald-500/30 shadow-2xl shadow-emerald-500/20 backdrop-blur-xl overflow-hidden">
-                      {/* Screen Content */}
-                      <div className="p-4 sm:p-5 md:p-6 h-full flex flex-col items-center justify-center space-y-4 sm:space-y-5 md:space-y-6">
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-2xl sm:rounded-2xl md:rounded-3xl flex items-center justify-center shadow-2xl shadow-emerald-500/50 animate-float">
-                          <Package size={36} className="sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
-                        </div>
-
-                        <div className="space-y-2 sm:space-y-2.5 md:space-y-3 text-center">
-                          <p className="text-lg sm:text-xl md:text-xl font-bold text-white">Scan & Analyze</p>
-                          <p className="text-xs sm:text-sm md:text-sm text-slate-400">Real-time AI nutrition insights</p>
-                        </div>
-
-                        {/* Scan Animation */}
-                        <div className="w-full h-24 sm:h-28 md:h-32 relative bg-slate-800/50 rounded-xl sm:rounded-xl md:rounded-2xl overflow-hidden border border-emerald-500/30">
-                          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/30 to-transparent h-6 sm:h-7 md:h-8 animate-scan"></div>
-                          <div className="flex items-center justify-center h-full">
-                            <span className="text-3xl sm:text-3xl md:text-4xl">🧃</span>
-                          </div>
-                        </div>
-
-                        {/* Health Score */}
-                        <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 rounded-xl sm:rounded-xl md:rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5 md:px-6 md:py-4 backdrop-blur-xl w-full max-w-[200px] sm:max-w-[220px] md:max-w-none">
-                          <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3 justify-center md:justify-start">
-                            <div className="text-2xl sm:text-2xl md:text-3xl font-black text-emerald-400">92</div>
-                            <div className="text-left">
-                              <p className="text-[10px] sm:text-xs md:text-xs text-slate-400">Health Score</p>
-                              <p className="text-xs sm:text-sm md:text-sm font-semibold text-white">Excellent Choice</p>
-                            </div>
-                          </div>
-                        </div>
+                  <div className="relative w-full aspect-[9/19] sm:w-[270px] sm:h-[560px] md:w-[290px] md:h-[600px] mx-auto transform-gpu md:hover:rotate-y-4 transition-transform duration-700 ease-out">
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 rounded-[2rem] sm:rounded-[2.25rem] md:rounded-[2.5rem] border-2 border-emerald-500/30 shadow-2xl shadow-emerald-500/20 overflow-hidden">
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-4 bg-slate-900 rounded-full border border-slate-800"></div>
+                      <div className="absolute inset-3 sm:inset-4 rounded-[1.6rem] sm:rounded-[1.8rem] overflow-hidden bg-slate-900">
+                        <Image
+                          src="/phone-screen.png"
+                          alt="Nutrigo app screen"
+                          fill
+                          sizes="(min-width: 768px) 260px, 70vw"
+                          className="object-cover"
+                          priority
+                        />
                       </div>
-
-                      {/* Glow */}
-                      <div className="absolute inset-0 rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-0 md:hover:opacity-20 blur-xl transition-opacity duration-500"></div>
-                    </div>
-
-                    {/* Floating Icons - Hidden on very small mobile, shown on larger screens */}
-                    <div
-                      className="hidden sm:flex absolute -top-4 -right-4 sm:-top-5 sm:-right-5 md:-top-6 md:-right-6 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl sm:rounded-xl md:rounded-2xl items-center justify-center shadow-xl shadow-emerald-500/40 animate-float"
-                      style={{ animationDelay: "0.5s" }}
-                    >
-                      <span className="text-xl sm:text-xl md:text-2xl">📊</span>
-                    </div>
-
-                    <div
-                      className="hidden sm:flex absolute -bottom-4 -left-4 sm:-bottom-5 sm:-left-5 md:-bottom-6 md:-left-6 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-cyan-400 to-emerald-500 rounded-xl sm:rounded-xl md:rounded-2xl items-center justify-center shadow-xl shadow-cyan-500/40 animate-float"
-                      style={{ animationDelay: "1s" }}
-                    >
-                      <span className="text-xl sm:text-xl md:text-2xl">🏷️</span>
                     </div>
                   </div>
                 </div>
