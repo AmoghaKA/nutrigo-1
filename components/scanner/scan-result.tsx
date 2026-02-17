@@ -617,10 +617,10 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
       const healthScore = data.healthScore ?? 0
       const scoreStatus = 
         healthScore >= 70
-          ? "⭐ Excellent Choice"
+          ? "Excellent Choice"
           : healthScore >= 50
-          ? "⚠️ Moderate"
-          : "❌ Not Recommended"
+          ? "Moderate"
+          : "Not Recommended"
 
       const scoreColor: [number, number, number] = healthScore >= 70 ? successGreen : healthScore >= 50 ? [59, 130, 246] : warningRed
       
@@ -764,7 +764,7 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
           pdf.setLineWidth(0.4)
           pdf.rect(margin, yPosition - 2.5, contentWidth, 8)
 
-          const splitWarning = pdf.splitTextToSize(`⚠ ${warning}`, contentWidth - 8)
+          const splitWarning = pdf.splitTextToSize(`! ${warning}`, contentWidth - 8)
           pdf.text(splitWarning, margin + 5, yPosition + 2)
           
           yPosition += 9
