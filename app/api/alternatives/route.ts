@@ -1,5 +1,53 @@
 import { NextResponse } from "next/server";
 
+export async function POST(request: Request) {
+  try {
+    // Get the request body
+    const body = await request.json();
+    
+    console.log(`🔄 POST request to alternatives API:`, body);
+
+    // Forward the POST request to backend
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:4000';
+    const url = `${backendUrl}/api/alternatives`;
+    
+    console.log(`🔄 Forwarding POST request to backend: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    
+    // Get response body as text first
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      console.error(`❌ Backend error (${response.status}):`, responseText);
+      throw new Error(`Backend returned ${response.status}: ${responseText}`);
+    }
+
+    try {
+      // Try to parse the response as JSON
+      const data = JSON.parse(responseText);
+      console.log(`✅ Received ${data.length} alternatives from backend`);
+      return NextResponse.json(data);
+    } catch (parseError) {
+      console.error("❌ Failed to parse backend response:", responseText);
+      throw new Error("Invalid JSON response from backend");
+    }
+  } catch (error) {
+    console.error("❌ Error in alternatives POST API route:", error);
+    return NextResponse.json(
+      { 
+        error: "Failed to fetch alternatives",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET(request: Request) {
   try {
     // Get minScore from URL params

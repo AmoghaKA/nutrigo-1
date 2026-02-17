@@ -189,6 +189,24 @@ export default function AlternativesPage() {
             <p className="font-semibold mb-2 text-sm sm:text-base">Error: {error}</p>
             <p className="text-xs sm:text-sm text-red-300">Please try again later or contact support if the issue persists.</p>
           </Card>
+        ) : alternatives.length === 0 ? (
+          <Card className="p-6 sm:p-8 md:p-12 text-center bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-emerald-500/20 rounded-xl">
+            <div className="max-w-md mx-auto space-y-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
+                <Leaf className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-white">No Alternatives Found</h3>
+              <p className="text-slate-400 text-sm sm:text-base">
+                We couldn't find specific alternatives for your scanned product yet. Try scanning another item or check back later as we're constantly updating our database!
+              </p>
+              <Button 
+                onClick={() => window.location.href = '/dashboard/scanner'} 
+                className="mt-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400"
+              >
+                Scan Another Product
+              </Button>
+            </div>
+          </Card>
         ) : (
           <div className="space-y-6 sm:space-y-8">
             {/* Alternatives Grid - Responsive */}

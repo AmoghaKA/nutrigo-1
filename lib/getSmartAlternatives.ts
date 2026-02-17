@@ -89,20 +89,19 @@ export async function getSmartAlternatives(
 
   console.log(`Detected category: ${category}, subcategory: ${subCategory}`);
 
-  // 2. Fetch alternatives from backend
+  // 2. Fetch alternatives from Next.js API route (which forwards to backend)
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-    console.log(`📡 Fetching alternatives from: ${backendUrl}/api/alternatives`);
+    const apiUrl = '/api/alternatives';
+    console.log(`📡 Fetching alternatives from: ${apiUrl}`);
+    console.log(`📦 Request payload:`, {
+      category,
+      subCategory,
+      currentHealthScore: scannedProduct.health_score,
+      currentProduct: scannedProduct.detected_name,
+      currentBrand: scannedProduct.brand
+    });
     
-    // Test backend connection first if not in production
-    if (typeof window !== 'undefined' && !process.env.NODE_ENV?.includes('prod')) {
-      const isConnected = await testBackendConnection(backendUrl);
-      if (!isConnected) {
-        console.warn('⚠️ Backend may not be reachable, will use fallback');
-      }
-    }
-    
-    const response = await fetch(`${backendUrl}/api/alternatives`, {
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -124,17 +123,14 @@ export async function getSmartAlternatives(
     console.log(`✅ Fetched ${alternatives.length} alternatives from API`);
 
     // 3. Filter and rank alternatives
+    // Don't filter too aggressively - show alternatives even if they're similar in health score
     return alternatives
-      .filter((alt: Alternative) => {
-        // Only show products with better health scores
-        return alt.health_score > scannedProduct.health_score;
-      })
       .map((alt: Alternative) => ({
         ...alt,
         matchScore: calculateMatchScore(alt, scannedProduct, subCategory)
       }))
       .sort((a: Alternative, b: Alternative) => b.matchScore - a.matchScore)
-      .slice(0, 9); // Top 9 alternatives
+      .slice(0, 12); // Top 12 alternatives
 
   } catch (error) {
     console.error('❌ Error fetching alternatives:', error);
@@ -166,13 +162,24 @@ function calculateMatchScore(
   let score = 0;
 
   // Health score improvement (40% weight)
+  // Give points even if equal or slightly worse (more lenient)
   const scoreDiff = alternative.health_score - scanned.health_score;
-  score += (scoreDiff / 100) * 40;
+  if (scoreDiff >= 10) {
+    score += 40; // Much better
+  } else if (scoreDiff >= 0) {
+    score += 30; // Better or equal
+  } else if (scoreDiff >= -10) {
+    score += 20; // Slightly worse but close
+  } else {
+    score += 10; // Less healthy but still show
+  }
 
   // Same subcategory (30% weight)
   const altSubCategory = getSubCategory(alternative.name, detectProductCategory(alternative.name, []));
   if (altSubCategory === subCategory) {
     score += 30;
+  } else {
+    score += 10; // Different subcategory but still relevant
   }
 
   // Similar calorie range (20% weight)
@@ -181,10 +188,13 @@ function calculateMatchScore(
   );
   if (calorieDiff < 50) score += 20;
   else if (calorieDiff < 100) score += 10;
+  else score += 5;
 
   // Different brand (10% weight) - prefer alternatives from different brands
   if (alternative.brand !== scanned.brand) {
     score += 10;
+  } else {
+    score += 5; // Same brand is okay too
   }
 
   return score;
