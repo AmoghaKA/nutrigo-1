@@ -20,13 +20,18 @@
 
 - [🎯 About the Project](#-about-the-project)
 - [✨ Features](#-features)
+- [🍟 Supported Packaged Food Categories](#-supported-packaged-food-categories)
 - [🛠️ Tech Stack](#-tech-stack)
+- [📂 Project Structure](#-project-structure)
+- [🏗️ Architecture & API Reference](#-architecture--api-reference)
 - [🚀 Getting Started](#-getting-started)
 - [💻 Usage](#-usage)
 - [📱 Dashboard Features](#-dashboard-features)
 - [🤖 AI-Powered Tools](#-ai-powered-tools)
+- [🐳 Docker & Deployment](#-docker--deployment)
 - [👥 Our Team](#-our-team)
-- [📝 License](#-license)
+- [📄 License](#-license)
+- [📞 Contact & Support](#-contact--support)
 
 ---
 
@@ -125,10 +130,12 @@ Create your personal collection of packaged foods:
 
 ### 🔐 **User Authentication**
 Secure and easy account management:
-- Sign up and login with email
-- User profile management and preferences
-- Personalized dietary preferences
-- Secure data storage with Supabase
+- Sign up and login with email/password
+- **Google OAuth** one-click sign-in integration
+- User profile management (name, phone, location, bio)
+- Supabase Auth with session refresh middleware
+- Protected routes — middleware redirects unauthenticated users to login
+- JWT-based backend authentication with bcrypt password hashing
 - Privacy-first approach to your health data
 
 ### 🔄 **Product Comparisons**
@@ -156,68 +163,408 @@ Set and track personal health objectives:
 
 ### 📱 **Responsive Design**
 Seamless experience across all devices:
-- Mobile-optimized interface
-- Tablet compatibility
-- Desktop full experience
-- Fast loading and smooth animations
+- Mobile-optimized interface with touch-friendly controls
+- Tablet compatibility with adaptive layouts
+- Desktop full experience with sidebar navigation
+- **Framer Motion** animations and smooth transitions
+- Floating navbar with scroll-aware transparency
 
-### 🌍 **Multi-Platform Support**
-Available on multiple platforms:
-- Web application
-- Mobile-responsive design
-- Easy access from any device
+### 🌗 **Dark/Light Theme**
+Full theme support powered by `next-themes`:
+- Dark mode by default with rich gradient backgrounds
+- Light mode support via theme toggle
+- System preference detection
+- Persistent theme preference across sessions
+
+### 🎭 **Animated Login Experience**
+Interactive and delightful authentication pages:
+- Animated mascot that follows your cursor on the login page
+- Mascot covers its eyes when you type your password
+- Happy expression on successful login
+- Starfield background animation with 60 animated stars
+- Google OAuth button with animated icon
+- Remember Me functionality
 
 ---
 
-## � Supported Packaged Food Categories
+## 🍟 Supported Packaged Food Categories
 
 NutriGo scans and analyzes products across all major Indian packaged food categories:
 
-- 🍟 **Snacks & Chips** - Lay's, Bingo, Kurkure, Cheetos
-- 🍪 **Biscuits & Cookies** - Britannia, ITC, Sunfeast, Oreo
-- 🥣 **Breakfast Cereals** - Kellogg's, Quaker Oats, Maggi
-- 🧂 **Instant Foods** - Maggi Noodles, Top Ramen, Haldiram's
-- 🍫 **Chocolates & Candy** - Cadbury, Nestlé, Amul
-- 🥛 **Beverages** - Tropica, Real, Minute Maid, Amul Kool
-- 🍯 **Spreads & Jams** - Amul, Kissan, Britannia
-- 🥜 **Nuts & Dry Fruits** - Yoga Bar, Slurrp Farm, Nutriorg
-- 🍕 **Ready-to-Eat** - Everest, MDH, Rajah Spices
-- 💊 **Protein & Health Products** - Yoga Bar, Slurrp Farm, Organa
+- 🍟 **Snacks & Chips** — Lay's, Bingo, Kurkure, Cheetos, Makhana, Popcorn
+- 🍪 **Biscuits & Cookies** — Britannia, ITC, Sunfeast, Oreo, Parle-G
+- 🥣 **Breakfast Cereals** — Kellogg's, Quaker Oats, Bagrry's, Muesli, Granola
+- 🍜 **Noodles & Pasta** — Maggi, Yippee, Top Ramen, Pasta, Vermicelli
+- 🧂 **Instant Mixes** — Dosa mix, Idli mix, Upma mix, Dhokla mix
+- 🍫 **Chocolates & Sweets** — Cadbury, Nestlé, Amul, KitKat, Dairy Milk
+- 🥛 **Beverages** — Tropicana, Real, Coca-Cola, Pepsi, Frooti, Paper Boat
+- 🥛 **Dairy** — Amul, Mother Dairy, Paneer, Cheese, Yogurt, Ghee
+- 🍯 **Spreads & Jams** — Peanut Butter, Nutella, Kissan, Honey
+- 🍞 **Bread** — Sliced bread, Pav, Buns, Sandwich bread
+- 🧊 **Frozen Foods** — Paratha, Samosa, Spring Roll, Nuggets
+- 🥒 **Pickles** — Priya, Mother's Recipe, Patanjali
+- 🥫 **Condiments** — Ketchup, Sauce, Mayonnaise, Chutney, Masala
+- 💪 **Health Drinks** — Horlicks, Bournvita, Boost, Complan, Protinex
+- 🥜 **Nuts & Dry Fruits** — Happilo, Farmley, Trail Mix, Roasted Makhana
+- 🌾 **Grains & Flour** — Rice, Wheat, Atta, Quinoa, Ragi, Jowar
+- 💊 **Protein & Health Products** — Yoga Bar, Slurrp Farm, Whey Protein
 
 Each product is analyzed for optimal nutrition and health impact!
+
+### 📥 **PDF Export & Sharing**
+Download and share scan results and comparisons:
+- Export scan results as professional PDF reports (jsPDF + html2canvas)
+- Export side-by-side product comparisons as landscape PDFs
+- Share results via Web Share API or clipboard
+- Generate shareable comparison summary text
+- Dark-themed PDF reports with A4 formatting and multi-page support
+
+### 🗣️ **Voice Interaction (TTS & STT)**
+Full voice support powered by Sarvam AI and Web Speech API:
+- **Text-to-Speech**: Sarvam AI (`bulbul:v1` model) with Indian English voice (`vidya` speaker)
+- **Speech-to-Text**: WebKit Speech Recognition for hands-free chatbot input
+- Browser-based TTS fallback when Sarvam API is unavailable
+- RecordRTC integration for audio recording capabilities
+- Real-time interim transcript display during voice input
+
+### 🔬 **Advanced Health Score Engine**
+Category-specific scoring with transparent breakdown:
+- **8 specialized scoring algorithms**: Beverage, Snack, Dairy, Packaged Food, Breakfast Cereal, Frozen Food, Condiment, Dessert
+- Detailed score breakdown showing penalties and bonuses with reasons
+- Score interpretation: Excellent (85+), Good (70+), Moderate (50+), Poor (30+), Very Poor (<30)
+- Confidence adjustment based on data completeness
+- Per-100g normalization for fair comparison
+
+### 🤖 **Multi-Layer Food Recognition Pipeline**
+Intelligent 4-step product identification:
+1. **Tesseract.js OCR** — Extract barcode numbers and text from images
+2. **OpenFoodFacts API** — Barcode lookup against global food database
+3. **OpenFoodFacts Text Search** — Fallback search by product name
+4. **Gemini 2.5 Flash Vision** — AI-powered image analysis with nutrition prediction when labels aren't visible
+
+### 🏷️ **Smart Category Detection**
+Automatic product categorization with subcategory support:
+- Detects 15+ categories: snacks, biscuits, beverages, sweets, dairy, grains, proteins, noodles, cereal, condiments, frozen, pickles, bread, spreads, health drinks, instant mixes
+- Subcategory detection (e.g., chips → chips/namkeen/popcorn, biscuits → cream/digestive/cookies)
+- Both frontend and backend implementations with regex-based pattern matching
+
+### 🛒 **Quick Commerce Integration**
+Direct purchase links to India's top delivery platforms:
+- **Blinkit** — 10-20 minute delivery links
+- **Zepto** — Ultra-fast delivery links
+- **Swiggy Instamart** — Quick grocery delivery links
+- **BigBasket** — Online grocery delivery links
+- Auto-generated search URLs for every alternative product
+
+### 💰 **Pricing & Subscription Tiers**
+Three-tier pricing model with yearly discounts:
+- **NutriGo (Free)** — 5 scans/day, basic health score, food comparisons
+- **NutriPlus (₹249/mo)** — Unlimited scans, detailed nutrients, AI insights, weekly reports, no ads
+- **NutriPro (₹499/mo)** — Everything in Plus + health goals, advanced analytics, hydration tracker, expert consultation
+- Monthly/yearly billing toggle with 17% yearly savings
+
+### 🧠 **CatBoost ML Model**
+Machine learning health score prediction:
+- CatBoost Regressor trained on `Indian_Packaged_Food.csv` dataset
+- Feature engineering: protein-to-calorie ratio, fat-to-calorie ratio, sugar-to-carb ratio, macronutrient balance, calorie density
+- RobustScaler normalization with 3-fold cross-validation
+- Model artifacts: `health_score_catboost_model.pkl`, `health_score_scaler.pkl`, `feature_columns.pkl`
+
+### 📊 **Dashboard Analytics**
+Rich data visualization with Recharts:
+- Weekly scan activity bar charts
+- Health score trend line charts
+- Streak tracking (consecutive days of scanning)
+- Healthy choices percentage calculation
+- Average health score aggregation
+
+### 🍽️ **Meal Tracking**
+Food record management by meal type:
+- Track scans by meal: breakfast, lunch, dinner, snack
+- Servings count per food record
+- Notes per scan entry
+- Aggregated average health score over configurable time periods (30-day default)
+- Indexed queries by user + meal type + date for fast lookups
+
+### 🔔 **Toast Notifications**
+Real-time feedback via Sonner toast system:
+- Success/error/info toast notifications across all actions
+- Scan saved, favorite toggled, PDF downloaded, profile updated confirmations
+- Auto-dismiss toasts with smooth animations
+- Global Toaster component on all dashboard pages
+
+### 🧩 **50+ UI Components**
+Comprehensive component library built on Radix UI + shadcn/ui:
+- Accordion, Alert Dialog, Avatar, Badge, Breadcrumb, Button, Calendar
+- Card, Carousel, Chart, Checkbox, Collapsible, Command Palette
+- Context Menu, Dialog, Drawer, Dropdown Menu, Form, Hover Card
+- Input, Input OTP, Label, Menubar, Navigation Menu, Pagination
+- Popover, Progress, Radio Group, Resizable Panels, Scroll Area
+- Select, Sheet, Sidebar, Skeleton, Slider, Switch, Table, Tabs
+- Textarea, Toast, Toggle, Tooltip, and more
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Next.js 14+** - React framework for production
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first styling
-- **Radix UI** - Accessible component library
-- **Recharts** - Data visualization
-- **React Hook Form** - Form management
+- **Next.js 16+** — React framework with App Router
+- **TypeScript** — Type-safe development
+- **Tailwind CSS v4** — Utility-first styling
+- **Radix UI** — Full accessible component library (50+ components)
+- **Recharts** — Data visualization (bar/line charts)
+- **React Hook Form + Zod** — Form management with schema validation
+- **Framer Motion** — Smooth animations and transitions
+- **jsPDF + html2canvas** — PDF generation from DOM
+- **Vercel Analytics** — Production analytics
+- **Sonner** — Toast notification system
+- **Lucide React** — Icon library
+- **date-fns** — Date manipulation
+- **cmdk** — Command palette component
+- **next-themes** — Dark/Light theme system with system preference detection
+- **RecordRTC** — Audio recording capabilities for voice input
 
 ### Backend
-- **Express.js** - Node.js web framework
-- **TypeScript** - Type safety
-- **Tesseract.js/OCR** - Text recognition from images
-- **Supabase** - PostgreSQL database and auth
+- **Express.js** — Node.js web framework with TypeScript
+- **Tesseract.js** — OCR text recognition from food label images
+- **Mongoose/MongoDB** — Document database for products, users, food records, subscriptions
+- **Supabase (PostgreSQL)** — Primary database for scans, comparisons; Row Level Security
+- **Winston** — Structured logging with file transports (error.log, all.log)
+- **Multer** — File upload handling for image scans
+- **express-validator** — Request validation middleware
+- **JWT + bcrypt** — Authentication with JSON Web Tokens and password hashing
+- **node-cron** — Scheduled job infrastructure (cleanup jobs)
+- **Morgan** — HTTP request logging
 
 ### AI & ML
-- **Google Generative AI** - Advanced AI processing
-- **LangChain** - AI framework integration
-- **Google Cloud Text-to-Speech** - Voice synthesis
+- **Google Gemini 2.5 Flash** — Vision AI for food label analysis and nutrition prediction
+- **Google Gemini 1.5 Flash** — Text-based food analysis fallback
+- **Google Generative AI** — Chatbot responses with knowledge base grounding
+- **LangChain** — AI framework integration (community + Google GenAI)
+- **Sarvam AI** — Indian English text-to-speech (`bulbul:v1` model)
+- **CatBoost** — ML health score regression model (Python)
+- **scikit-learn** — Feature engineering, scaling, cross-validation
+
+### Data Sources
+- **OpenFoodFacts API** — Global food product database (barcode + text search)
+- **Indian Packaged Food CSV** — Training dataset for ML model
+- **Knowledge Base FAQ** — 25+ curated Q&As about Indian packaged food brands
 
 ### Infrastructure
-- **Vercel** - Frontend deployment
-- **Docker** - Containerization
-- **Supabase** - Backend services
+- **Vercel** — Frontend deployment with edge middleware
+- **Docker** — Backend containerization (Node.js Alpine)
+- **Docker Compose** — Multi-service setup (app + MongoDB + Redis)
+- **Supabase** — PostgreSQL + Auth + Row Level Security
 
-### APIs & Services
-- **Google Cloud Vision** - Image analysis
-- **Supabase Auth** - Authentication
-- **E-commerce APIs** - Blinkit, Zepto, Swiggy, BigBasket
+### Authentication
+- **Supabase Auth** — Email/password + Google OAuth (via `@supabase/auth-helpers-nextjs`)
+- **JWT (Backend)** — Token-based API authentication with 7-day token expiry
+- **bcryptjs** — Password hashing with salt rounds
+- **Middleware** — Next.js edge middleware for route protection (`/dashboard/*`, `/auth/*`)
+- **Row Level Security** — Supabase RLS policies on `comparisons` table (users can only read/write their own data)
+
+### Testing
+- **Jest** — Unit testing framework
+- **Supertest** — HTTP assertion library for API tests
+- **ts-jest** — TypeScript Jest transformer
+
+---
+
+## 📂 Project Structure
+
+```
+nutrigo/
+├── app/                        # Next.js App Router
+│   ├── page.tsx                # Landing page (Hero, Features, About, CTA)
+│   ├── layout.tsx              # Root layout with theme provider & chatbot
+│   ├── globals.css             # Global styles
+│   ├── api/                    # Next.js API routes (proxy to backend)
+│   │   ├── auth/               # Login, signup, logout endpoints
+│   │   ├── scan/image/         # Image upload proxy
+│   │   ├── scans/              # CRUD for scan records
+│   │   ├── alternatives/       # Alternatives proxy
+│   │   ├── compare/            # Score recalculation proxy
+│   │   ├── tts/sarvam/         # Sarvam AI text-to-speech
+│   │   ├── metrics/            # Dashboard metrics
+│   │   ├── health/             # Health check
+│   │   └── user/profile/       # User profile CRUD
+│   ├── auth/                   # Auth pages (login, signup, callback)
+│   ├── dashboard/              # Protected dashboard routes
+│   │   ├── scanner/            # Camera/upload scanner
+│   │   ├── history/            # Scan history + [id] detail page
+│   │   ├── alternatives/       # Healthier alternatives browser
+│   │   ├── favorites/          # Saved favorites (localStorage)
+│   │   ├── profile/            # Editable user profile
+│   │   └── settings/           # App settings & preferences
+│   └── pricing/                # Subscription pricing page
+├── backend/                    # Express.js backend service
+│   ├── src/
+│   │   ├── app.ts              # Express app setup with CORS & routes
+│   │   ├── server.ts           # Server entry point
+│   │   ├── routes/             # API route handlers
+│   │   ├── controllers/        # Request handlers (scan, auth, products, history)
+│   │   ├── services/           # Business logic (chatbot, product, auth)
+│   │   ├── models/             # Mongoose schemas (User, Product, FoodRecord, Subscription)
+│   │   ├── middlewares/        # Auth, validation, error handling
+│   │   ├── lib/                # External APIs (OpenFoodFacts, Supabase)
+│   │   ├── utils/              # Health score calculator, category detector, logger, HTTP client
+│   │   ├── knowledge-base/     # FAQ JSON for chatbot grounding
+│   │   ├── config/             # Environment config
+│   │   ├── jobs/               # Scheduled cleanup jobs (node-cron)
+│   │   └── scripts/            # DB migrations & seed scripts
+│   ├── Dockerfile              # Node.js 18 Alpine container
+│   └── docker-compose.yml      # App + MongoDB + Redis stack
+├── components/                 # Reusable React components
+│   ├── scanner/                # Scan result, comparison, score breakdown components
+│   ├── landing/                # Landing page sections (hero, features, about, nav, footer)
+│   ├── ui/                     # 50+ shadcn/ui components (Radix-based)
+│   ├── ChatbotWidget.tsx       # Floating AI chatbot with voice I/O
+│   └── theme-provider.tsx      # Dark/Light theme provider (next-themes)
+├── lib/                        # Frontend utilities & API clients
+│   ├── api.ts                  # Auth, scans, comparisons API client
+│   ├── health-score.ts         # Client-side health score calculation
+│   ├── categoryDetector.ts     # 15+ category detection with subcategories
+│   ├── comparisonUtils.ts      # Product comparison math & share text
+│   ├── comparisonApi.ts        # Comparison CRUD API client
+│   ├── comparisonContext.ts    # TypeScript types for comparison feature
+│   ├── pdf-utils.ts            # PDF generation from DOM (jsPDF + html2canvas)
+│   ├── getSmartAlternatives.ts # Smart alternative fetcher with match scoring
+│   ├── mockAlternatives.ts     # 890+ lines of static healthy alternatives
+│   ├── constants.ts            # App routes, health score ranges
+│   └── supabaseClient.js       # Frontend Supabase client
+├── model.py                    # CatBoost ML model training script
+├── Indian_Packaged_Food.csv    # Training dataset for ML model
+├── middleware.ts               # Next.js edge middleware (auth route protection)
+└── hooks/                      # Custom React hooks (useToast, useMobile)
+```
+
+---
+
+## 🏗️ Architecture & API Reference
+
+### Frontend API Routes (`app/api/`)
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/auth/login` | POST | Mock login with deterministic user ID from email |
+| `/api/auth/signup` | POST | Mock signup with email, password, name |
+| `/api/auth/logout` | POST | Clear session |
+| `/api/scan/image` | POST | Forward image upload to backend for OCR + AI analysis |
+| `/api/scans` | GET | Fetch all scans for a user (by `userId` query param) |
+| `/api/scans` | POST | Save a new scan record to Supabase |
+| `/api/scans` | DELETE | Delete a scan (ownership verified) |
+| `/api/scans/[id]` | GET | Fetch single scan detail by ID |
+| `/api/scans/[id]` | DELETE | Delete specific scan |
+| `/api/alternatives` | GET/POST | Proxy to backend alternatives API |
+| `/api/compare/recalculate-scores` | POST | Forward score recalculation to backend |
+| `/api/health` | GET | Health check endpoint |
+| `/api/metrics` | GET | Dashboard metrics (total scans, avg score, streak) |
+| `/api/tts/sarvam` | POST | Sarvam AI text-to-speech (Indian English, WAV format) |
+| `/api/user/profile` | GET/PUT | User profile CRUD |
+
+### Backend API Routes (`backend/src/routes/`)
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/scan/image` | POST | Image upload → OCR → OpenFoodFacts → Gemini Vision pipeline |
+| `/api/scan/barcode` | POST | Barcode lookup via OpenFoodFacts + Gemini fallback |
+| `/api/scan/history` | GET | Fetch all scan history from Supabase |
+| `/api/alternatives` | GET/POST | Smart alternatives with Gemini AI + static fallback DB (3000+ lines) |
+| `/api/chatbot/chat` | POST | Knowledge-base grounded chatbot via Gemini |
+| `/api/chatbot/health` | GET | Chatbot service health check |
+| `/api/compare/save` | POST | Save comparison between two products |
+| `/api/compare/history` | GET | User's comparison history |
+| `/api/compare/:id` | GET/DELETE | Get or delete specific comparison |
+| `/api/compare/recalculate-scores` | POST | Recalculate health scores with detailed breakdown |
+| `/api/auth/register` | POST | User registration (MongoDB + bcrypt) |
+| `/api/auth/login` | POST | JWT token-based login |
+| `/api/auth/me` | GET | Protected route — get current user |
+| `/api/products/alternatives` | GET | Healthier alternatives from Supabase (by minScore) |
+| `/api/health` | GET | Backend health check with available routes |
+
+### Frontend Pages
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | Landing | Hero, Features, Market stats, About team, CTA, Footer |
+| `/auth/login` | Login | Email/password + Google OAuth with animated mascot |
+| `/auth/signup` | Signup | Registration with password confirmation + Google OAuth |
+| `/auth/callback` | OAuth Callback | Handles Supabase OAuth redirect |
+| `/pricing` | Pricing | 3-tier subscription plans with monthly/yearly toggle |
+| `/dashboard` | Dashboard Home | Stats cards, weekly charts, recent scans, streak tracker |
+| `/dashboard/scanner` | Scanner | Camera capture + file upload → AI analysis → results |
+| `/dashboard/history` | Scan History | All scans with search, filter by category, sort by date/score/calories/sugar |
+| `/dashboard/history/[id]` | Scan Detail | Full nutrition breakdown, ingredients, warnings for a single scan |
+| `/dashboard/alternatives` | Alternatives | Browse healthier alternatives with purchase links |
+| `/dashboard/favorites` | Favorites | Saved favorite products (localStorage per user) |
+| `/dashboard/profile` | Profile | Edit name, email, phone, location, bio; view subscription plan |
+| `/dashboard/settings` | Settings | Notifications, dark mode, daily reminders, privacy controls |
+
+### Backend Models (Mongoose)
+
+| Model | Fields | Purpose |
+|-------|--------|---------|
+| **User** | name, email, password, subscription_tier | User accounts with bcrypt passwords |
+| **Product** | barcode, name, brand, nutrition, ingredients_text, image_url, health_score | Cached product data from OpenFoodFacts |
+| **FoodRecord** | user, product, scanDate, servings, mealType, notes, healthScore | Meal tracking with aggregation queries |
+| **Subscription** | user, type (free/premium), status, startDate, endDate, paymentHistory, features | Subscription management with TTL index |
+
+### Database (Supabase - PostgreSQL)
+
+| Table | Key Columns | Purpose |
+|-------|-------------|---------|
+| **scans** | id, user_id, product_name, detected_name, brand, category, barcode, health_score, nutrition (JSONB), ingredients, warnings, source | All scan records |
+| **comparisons** | id, user_id, product_1_id, product_2_id, winner_id | Product comparison history with RLS policies |
+| **profiles** | id, full_name, phone, location, bio, subscription_plan | User profile extensions |
+
+### Key Scanner Components
+
+| Component | File | Description |
+|-----------|------|-------------|
+| `ScanResult` | `components/scanner/scan-result.tsx` | Full scan results with nutrition, score, alternatives, comparison, PDF download, share, favorite |
+| `ProductComparisonView` | `components/scanner/ProductComparisonView.tsx` | Side-by-side comparison with VS badge, winner detection, PDF export |
+| `HealthScoreComparison` | `components/scanner/HealthScoreComparison.tsx` | Health score visual comparison with score breakdown |
+| `NutritionComparison` | `components/scanner/NutritionComparison.tsx` | Metric-by-metric nutrition diff with percentage indicators |
+| `ScoreBreakdownCard` | `components/scanner/ScoreBreakdownCard.tsx` | Expandable penalties/bonuses breakdown card |
+| `ComparisonCard` | `components/scanner/ComparisonCard.tsx` | Individual product card in comparison view |
+| `ScanLoadingPortal` | `components/scanner/scan-loading-portal.tsx` | Full-screen loading portal during scan processing |
+| `ChatbotWidget` | `components/ChatbotWidget.tsx` | Floating chatbot with voice I/O, Sarvam TTS, WebKit STT |
+
+### Backend Services & Utilities
+
+| File | Purpose |
+|------|---------|
+| `services/chatbot.service.ts` | Gemini 2.5 Flash chatbot with knowledge base loading from multiple paths |
+| `services/product.service.ts` | Product fetch/cache: OpenFoodFacts → MongoDB with health score calculation |
+| `utils/healthScoreCalculator.ts` | 1028-line scoring engine with 8 category-specific algorithms + breakdown |
+| `utils/categoryDetector.ts` | Regex-based food category + subcategory detection |
+| `utils/httpClient.ts` | Axios client with request/response interceptors and logging |
+| `utils/logger.ts` | Winston logger with console + file transports (error.log, all.log) |
+| `lib/openFoodFacts.ts` | OpenFoodFacts API client (barcode lookup, text search, existence check) |
+| `lib/supabase.ts` | Singleton Supabase client for backend |
+| `middlewares/auth.middleware.ts` | JWT Bearer token verification |
+| `middlewares/error.middleware.ts` | Global error handler with Mongoose/JWT error classification |
+| `middlewares/validate.middleware.ts` | express-validator result handling |
+
+### Frontend Libraries
+
+| File | Purpose |
+|------|---------|
+| `lib/health-score.ts` | Client-side health score calculation with rating + color functions |
+| `lib/categoryDetector.ts` | Extended 15+ category detection for frontend |
+| `lib/comparisonUtils.ts` | Comparison math: diff calculation, winner detection, share text generation |
+| `lib/comparisonContext.ts` | TypeScript types/interfaces for comparison feature + nutrition metrics config |
+| `lib/comparisonApi.ts` | Frontend API client for save/get/delete comparisons |
+| `lib/pdf-utils.ts` | PDF generation from DOM elements (A4, dark theme, multi-page) |
+| `lib/getSmartAlternatives.ts` | Smart alternative fetcher with category detection, match scoring, fallback |
+| `lib/mockAlternatives.ts` | 890+ lines of static healthy alternatives across all categories with purchase links |
+| `lib/api.ts` | Frontend API client for auth, scans, comparisons with safe JSON parsing |
+| `lib/constants.ts` | App routes, health score ranges, nutrition guidelines |
+| `lib/supabaseClient.js` | Frontend Supabase client instance |
+| `middleware.ts` | Next.js edge middleware — session refresh + route protection for `/dashboard/*` |
+| `components/theme-provider.tsx` | Dark/Light theme provider wrapping `next-themes` |
+| `hooks/use-toast.ts` | Custom toast hook for Sonner notification system |
+| `hooks/use-mobile.ts` | Responsive breakpoint detection hook |
 
 ---
 
@@ -256,16 +603,21 @@ Each product is analyzed for optimal nutrition and health impact!
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   BACKEND_URL=http://localhost:4000
+   NEXT_PUBLIC_BACKEND_URL=http://localhost:4000
+   SARVAM_API_KEY=your_sarvam_tts_api_key
    ```
    
    Create `backend/.env`:
    ```env
-   PORT=5000
-   GOOGLE_API_KEY=your_google_api_key
+   PORT=4000
+   GEMINI_API_KEY=your_google_gemini_api_key
    SUPABASE_URL=your_supabase_url
-   SUPABASE_SERVICE_KEY=your_service_key
-   TTS_PROJECT_ID=your_gcp_project_id
-   TTS_API_KEY=your_tts_api_key
+   SUPABASE_KEY=your_supabase_service_key
+   JWT_SECRET=your_jwt_secret
+   MONGO_URI=mongodb://localhost:27017/nutrigo
+   FRONTEND_URL=http://localhost:3000
+   NODE_ENV=development
    ```
 
 4. **Run the application**
@@ -367,35 +719,77 @@ Each product is analyzed for optimal nutrition and health impact!
 
 ## 🤖 AI-Powered Tools
 
-### Smart Scanner
-- Advanced OCR technology reads food labels instantly
-- Scan packaged products from brands like Lay's, Britannia, ITC, Amul
-- Instant label reading and automatic data extraction
-- High accuracy recognition of ingredients and nutrition facts
-- Works with both Indian and international brands
+### Smart Scanner Pipeline
+Multi-step food recognition with intelligent fallbacks:
+1. **Tesseract.js OCR** — Extracts text and barcode numbers from uploaded images
+2. **OpenFoodFacts Barcode Lookup** — Searches global database by detected barcode
+3. **OpenFoodFacts Text Search** — Falls back to text-based product search
+4. **Gemini 2.5 Flash Vision** — Sends raw image to Google AI for product identification, nutrition extraction, and health assessment
+5. **Gemini Text Fallback** — Text-based nutrition analysis when image analysis fails
+- Automatic category and subcategory detection
+- Nutrition prediction when labels aren't visible (with `dataSource: "predicted"` flag)
+- Scan result saved to Supabase with JSONB nutrition column
 
-### Health Score Algorithm
-- Multi-factor analysis of packaged foods
-- Sugar content evaluation - identifies hidden sugars in products
-- Calorie assessment for portion planning
-- Additive detection - warns about artificial preservatives
-- Overall healthiness rating (0-100 scale)
-- Examples: Maggi noodles (score) vs Yoga Bar snacks (score)
+### Health Score Algorithm (v3)
+Category-aware scoring engine (1028 lines) with transparent breakdown:
+- **Beverage scoring**: Sugar/100ml penalties, calorie/100ml weights, protein bonuses for milk drinks
+- **Snack scoring**: Calorie, fat, sodium penalties; protein/fiber bonuses
+- **Dairy scoring**: Saturated fat focus, calcium/protein bonuses
+- **Cereal scoring**: Sugar-per-serving focus, whole grain/fiber bonuses
+- **Dessert scoring**: Aggressive sugar penalties, portion size awareness
+- **Frozen/Condiment/General**: Specialized algorithms per category
+- **Score breakdown**: Returns `baseScore`, `finalScore`, `penalties[]`, `bonuses[]`, `summary`
+- **Score interpretation**: Rating text + color for UI display
+- **Confidence adjustment**: Reduces reliability for incomplete product data
 
 ### AI Chatbot Assistant
-- Natural language processing understands food-related questions
-- Ask about specific products: "Is Britannia Good Day biscuit healthy?"
-- Contextual understanding of your dietary goals
-- 24/7 availability for nutrition queries
-- Voice interaction support for hands-free access
-- Learning from your packaged food preferences
+Knowledge-base grounded chatbot powered by Gemini:
+- **Google Gemini 2.5 Flash** model for response generation
+- **Knowledge base**: 25+ curated FAQ entries about Indian packaged food brands
+- Strict grounding: Only answers from knowledge base, declines unknown questions
+- **Sarvam AI TTS**: Indian English voice synthesis (WAV format, 24kHz, `vidya` speaker)
+- **WebKit Speech Recognition**: Browser-based speech-to-text for voice input
+- Fallback to browser `SpeechSynthesis` if Sarvam API fails
+- Available globally on every page as floating widget
 
-### Recommendation Engine
-- Personalized suggestions based on your scan history
-- Recommends healthier alternatives to junk food
-- Based on your packaged food scanning patterns
-- Aligned with your personal health goals
-- Smart alternatives matching for similar products
+### Product Comparison Engine
+Side-by-side product analysis:
+- Compare any two scanned products with inline scan-another-product flow
+- Health score recalculation via backend with detailed breakdown
+- Nutrition diff calculation with percentage differences and winner indicators
+- 7 tracked metrics: Calories, Sugar, Protein, Fat, Carbs, Sodium, Fiber
+- Configurable `lowerIsBetter` per metric for accurate winner determination
+- Export comparison as landscape PDF or share via Web Share API / clipboard
+
+### Smart Alternatives Recommendation
+Intelligent healthier product suggestions:
+- **AI-powered**: Gemini generates alternatives based on product category
+- **Static fallback**: 3000+ line database covering snacks, chips, biscuits, beverages, dairy, sweets, cereals, namkeen, noodles
+- **Match scoring**: 4 factors — health improvement (40%), subcategory match (30%), calorie similarity (20%), brand diversity (10%)
+- **Purchase links**: Auto-generated URLs for Blinkit, Zepto, Swiggy, BigBasket
+- Top 12 alternatives returned, sorted by match score
+
+---
+
+## 🐳 Docker & Deployment
+
+### Docker Setup
+```bash
+cd backend
+docker-compose up -d
+```
+
+**Services**:
+- `app` — Node.js 18 Alpine backend (port 5000)
+- `mongo` — MongoDB 6 (port 27017, persistent volume)
+- `redis` — Redis Alpine (port 6379, persistent volume)
+
+### Database Migrations
+Run in Supabase SQL editor:
+```sql
+-- Creates comparisons table with RLS policies, indexes, and updated_at trigger
+-- See: backend/src/scripts/001-create-comparisons-table.sql
+```
 
 ---
 
@@ -432,14 +826,18 @@ Meet the dedicated team of innovators building the future of food transparency:
 
 ## 🌟 Key Highlights
 
-✅ **AI-Powered** - Advanced machine learning algorithms  
-✅ **Instant Results** - Get nutrition insights in milliseconds  
-✅ **Beautiful UI** - Modern, intuitive interface  
-✅ **Mobile Optimized** - Works seamlessly on all devices  
-✅ **Secure** - Enterprise-grade security  
-✅ **Free to Start** - Begin with our free tier  
-✅ **India-Focused** - Built for Indian food products  
-✅ **Growing Database** - Constantly updated product library  
+✅ **AI-Powered** — Multi-model AI pipeline (Gemini Vision + OCR + OpenFoodFacts)  
+✅ **Instant Results** — Get nutrition insights in milliseconds  
+✅ **Voice Enabled** — Sarvam AI TTS + WebKit Speech Recognition  
+✅ **Beautiful UI** — 50+ Radix components, Framer Motion animations, dark theme  
+✅ **Mobile Optimized** — Responsive design with touch-friendly controls  
+✅ **PDF Reports** — Export scan results and comparisons as branded PDFs  
+✅ **Secure** — Supabase Auth, JWT, bcrypt, Row Level Security, edge middleware  
+✅ **Free to Start** — Three-tier pricing with generous free plan  
+✅ **India-Focused** — 17+ food categories, 25+ FAQ entries, 890+ static alternatives  
+✅ **ML-Powered** — CatBoost health score model trained on Indian food dataset  
+✅ **Quick Commerce** — Direct links to Blinkit, Zepto, Swiggy, BigBasket  
+✅ **Dockerized** — One-command backend deployment with MongoDB + Redis  
 
 ---
 
