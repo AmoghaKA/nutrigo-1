@@ -9,7 +9,7 @@ import Navigation from "@/components/landing/navigation"
 const pricingPlans = [
   {
     name: "NutriGo",
-    tagline: "For users seeking quick packaged food awareness",
+    tagline: "For users seeking quick nutrition awareness",
     icon: "🌱",
     color: "from-emerald-400 to-teal-500",
     bgColor: "from-emerald-500/10 to-teal-500/10",
@@ -18,10 +18,10 @@ const pricingPlans = [
     priceYearly: 0,
     popular: false,
     features: [
-      { text: "Scan up to 5 packaged products/day", included: true },
-      { text: "Get basic nutrition info", included: true },
+      { text: "Scan up to 5 items/day", included: true },
+      { text: "Get basic product info", included: true },
       { text: "View basic health score", included: true },
-      { text: "Access to food comparisons", included: true },
+      { text: "Access to limited comparisons", included: true },
       { text: "Ad-supported experience", included: true },
       { text: "Detailed nutrient breakdown", included: false },
       { text: "Health summaries or insights", included: false },
@@ -29,22 +29,22 @@ const pricingPlans = [
   },
   {
     name: "NutriPlus",
-    tagline: "For users who want detailed packaged food insights",
+    tagline: "For users who want detailed food insights",
     icon: "🍊",
     color: "from-amber-400 to-orange-500",
     bgColor: "from-amber-500/10 to-orange-500/10",
     borderColor: "border-amber-500/40",
-    priceMonthly: 249,
-    priceYearly: 2490,
+    priceMonthly: 149,
+    priceYearly: 1430,
     popular: true,
     features: [
-      { text: "Unlimited packaged food scans per day", included: true },
+      { text: "Unlimited scans per day", included: true },
       { text: "Detailed breakdown of nutrients", included: true },
       { text: "Food history tracking", included: true },
       { text: "Weekly health summary reports", included: true },
       { text: "Access to AI-powered insights", included: true },
       { text: "No ads", included: true },
-      { text: "Advanced analytics dashboard", included: true },
+      { text: "Advanced analytics dashboard", included: false },
       { text: "Priority feature access", included: false },
     ],
   },
@@ -55,8 +55,8 @@ const pricingPlans = [
     color: "from-orange-400 to-red-500",
     bgColor: "from-orange-500/10 to-red-500/10",
     borderColor: "border-orange-500/40",
-    priceMonthly: 499,
-    priceYearly: 4990,
+    priceMonthly: 249,
+    priceYearly: 2390,
     popular: false,
     features: [
       { text: "Everything in NutriPlus", included: true },
@@ -64,7 +64,7 @@ const pricingPlans = [
       { text: "Advanced analytics dashboard", included: true },
       { text: "Early access to new features", included: true },
       { text: "Priority support & feedback", included: true },
-      { text: "Hydration tracker", included: true },
+      { text: "Side by Side Comparison", included: true },
       { text: "Educational contents", included: true },
       { text: "Expert consultation", included: true },
     ],
@@ -102,7 +102,7 @@ export default function PricingPage() {
             </h1>
 
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed px-4">
-              Start free, upgrade when you need more. All plans include AI-powered packaged food nutrition insights.
+              Start free, upgrade when you need more. All plans include AI-powered nutrition insights.
             </p>
 
             {/* Enhanced Billing Toggle - Responsive */}
@@ -127,7 +127,7 @@ export default function PricingPage() {
               >
                 Yearly
                 <span className="absolute -top-1.5 sm:-top-2 -right-1.5 sm:-right-2 px-1.5 sm:px-2 py-0.5 bg-amber-500 text-white text-[9px] sm:text-[10px] font-black rounded-full animate-pulse">
-                  -17%
+                  -20%
                 </span>
               </button>
             </div>
