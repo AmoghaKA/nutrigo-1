@@ -987,41 +987,58 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
       {/* Compare Choice Modal */}
       {showCompareModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <Card className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-xl">
-            <div className="p-6 space-y-4">
-              <div className="text-center space-y-1">
-                <h2 className="text-xl font-bold text-white">Compare Product</h2>
-                <p className="text-sm text-slate-400">Choose how to scan the second product</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  onClick={handleCameraStartCompare}
-                  className="flex flex-col items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-lg transition-colors"
-                >
-                  <Camera size={24} />
-                  <span className="text-sm">Camera</span>
-                </Button>
-
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-4 rounded-lg transition-colors"
-                >
-                  <Upload size={24} />
-                  <span className="text-sm">Upload</span>
-                </Button>
-              </div>
-
-              <Button
-                onClick={() => setShowCompareModal(false)}
-                variant="outline"
-                className="w-full border-slate-600 hover:border-slate-500 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-sm"
-              >
-                <X size={14} className="mr-2" />
-                Cancel
-              </Button>
+          <div className="w-full max-w-md space-y-6">
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl sm:text-3xl font-black text-white">Add Second Product to Compare</h2>
+              <p className="text-slate-400 text-sm sm:text-base">Upload or capture the second product</p>
             </div>
-          </Card>
+
+            {/* Options Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              {/* Camera Option */}
+              <Card className="group relative p-6 sm:p-8 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 shadow-xl cursor-pointer overflow-hidden active:scale-[0.98]">
+                <button
+                  onClick={handleCameraStartCompare}
+                  className="relative w-full h-full flex flex-col items-center justify-center space-y-4 sm:space-y-6 text-center"
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-110 transition-transform duration-300">
+                    <Camera size={32} className="sm:w-9 sm:h-9 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-black text-white mb-2">Use Camera</h3>
+                    <p className="text-slate-400 text-sm sm:text-base">Point camera at the label</p>
+                  </div>
+                </button>
+              </Card>
+
+              {/* Upload Option */}
+              <Card className="group relative p-6 sm:p-8 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-teal-500/20 hover:border-teal-500/40 transition-all duration-300 shadow-xl cursor-pointer overflow-hidden active:scale-[0.98]">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="relative w-full h-full flex flex-col items-center justify-center space-y-4 sm:space-y-6 text-center"
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-teal-500/25 group-hover:scale-110 transition-transform duration-300">
+                    <Upload size={32} className="sm:w-9 sm:h-9 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-black text-white mb-2">Upload Image</h3>
+                    <p className="text-slate-400 text-sm sm:text-base">Choose from your device</p>
+                  </div>
+                </button>
+              </Card>
+            </div>
+
+            {/* Cancel Button */}
+            <Button
+              onClick={() => setShowCompareModal(false)}
+              variant="outline"
+              className="w-full h-12 sm:h-14 border-2 border-slate-700 hover:border-red-500/50 bg-slate-800/50 hover:bg-red-500/10 text-slate-300 hover:text-red-400 transition-all font-semibold"
+            >
+              <X size={16} className="mr-2" />
+              Cancel
+            </Button>
+          </div>
           <input
             ref={fileInputRef}
             type="file"
