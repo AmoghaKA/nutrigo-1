@@ -663,6 +663,222 @@ export const healthyAlternatives = {
         swiggy: "https://www.swiggy.com/instamart/search?query=sprouted%20beans",
         bigbasket: "https://www.bigbasket.com/ps/?q=wingreens%20sprouted%20beans"
       }
+    },
+    {
+      name: "Whey Protein Isolate",
+      brand: "MuscleBlaze",
+      health_score: 94,
+      nutrition: {
+        calories: 103,
+        protein: "25g",
+        bcaa: "5.5g",
+      },
+      benefits: ["90% Protein", "Fast Absorption", "Low Carb"],
+      description: "Premium whey isolate with 25g protein per serving - ideal for muscle building and recovery",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=muscleblaze%20whey%20protein",
+        zepto: "https://www.zepto.com/search?query=muscleblaze%20whey",
+        swiggy: "https://www.swiggy.com/instamart/search?query=muscleblaze%20protein",
+        bigbasket: "https://www.bigbasket.com/ps/?q=muscleblaze%20whey%20protein"
+      }
+    },
+    {
+      name: "Pea Protein Isolate",
+      brand: "Oziva",
+      health_score: 92,
+      nutrition: {
+        calories: 120,
+        protein: "24g",
+        iron: "High",
+      },
+      benefits: ["Plant-Based", "Allergen-Free", "Easily Digestible"],
+      description: "100% plant-based pea protein - perfect vegan alternative with complete amino acid profile",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=oziva%20protein",
+        zepto: "https://www.zepto.com/search?query=oziva%20pea%20protein",
+        swiggy: "https://www.swiggy.com/instamart/search?query=oziva%20protein",
+        bigbasket: "https://www.bigbasket.com/ps/?q=oziva%20pea%20protein"
+      }
+    },
+    {
+      name: "Organic Whey Protein Concentrate",
+      brand: "Nutrabay Pure",
+      health_score: 91,
+      nutrition: {
+        calories: 130,
+        protein: "24g",
+        calcium: "High",
+      },
+      benefits: ["Grass-Fed Whey", "No Additives", "Clean Label"],
+      description: "Certified organic whey from grass-fed cows - pure protein without artificial ingredients",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=nutrabay%20whey%20protein",
+        zepto: "https://www.zepto.com/search?query=nutrabay%20protein",
+        swiggy: "https://www.swiggy.com/instamart/search?query=nutrabay%20whey",
+        bigbasket: "https://www.bigbasket.com/ps/?q=nutrabay%20organic%20whey"
+      }
+    },
+    {
+      name: "Plant Protein Blend (Rice + Pea)",
+      brand: "Raw Pressery",
+      health_score: 93,
+      nutrition: {
+        calories: 115,
+        protein: "22g",
+        fiber: "3g",
+      },
+      benefits: ["Vegan", "Complete Protein", "No Soy"],
+      description: "Synergistic blend of rice and pea protein for complete amino acid profile - 100% plant-based",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=raw%20pressery%20protein",
+        zepto: "https://www.zepto.com/search?query=raw%20pressery%20plant%20protein",
+        swiggy: "https://www.swiggy.com/instamart/search?query=raw%20pressery%20protein",
+        bigbasket: "https://www.bigbasket.com/ps/?q=raw%20pressery%20plant%20protein"
+      }
+    },
+    {
+      name: "Brown Rice Protein",
+      brand: "HealthKart",
+      health_score: 89,
+      nutrition: {
+        calories: 110,
+        protein: "20g",
+        fiber: "4g",
+      },
+      benefits: ["Hypoallergenic", "Gluten-Free", "Eco-Friendly"],
+      description: "Sprouted brown rice protein - gentle on stomach with natural fiber content",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=healthkart%20protein",
+        zepto: "https://www.zepto.com/search?query=healthkart%20brown%20rice%20protein",
+        swiggy: "https://www.swiggy.com/instamart/search?query=healthkart%20protein",
+        bigbasket: "https://www.bigbasket.com/ps/?q=healthkart%20rice%20protein"
+      }
+    },
+    {
+      name: "Hemp Protein Powder",
+      brand: "Nourish Organics",
+      health_score: 95,
+      nutrition: {
+        calories: 125,
+        protein: "15g",
+        omega3: "High",
+      },
+      benefits: ["Omega-3 Rich", "Complete Protein", "Organic"],
+      description: "Organic hemp protein with omega-3 fatty acids - a complete superfood protein source",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=nourish%20organics%20hemp",
+        zepto: "https://www.zepto.com/search?query=hemp%20protein",
+        swiggy: "https://www.swiggy.com/instamart/search?query=nourish%20organics%20protein",
+        bigbasket: "https://www.bigbasket.com/ps/?q=nourish%20organics%20hemp%20protein"
+      }
+    },
+    {
+      name: "Casein Protein (Slow Release)",
+      brand: "Optimum Nutrition",
+      health_score: 90,
+      nutrition: {
+        calories: 120,
+        protein: "24g",
+        calcium: "50% DV",
+      },
+      benefits: ["Slow Digestion", "Muscle Recovery", "High Calcium"],
+      description: "Gold standard casein protein - perfect for overnight muscle recovery with sustained release",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=optimum%20nutrition%20casein",
+        zepto: "https://www.zepto.com/search?query=on%20casein%20protein",
+        swiggy: "https://www.swiggy.com/instamart/search?query=optimum%20nutrition%20protein",
+        bigbasket: "https://www.bigbasket.com/ps/?q=optimum%20nutrition%20casein"
+      }
+    },
+    {
+      name: "Soy Protein Isolate (Non-GMO)",
+      brand: "MyProtein",
+      health_score: 88,
+      nutrition: {
+        calories: 116,
+        protein: "27g",
+        isoflavones: "High",
+      },
+      benefits: ["Complete Protein", "Heart Health", "Affordable"],
+      description: "Non-GMO soy isolate with 27g protein - excellent budget-friendly complete protein",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=myprotein%20soy",
+        zepto: "https://www.zepto.com/search?query=soy%20protein%20isolate",
+        swiggy: "https://www.swiggy.com/instamart/search?query=myprotein%20soy",
+        bigbasket: "https://www.bigbasket.com/ps/?q=myprotein%20soy%20isolate"
+      }
+    },
+    {
+      name: "Collagen Protein Peptides",
+      brand: "Wellbeing Nutrition",
+      health_score: 91,
+      nutrition: {
+        calories: 35,
+        protein: "9g",
+        collagen: "10g",
+      },
+      benefits: ["Skin Health", "Joint Support", "Hair & Nails"],
+      description: "Hydrolyzed collagen peptides - bioavailable protein for skin, hair, and joint health",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=wellbeing%20nutrition%20collagen",
+        zepto: "https://www.zepto.com/search?query=collagen%20peptides",
+        swiggy: "https://www.swiggy.com/instamart/search?query=wellbeing%20nutrition%20collagen",
+        bigbasket: "https://www.bigbasket.com/ps/?q=wellbeing%20nutrition%20collagen"
+      }
+    },
+    {
+      name: "Performance Whey Blend",
+      brand: "Bigmuscles Nutrition",
+      health_score: 89,
+      nutrition: {
+        calories: 135,
+        protein: "25g",
+        glutamine: "4g",
+      },
+      benefits: ["Tri-Blend Formula", "Added Digestive Enzymes", "Great Taste"],
+      description: "Advanced tri-blend whey with isolate, concentrate & hydrolysate for maximum absorption",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=bigmuscles%20whey",
+        zepto: "https://www.zepto.com/search?query=bigmuscles%20protein",
+        swiggy: "https://www.swiggy.com/instamart/search?query=bigmuscles%20whey",
+        bigbasket: "https://www.bigbasket.com/ps/?q=bigmuscles%20nutrition%20whey"
+      }
+    },
+    {
+      name: "Women's Plant Protein",
+      brand: "Plix",
+      health_score: 93,
+      nutrition: {
+        calories: 90,
+        protein: "18g",
+        iron: "25% DV",
+      },
+      benefits: ["Women-Specific Formula", "Added Superfoods", "Beauty Nutrients"],
+      description: "Plant-based women's protein with added biotin, iron, and superfoods for holistic health",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=plix%20protein",
+        zepto: "https://www.zepto.com/search?query=plix%20women%20protein",
+        swiggy: "https://www.swiggy.com/instamart/search?query=plix%20plant%20protein",
+        bigbasket: "https://www.bigbasket.com/ps/?q=plix%20women%20protein"
+      }
+    },
+    {
+      name: "Egg White Protein Powder",
+      brand: "ASITIS Nutrition",
+      health_score: 92,
+      nutrition: {
+        calories: 105,
+        protein: "24g",
+        bcaa: "Natural",
+      },
+      benefits: ["Lactose-Free", "Natural BCAAs", "Cholesterol-Free"],
+      description: "Pure egg white protein - lactose-free alternative with naturally occurring BCAAs",
+      purchaseLinks: {
+        blinkit: "https://blinkit.com/search?q=asitis%20egg%20protein",
+        zepto: "https://www.zepto.com/search?query=egg%20white%20protein",
+        swiggy: "https://www.swiggy.com/instamart/search?query=asitis%20protein",
+        bigbasket: "https://www.bigbasket.com/ps/?q=asitis%20egg%20white%20protein"
+      }
     }
   ],
 
