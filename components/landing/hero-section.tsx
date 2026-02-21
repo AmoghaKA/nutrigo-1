@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
@@ -140,28 +139,50 @@ export default function HeroSection() {
           </div>
 
           {/* Right Visual */}
-          <div className="relative flex items-center justify-center mt-8 md:mt-0 md:items-start md:pt-0">
-            <div className="md:sticky md:top-24 w-full max-w-[290px] sm:max-w-[320px] md:max-w-none">
-              <div className="relative mx-auto">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/30 via-teal-500/30 to-cyan-500/30 rounded-[2rem] sm:rounded-[2.25rem] md:rounded-[2.5rem] blur-2xl sm:blur-3xl animate-pulse-slow"></div>
+          <div className="relative flex items-center justify-center mt-8 md:mt-0">
+            <div className="md:sticky md:top-24 w-full max-w-[290px] sm:max-w-[320px] md:max-w-[310px] mx-auto">
 
-                <div className="relative perspective-1000">
-                  <div className="relative w-full aspect-[9/19] sm:w-[270px] sm:h-[560px] md:w-[290px] md:h-[600px] mx-auto transform-gpu md:hover:rotate-y-4 transition-transform duration-700 ease-out">
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 rounded-[2rem] sm:rounded-[2.25rem] md:rounded-[2.5rem] border-2 border-emerald-500/30 shadow-2xl shadow-emerald-500/20 overflow-hidden">
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-4 bg-slate-900 rounded-full border border-slate-800"></div>
-                      <div className="absolute inset-3 sm:inset-4 rounded-[1.6rem] sm:rounded-[1.8rem] overflow-hidden bg-slate-900">
-                        <Image
-                          src="/phone-screen.png"
-                          alt="Nutrigo app screen"
-                          fill
-                          sizes="(min-width: 768px) 260px, 70vw"
-                          className="object-cover"
-                          priority
-                        />
-                      </div>
+              {/* Glow behind phone */}
+              <div className="absolute inset-4 bg-gradient-to-br from-emerald-500/40 via-teal-500/40 to-cyan-500/40 rounded-[3rem] blur-3xl animate-pulse-slow"></div>
+
+              {/* Phone wrapper with 3D hover */}
+              <div className="relative group transition-transform duration-500 ease-out hover:-translate-y-3 hover:[transform:perspective(800px)_rotateY(-8deg)_rotateX(3deg)_translateY(-12px)]">
+
+                {/* Metallic outer frame */}
+                <div className="relative rounded-[3rem] p-[3px] bg-gradient-to-br from-slate-300 via-slate-500 to-slate-800 shadow-[0_30px_60px_-10px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.6)]">
+
+                  {/* Left buttons */}
+                  <div className="absolute -left-[4px] top-[90px] w-[4px] h-7 bg-gradient-to-b from-slate-400 to-slate-600 rounded-l-sm"></div>
+                  <div className="absolute -left-[4px] top-[130px] w-[4px] h-12 bg-gradient-to-b from-slate-400 to-slate-600 rounded-l-sm"></div>
+                  <div className="absolute -left-[4px] top-[190px] w-[4px] h-12 bg-gradient-to-b from-slate-400 to-slate-600 rounded-l-sm"></div>
+                  {/* Right button */}
+                  <div className="absolute -right-[4px] top-[130px] w-[4px] h-16 bg-gradient-to-b from-slate-400 to-slate-600 rounded-r-sm"></div>
+
+                  {/* Black glass inner bezel */}
+                  <div className="rounded-[2.8rem] overflow-hidden bg-black p-[5px]">
+
+                    {/* Screen */}
+                    <div className="relative rounded-[2.4rem] overflow-hidden bg-slate-900" style={{ aspectRatio: '9/19' }}>
+
+                      {/* THE IMAGE */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/phone-screen.png"
+                        alt="Nutrigo app screen"
+                        style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
+                      />
+
+                      {/* Dynamic Island */}
+                      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-30"></div>
+
+                      {/* Screen glare */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/0 to-white/10 z-20 pointer-events-none group-hover:via-white/5 group-hover:to-white/20 transition-all duration-700"></div>
                     </div>
                   </div>
                 </div>
+
+                {/* Drop shadow underneath */}
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-emerald-500/20 blur-2xl rounded-full"></div>
               </div>
             </div>
           </div>
