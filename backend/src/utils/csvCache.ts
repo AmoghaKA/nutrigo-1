@@ -1,25 +1,24 @@
 /**
  * csvCache.ts
  *
- * CSV-based product cache.
- * Every scanned product (from any user) is stored here with its full nutritional
- * data and computed health score. The next scan of the same product hits the CSV
- * first, skipping the LLM call entirely.
+ * Supabase-backed product cache.
  *
- * CSV columns (all quoted when written):
- *   name | brand | category | calories | fat | sugar | protein | carbs |
- *   sodium | fiber | ingredients | warnings | health_score | created_at
+ * WHY the old filesystem CSV broke on deployment:
+ *   Local files are wiped on every deploy on Vercel, Railway, Render, Heroku, etc.
+ *   Supabase is persistent across all deployments.
+ *
+ * Public API (unchanged — no other file needs editing):
+ *   lookupInCSV(name, brand?)   → Promise<CachedProduct | null>
+ *   saveToCSV(product)          → Promise<void>
+ *   getAllCachedProducts()       → Promise<CachedProduct[]>
+ *   generateCSVContent()        → Promise<string>   (for download route)
+ *   getCSVPath()                → string            (legacy compat shim)
  */
 
-import fs from "fs";
-import path from "path";
+import { supabase } from "../lib/supabase";
 
-// ── File path ─────────────────────────────────────────────────────────────────
-const DATA_DIR  = path.join(__dirname, "../../data");
-const CSV_PATH  = path.join(DATA_DIR, "products_cache.csv");
-
-const CSV_HEADER =
-  "name,brand,category,calories,fat,sugar,protein,carbs,sodium,fiber,ingredients,warnings,health_score,created_at\n";
+// ── Supabase table name ───────────────────────────────────────────────────────
+const TABLE = "products_cache";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface CachedProduct {
@@ -41,122 +40,64 @@ export interface CachedProduct {
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-/** Normalise a product identifier for case-insensitive matching. */
 function normalise(str: string): string {
   return str.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-/** Wrap a value in double-quotes (escaping any embedded quotes). */
-function csvQuote(value: string): string {
-  const escaped = value.replace(/"/g, '""');
-  return `"${escaped}"`;
-}
-
-/** Parse one CSV row, respecting quoted fields that may contain commas. */
-function parseCSVRow(row: string): string[] {
-  const result: string[] = [];
-  let current = "";
-  let insideQuotes = false;
-
-  for (let i = 0; i < row.length; i++) {
-    const ch = row[i];
-    if (ch === '"') {
-      if (insideQuotes && row[i + 1] === '"') {
-        // Escaped double-quote inside a quoted field
-        current += '"';
-        i++;
-      } else {
-        insideQuotes = !insideQuotes;
-      }
-    } else if (ch === "," && !insideQuotes) {
-      result.push(current);
-      current = "";
-    } else {
-      current += ch;
-    }
-  }
-  result.push(current);
-  return result;
-}
-
-/** Parse all CSV rows into CachedProduct objects (skips header). */
-function parseCSV(): CachedProduct[] {
-  ensureFile();
-  const raw = fs.readFileSync(CSV_PATH, "utf-8");
-  const lines = raw.split("\n").filter((l) => l.trim() !== "");
-  const products: CachedProduct[] = [];
-
-  // Skip the header row
-  for (let i = 1; i < lines.length; i++) {
-    const cols = parseCSVRow(lines[i]);
-    if (cols.length < 14) continue; // corrupted row — skip
-    try {
-      products.push({
-        name:         cols[0],
-        brand:        cols[1],
-        category:     cols[2],
-        calories:     parseFloat(cols[3]) || 0,
-        fat:          parseFloat(cols[4]) || 0,
-        sugar:        parseFloat(cols[5]) || 0,
-        protein:      parseFloat(cols[6]) || 0,
-        carbs:        parseFloat(cols[7]) || 0,
-        sodium:       parseFloat(cols[8]) || 0,
-        fiber:        parseFloat(cols[9]) || 0,
-        ingredients:  safeParseArray(cols[10]),
-        warnings:     safeParseArray(cols[11]),
-        health_score: parseFloat(cols[12]) || 0,
-        created_at:   cols[13],
-      });
-    } catch {
-      // Skip malformed rows silently
-    }
-  }
-  return products;
-}
-
-function safeParseArray(val: string): string[] {
-  try {
-    const parsed = JSON.parse(val);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return val ? [val] : [];
-  }
-}
-
-/** Ensure the data directory and CSV file (with header) exist. */
-function ensureFile(): void {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(CSV_PATH)) {
-    fs.writeFileSync(CSV_PATH, CSV_HEADER, "utf-8");
-  }
+/** Map a raw Supabase row → CachedProduct */
+function rowToProduct(row: any): CachedProduct {
+  return {
+    name:         row.name         ?? "",
+    brand:        row.brand        ?? "",
+    category:     row.category     ?? "",
+    calories:     Number(row.calories)   || 0,
+    fat:          Number(row.fat)        || 0,
+    sugar:        Number(row.sugar)      || 0,
+    protein:      Number(row.protein)    || 0,
+    carbs:        Number(row.carbs)      || 0,
+    sodium:       Number(row.sodium)     || 0,
+    fiber:        Number(row.fiber)      || 0,
+    ingredients:  Array.isArray(row.ingredients) ? row.ingredients : [],
+    warnings:     Array.isArray(row.warnings)    ? row.warnings    : [],
+    health_score: Number(row.health_score)        || 0,
+    created_at:   row.created_at ?? new Date().toISOString(),
+  };
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /**
- * Look up a product by name (and optionally brand) in the CSV cache.
- * Returns the cached entry or null if not found.
+ * Look up a product by name (case-insensitive) and optional brand.
+ * Reads from Supabase — survives all deployments.
  */
-export function lookupInCSV(
+export async function lookupInCSV(
   name: string,
   brand?: string
-): CachedProduct | null {
+): Promise<CachedProduct | null> {
   try {
-    const products = parseCSV();
-    const normName  = normalise(name);
-    const normBrand = brand ? normalise(brand) : null;
+    const normName = normalise(name);
 
-    const match = products.find((p) => {
-      const nameMatch  = normalise(p.name) === normName;
-      const brandMatch = normBrand
-        ? normalise(p.brand) === normBrand
-        : true; // if no brand supplied, match on name only
-      return nameMatch && brandMatch;
-    });
+    let query = supabase
+      .from(TABLE)
+      .select("*")
+      .ilike("name", normName)
+      .limit(1);
 
-    return match ?? null;
+    if (brand && brand.trim()) {
+      query = query.ilike("brand", brand.trim());
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) {
+      console.error("❌ [csvCache] lookupInCSV error:", error.message);
+      return null;
+    }
+
+    if (!data) return null;
+
+    console.log(`📂 [csvCache] Cache HIT: "${name}" (${brand ?? "any brand"})`);
+    return rowToProduct(data);
   } catch (err) {
     console.error("❌ [csvCache] lookupInCSV error:", err);
     return null;
@@ -164,88 +105,105 @@ export function lookupInCSV(
 }
 
 /**
- * Save a scanned product to the CSV cache.
- * If a row with the same normalised name+brand already exists, it is updated
- * in-place; otherwise a new row is appended.
+ * Save/update a scanned product in Supabase.
+ * Uses upsert on (name, brand) — re-scanning the same product updates the row.
  */
-export function saveToCSV(product: CachedProduct): void {
+export async function saveToCSV(product: CachedProduct): Promise<void> {
   try {
-    ensureFile();
-    const products  = parseCSV();
-    const normName  = normalise(product.name);
-    const normBrand = normalise(product.brand);
+    const row = {
+      name:         product.name.trim(),
+      brand:        product.brand.trim(),
+      category:     product.category,
+      calories:     product.calories,
+      fat:          product.fat,
+      sugar:        product.sugar,
+      protein:      product.protein,
+      carbs:        product.carbs,
+      sodium:       product.sodium,
+      fiber:        product.fiber,
+      ingredients:  product.ingredients,
+      warnings:     product.warnings,
+      health_score: product.health_score,
+      created_at:   product.created_at || new Date().toISOString(),
+    };
 
-    const existingIdx = products.findIndex(
-      (p) =>
-        normalise(p.name) === normName &&
-        normalise(p.brand) === normBrand
-    );
+    const { error } = await supabase
+      .from(TABLE)
+      .upsert([row], { onConflict: "name,brand" });
 
-    if (existingIdx !== -1) {
-      // Update existing entry
-      products[existingIdx] = {
-        ...products[existingIdx],
-        ...product,
-        created_at: products[existingIdx].created_at, // keep original timestamp
-      };
-      rewriteCSV(products);
-      console.log(`✅ [csvCache] Updated cache entry: ${product.name} (${product.brand})`);
+    if (error) {
+      console.error("❌ [csvCache] saveToCSV error:", error.message);
     } else {
-      // Append new entry
-      const row = buildRow(product);
-      fs.appendFileSync(CSV_PATH, row, "utf-8");
-      console.log(`✅ [csvCache] Saved new cache entry: ${product.name} (${product.brand})`);
+      console.log(
+        `✅ [csvCache] Upserted: "${product.name}" (${product.brand}) → health_score: ${product.health_score}`
+      );
     }
   } catch (err) {
     console.error("❌ [csvCache] saveToCSV error:", err);
   }
 }
 
-/** Build a single CSV row string from a CachedProduct. */
-function buildRow(p: CachedProduct): string {
-  const cols = [
-    csvQuote(p.name),
-    csvQuote(p.brand),
-    csvQuote(p.category),
-    String(p.calories),
-    String(p.fat),
-    String(p.sugar),
-    String(p.protein),
-    String(p.carbs),
-    String(p.sodium),
-    String(p.fiber),
-    csvQuote(JSON.stringify(p.ingredients)),
-    csvQuote(JSON.stringify(p.warnings)),
-    String(p.health_score),
-    csvQuote(p.created_at || new Date().toISOString()),
-  ];
-  return cols.join(",") + "\n";
-}
-
-/** Rewrite the entire CSV file (used when updating an existing row). */
-function rewriteCSV(products: CachedProduct[]): void {
-  let content = CSV_HEADER;
-  for (const p of products) {
-    content += buildRow(p);
-  }
-  fs.writeFileSync(CSV_PATH, content, "utf-8");
-}
-
 /**
- * Return the path of the CSV cache file (useful for serving/downloading).
+ * Return all cached products (for admin / list endpoints).
  */
-export function getCSVPath(): string {
-  ensureFile();
-  return CSV_PATH;
-}
-
-/**
- * Return all cached products as an array (for admin/debug routes).
- */
-export function getAllCachedProducts(): CachedProduct[] {
+export async function getAllCachedProducts(): Promise<CachedProduct[]> {
   try {
-    return parseCSV();
-  } catch {
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("❌ [csvCache] getAllCachedProducts error:", error.message);
+      return [];
+    }
+
+    return (data ?? []).map(rowToProduct);
+  } catch (err) {
+    console.error("❌ [csvCache] getAllCachedProducts error:", err);
     return [];
   }
+}
+
+/**
+ * Generate CSV text on-the-fly from Supabase data.
+ * Used by the /api/cache/download endpoint — no filesystem required.
+ */
+export async function generateCSVContent(): Promise<string> {
+  const products = await getAllCachedProducts();
+
+  const header =
+    "name,brand,category,calories,fat,sugar,protein,carbs,sodium,fiber," +
+    "ingredients,warnings,health_score,created_at\n";
+
+  const q = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
+
+  const rows = products.map((p) =>
+    [
+      q(p.name),
+      q(p.brand),
+      q(p.category),
+      p.calories,
+      p.fat,
+      p.sugar,
+      p.protein,
+      p.carbs,
+      p.sodium,
+      p.fiber,
+      q(JSON.stringify(p.ingredients)),
+      q(JSON.stringify(p.warnings)),
+      p.health_score,
+      q(p.created_at),
+    ].join(",")
+  );
+
+  return header + rows.join("\n") + "\n";
+}
+
+/**
+ * Legacy shim — callers expecting a file path will get an informational string.
+ * The real data now lives in Supabase.
+ */
+export function getCSVPath(): string {
+  return "[Supabase-backed — use /api/cache/download for the CSV]";
 }

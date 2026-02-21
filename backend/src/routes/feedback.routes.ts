@@ -94,7 +94,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     // ── 2. If user supplied corrections → update CSV cache ────────────────────
     if (feedback_type === "incorrect" && corrections && typeof corrections === "object") {
-      const existing = lookupInCSV(product_name, brand || undefined);
+      const existing = await lookupInCSV(product_name, brand || undefined);
 
       if (existing) {
         // Merge corrections on top of existing cached values
@@ -111,7 +111,7 @@ router.post("/", async (req: Request, res: Response) => {
         // Recalculate health score with corrected nutrition
         merged.health_score = calculateHealthScore(merged);
 
-        saveToCSV(merged);
+        await saveToCSV(merged);
 
         console.log(
           `🔄 [feedback] CSV cache updated for "${product_name}" with user corrections. ` +

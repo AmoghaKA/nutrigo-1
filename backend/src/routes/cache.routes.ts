@@ -1,24 +1,22 @@
 /**
  * cache.routes.ts
  *
- * Exposes the CSV product cache over HTTP:
+ * Exposes the Supabase-backed product cache over HTTP:
  *   GET  /api/cache              → paginated list of all cached products
- *   GET  /api/cache/download     → download the raw products_cache.csv file
+ *   GET  /api/cache/download     → download products_cache.csv (generated on-the-fly)
  *   GET  /api/cache/lookup?name=<name>&brand=<brand>
  *                                → check whether a product is cached
  */
 
 import express, { Request, Response } from "express";
-import path from "path";
-import { getAllCachedProducts, lookupInCSV, getCSVPath } from "../utils/csvCache";
+import { getAllCachedProducts, lookupInCSV, generateCSVContent } from "../utils/csvCache";
 
 const router = express.Router();
 
 // ── GET /api/cache ─────────────────────────────────────────────────────────────
-// Returns all cached products with optional pagination.
-router.get("/", (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
-    const products = getAllCachedProducts();
+    const products = await getAllCachedProducts();
     const page     = Math.max(1, parseInt(req.query.page  as string) || 1);
     const limit    = Math.min(200, parseInt(req.query.limit as string) || 50);
     const start    = (page - 1) * limit;
@@ -37,9 +35,7 @@ router.get("/", (req: Request, res: Response) => {
 });
 
 // ── GET /api/cache/lookup ─────────────────────────────────────────────────────
-// Check if a specific product is already cached.
-// Query params: name (required), brand (optional)
-router.get("/lookup", (req: Request, res: Response) => {
+router.get("/lookup", async (req: Request, res: Response) => {
   const name  = (req.query.name  as string || "").trim();
   const brand = (req.query.brand as string || "").trim() || undefined;
 
@@ -47,7 +43,7 @@ router.get("/lookup", (req: Request, res: Response) => {
     return res.status(400).json({ error: "Query param 'name' is required" });
   }
 
-  const hit = lookupInCSV(name, brand);
+  const hit = await lookupInCSV(name, brand);
 
   if (hit) {
     return res.json({ cached: true, product: hit });
@@ -56,17 +52,17 @@ router.get("/lookup", (req: Request, res: Response) => {
 });
 
 // ── GET /api/cache/download ───────────────────────────────────────────────────
-// Download the raw CSV file.
-router.get("/download", (_req: Request, res: Response) => {
-  const csvPath = getCSVPath();
-  res.download(csvPath, "products_cache.csv", (err) => {
-    if (err) {
-      console.error("❌ [cache] CSV download error:", err);
-      if (!res.headersSent) {
-        res.status(500).json({ error: "Failed to download CSV" });
-      }
-    }
-  });
+// Generates the CSV on-the-fly from Supabase — no filesystem needed.
+router.get("/download", async (_req: Request, res: Response) => {
+  try {
+    const csvContent = await generateCSVContent();
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", 'attachment; filename="products_cache.csv"');
+    res.send(csvContent);
+  } catch (err) {
+    console.error("❌ [cache] CSV download error:", err);
+    res.status(500).json({ error: "Failed to generate CSV" });
+  }
 });
 
 export default router;

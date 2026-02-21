@@ -308,8 +308,8 @@ async function saveScanToSupabase(product: any, barcode?: string) {
     fiber:    nutrition.fiber_100g        || product.fiber    || 0,
   };
 
-  // ── 1. Check CSV cache first ───────────────────────────────────────────────
-  const csvHit = lookupInCSV(productName, brand);
+  // ── 1. Check CSV cache first (Supabase-backed, survives deployments) ────────
+  const csvHit = await lookupInCSV(productName, brand);
   let finalHealthScore: number;
 
   if (csvHit) {
@@ -346,7 +346,7 @@ async function saveScanToSupabase(product: any, barcode?: string) {
       health_score: finalHealthScore,
       created_at:   new Date().toISOString(),
     };
-    saveToCSV(csvEntry);
+    await saveToCSV(csvEntry);
   }
 
   // ── 3. Build Supabase record ───────────────────────────────────────────────
