@@ -28,6 +28,7 @@ import ProductComparisonView from "./ProductComparisonView"
 import { ComparisonProduct } from "@/lib/comparisonContext"
 import ScanLoadingPortal from "./scan-loading-portal"
 import { getSmartAlternatives } from "@/lib/getSmartAlternatives"
+import NutritionFeedbackWidget from "./NutritionFeedbackWidget"
 
 interface ScanResultProps {
   data: {
@@ -1171,6 +1172,24 @@ export default function ScanResult({ data, onReset }: ScanResultProps) {
                   <span className={`font-black text-lg ${item.color}`}>{item.value}</span>
                 </div>
               ))}
+            </div>
+
+            {/* ── Feedback loop ── */}
+            <div className="mt-6 pt-5 border-t border-slate-700/50">
+              <NutritionFeedbackWidget
+                productName={data.name || data.detected_name || "Unknown Product"}
+                brand={data.brand || ""}
+                scanId={data.id}
+                nutrition={{
+                  calories: nutrition.calories,
+                  fat:      nutrition.fat,
+                  sugar:    nutrition.sugar,
+                  protein:  nutrition.protein,
+                  carbs:    nutrition.carbs,
+                  sodium:   (nutrition as any).sodium,
+                  fiber:    (nutrition as any).fiber,
+                }}
+              />
             </div>
           </Card>
 

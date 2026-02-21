@@ -5,6 +5,7 @@ import alternativesRoutes from "./routes/alternatives.routes";
 import chatbotRoutes from "./routes/chatbot.routes";
 import compareRoutes from "./routes/compare.routes";
 import cacheRoutes from "./routes/cache.routes";
+import feedbackRoutes from "./routes/feedback.routes";
 
 const app = express();
 
@@ -43,6 +44,10 @@ console.log("✅ Compare routes mounted successfully");
 console.log("📍 Mounting /api/cache routes...");
 app.use("/api/cache", cacheRoutes);
 console.log("✅ Cache routes mounted successfully");
+
+console.log("📍 Mounting /api/feedback routes...");
+app.use("/api/feedback", feedbackRoutes);
+console.log("✅ Feedback routes mounted successfully");
 
 // Test route to verify Express is working
 app.get("/api/health", (req: express.Request, res: express.Response) => {
