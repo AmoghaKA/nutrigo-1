@@ -1,0 +1,3 @@
+name,brand,category,calories,fat,sugar,protein,carbs,sodium,fiber,ingredients,warnings,health_score,created_at
+"Original Taste","Coca-Cola","snacks",39,0,11,0,11,13,0,"[""CARBONATED WATER"",""HIGH FRUCTOSE CORN SYRUP"",""CARAMEL COLOR"",""PHOSPHORIC ACID"",""NATURAL FLAVORS"",""CAFFEINE""]","[""High sugar"",""Ultra-processed""]",25,"2026-02-21T10:27:43.569Z"
+"Original Taste Cola","Coca-Cola","beverages",39.4,0,11,0,11,12.7,0,"[""CARBONATED WATER"",""HIGH FRUCTOSE CORN SYRUP"",""CARAMEL COLOR"",""PHOSPHORIC ACID"",""NATURAL FLAVORS"",""CAFFEINE""]","[""High sugar"",""Ultra-processed""]",25,"2026-02-21T10:28:43.777Z"
