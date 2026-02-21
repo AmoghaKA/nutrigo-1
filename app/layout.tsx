@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   description:
     "Smart food scanner that reveals sugar, calories, and hidden ingredients. Make informed nutrition choices with NutriGo.",
   generator: "v0.app",
+  icons: {
+    icon: "/logo with bg nutrigo.png",
+    apple: "/logo with bg nutrigo.png",
+  },
 }
 
 export default function RootLayout({
