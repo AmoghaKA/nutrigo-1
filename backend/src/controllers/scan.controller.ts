@@ -9,6 +9,34 @@ dotenv.config();
 
 import { supabase } from "../lib/supabase";
 import { detectProductCategory, getSubCategory } from "../utils/categoryDetector";
+import { lookupInCSV, saveToCSV, CachedProduct } from "../utils/csvCache";
+
+// ── Health Score Formula (same as alternatives.routes.ts) ─────────────────────
+function calculateHealthScore(nutrition: {
+  calories?: number;
+  sugar?: number;
+  protein?: number;
+  fat?: number;
+  fiber?: number;
+  sodium?: number;
+  [key: string]: any;
+}): number {
+  let score = 100;
+  const calories = nutrition.calories ?? 0;
+  const sugar    = nutrition.sugar    ?? 0;
+  const protein  = nutrition.protein  ?? 0;
+  const fiber    = nutrition.fiber;
+  const sodium   = nutrition.sodium;
+
+  if (sugar > 25)                         score -= Math.min(30, (sugar - 25) * 1.5);
+  if (calories > 300)                     score -= Math.min(20, (calories - 300) * 0.05);
+  if (sodium != null && sodium > 500)     score -= Math.min(15, (sodium - 500) * 0.02);
+  if (protein > 5)                        score += Math.min(15, (protein - 5) * 2);
+  if (fiber != null && fiber > 3)         score += Math.min(10, (fiber - 3) * 3);
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+// ──────────────────────────────────────────────────────────────────────────────
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 
@@ -255,40 +283,85 @@ async function fetchGeminiAIText(input: string): Promise<any> {
 }
 
 // =======================================================
-// Supabase storage helper
+// Supabase storage helper (with CSV cache integration)
 // =======================================================
 async function saveScanToSupabase(product: any, barcode?: string) {
   const nutrition = product.nutriments || {};
 
   const productName = product.product_name || product.name || "Unknown";
+  const brand       = product.brands || product.brand || "";
   const ingredients = product.ingredients || [];
-  
+  const warnings    = product.warnings || [];
+
   // Detect category
-  const category = detectProductCategory(productName, ingredients);
+  const category    = detectProductCategory(productName, ingredients);
   const subCategory = getSubCategory(productName, category);
 
+  // ── Resolved nutrition values ──────────────────────────────────────────────
+  const resolvedNutrition = {
+    calories: nutrition.energy_kcal_100g  || product.calories || nutrition["energy-kcal"] || 0,
+    sugar:    nutrition.sugars_100g       || product.sugar    || 0,
+    protein:  nutrition.proteins_100g     || product.protein  || 0,
+    fat:      nutrition.fat_100g          || product.fat      || 0,
+    carbs:    nutrition.carbohydrates_100g|| product.carbs    || 0,
+    sodium:   nutrition.sodium_100g       || product.sodium   || 0,
+    fiber:    nutrition.fiber_100g        || product.fiber    || 0,
+  };
+
+  // ── 1. Check CSV cache first (Supabase-backed, survives deployments) ────────
+  const csvHit = await lookupInCSV(productName, brand);
+  let finalHealthScore: number;
+
+  if (csvHit) {
+    // Product was scanned before — use the stored health score (deterministic)
+    finalHealthScore = csvHit.health_score;
+    console.log(
+      `📂 [csvCache] Cache HIT for "${productName}" (${brand}) → health_score: ${finalHealthScore}`
+    );
+  } else {
+    // Not cached yet — derive health score from nutrition formula or LLM value
+    const llmScore = product.healthScore ?? product.health_score;
+    finalHealthScore = llmScore != null
+      ? Math.max(0, Math.min(100, Math.round(llmScore)))
+      : calculateHealthScore(resolvedNutrition);
+
+    console.log(
+      `🆕 [csvCache] Cache MISS for "${productName}" (${brand}) → health_score: ${finalHealthScore}`
+    );
+
+    // ── 2. Persist to CSV so all future scans get the same score ──────────
+    const csvEntry: CachedProduct = {
+      name:         productName,
+      brand:        brand,
+      category:     category,
+      calories:     resolvedNutrition.calories,
+      fat:          resolvedNutrition.fat,
+      sugar:        resolvedNutrition.sugar,
+      protein:      resolvedNutrition.protein,
+      carbs:        resolvedNutrition.carbs,
+      sodium:       resolvedNutrition.sodium,
+      fiber:        resolvedNutrition.fiber,
+      ingredients:  Array.isArray(ingredients) ? ingredients : [],
+      warnings:     Array.isArray(warnings)    ? warnings    : [],
+      health_score: finalHealthScore,
+      created_at:   new Date().toISOString(),
+    };
+    await saveToCSV(csvEntry);
+  }
+
+  // ── 3. Build Supabase record ───────────────────────────────────────────────
   const record = {
-    barcode: barcode || product.code || null,
+    barcode:      barcode || product.code || null,
     detected_name: productName,
-    brand: product.brands || product.brand || "",
-    nutrition: {
-      calories:
-        nutrition.energy_kcal_100g ||
-        product.calories ||
-        nutrition["energy-kcal"] ||
-        0,
-      sugar: nutrition.sugars_100g || product.sugar || 0,
-      protein: nutrition.proteins_100g || product.protein || 0,
-      fat: nutrition.fat_100g || product.fat || 0,
-      carbs: nutrition.carbohydrates_100g || product.carbs || 0,
-    },
-    warnings: product.warnings || [],
-    ingredients: ingredients,
-    healthScore: product.healthScore || 70, // 🔥 match DB column name
-    source: product.source || "gemini-vision",
-    category: category,
-    subCategory: subCategory,
-    created_at: new Date().toISOString(),
+    brand,
+    nutrition:    resolvedNutrition,
+    warnings,
+    ingredients,
+    healthScore:  finalHealthScore,     // consistent across all users
+    source:       product.source || "gemini-vision",
+    category,
+    subCategory,
+    created_at:   new Date().toISOString(),
   };
 
   const { data, error } = await supabase.from("scans").insert([record]).select();

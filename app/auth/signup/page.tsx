@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowRight, Eye, EyeOff, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { FcGoogle } from "react-icons/fc"
+import { AuthCharacters } from "@/components/ui/AuthCharacters"
 
 export default function SignUpPage() {
   const supabase = createClientComponentClient()
@@ -30,6 +31,7 @@ export default function SignUpPage() {
 
   const [isPasswordFocused, setIsPasswordFocused] = useState(false)
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false)
+  const [isEmailFocused, setIsEmailFocused] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [isHappy, setIsHappy] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -372,179 +374,13 @@ export default function SignUpPage() {
 
       <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-0 items-center relative z-10">
         {/* Left Side - Animated Characters (keep all existing characters) */}
-        <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-l-3xl border-l border-t border-b border-emerald-500/20 p-12 relative overflow-visible h-[700px]">
-          <div className="absolute inset-0 opacity-5">
-            <div className="absolute top-0 left-0 w-full h-full" style={{
-              backgroundImage: `radial-gradient(circle, #34d399 1px, transparent 1px)`,
-              backgroundSize: '30px 30px'
-            }}></div>
-          </div>
-
-          <div className="relative w-full h-full flex items-center justify-center">
-            <div className="relative w-[420px] h-[380px]">
-
-              {/* Character 1: Orange Semicircle */}
-              <div
-                className="absolute bottom-0 left-0 w-48 h-28 bg-gradient-to-b from-orange-400 to-orange-500 rounded-t-full shadow-2xl transition-all duration-500 z-40 flex flex-col items-center pt-7"
-                style={{
-                  transform: `translateY(${isHappy ? '-15px' : '0'})`,
-                  animation: 'sway 4s ease-in-out infinite, breathe 3s ease-in-out infinite',
-                }}
-              >
-                <div className="flex gap-7">
-                  <div className="w-5 h-5 bg-slate-900 rounded-full relative overflow-hidden transition-all duration-300">
-                    {areEyesClosed ? (
-                      <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
-                    ) : (
-                      <div
-                        className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
-                        style={{
-                          transform: `translate(${1 + calculateEyePosition(100, 350).x * 3}px, ${1 + calculateEyePosition(100, 350).y * 3}px)`
-                        }}
-                      ></div>
-                    )}
-                  </div>
-                  <div className="w-5 h-5 bg-slate-900 rounded-full relative overflow-hidden transition-all duration-300">
-                    {areEyesClosed ? (
-                      <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
-                    ) : (
-                      <div
-                        className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
-                        style={{
-                          transform: `translate(${1 + calculateEyePosition(100, 350).x * 3}px, ${1 + calculateEyePosition(100, 350).y * 3}px)`
-                        }}
-                      ></div>
-                    )}
-                  </div>
-                </div>
-                <div
-                  className={`transition-all duration-500 mt-4 ${isHappy ? 'w-16 h-3 border-b-[3px] border-slate-900 rounded-b-full' : 'w-14 h-2 bg-slate-900 rounded-full'
-                    }`}
-                ></div>
-              </div>
-
-              {/* Character 2: Purple Rectangle */}
-              <div
-                className="absolute bottom-0 left-20 w-32 h-80 bg-gradient-to-b from-purple-500 to-purple-600 rounded-t-3xl shadow-2xl transition-all duration-500 z-10 flex flex-col items-center pt-8"
-                style={{
-                  transform: `translateY(${isHappy ? '-20px' : '0'})`,
-                  animation: 'sway 5s ease-in-out infinite 0.5s, breathe 4s ease-in-out infinite',
-                }}
-              >
-                <div className="flex gap-5 mt-2">
-                  <div className="w-5 h-5 bg-white rounded-full relative overflow-hidden transition-all duration-300">
-                    {areEyesClosed ? (
-                      <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
-                    ) : (
-                      <div
-                        className="w-2.5 h-2.5 bg-slate-900 rounded-full absolute transition-transform duration-200"
-                        style={{
-                          transform: `translate(${1 + calculateEyePosition(180, 240).x * 3}px, ${1 + calculateEyePosition(180, 240).y * 3}px)`
-                        }}
-                      ></div>
-                    )}
-                  </div>
-                  <div className="w-5 h-5 bg-white rounded-full relative overflow-hidden transition-all duration-300">
-                    {areEyesClosed ? (
-                      <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
-                    ) : (
-                      <div
-                        className="w-2.5 h-2.5 bg-slate-900 rounded-full absolute transition-transform duration-200"
-                        style={{
-                          transform: `translate(${1 + calculateEyePosition(180, 240).x * 3}px, ${1 + calculateEyePosition(180, 240).y * 3}px)`
-                        }}
-                      ></div>
-                    )}
-                  </div>
-                </div>
-                <div
-                  className={`transition-all duration-500 mt-4 ${isHappy ? 'w-12 h-2 bg-white rounded-full' : 'w-10 h-1 bg-white rounded-full'
-                    }`}
-                ></div>
-              </div>
-
-              {/* Character 3: WHITE Rectangle */}
-              <div
-                className="absolute bottom-0 left-36 w-36 h-40 bg-gradient-to-b from-white to-gray-100 rounded-t-3xl shadow-2xl border-2 border-gray-200 transition-all duration-500 z-20 flex flex-col items-center pt-16"
-                style={{
-                  transform: `translateY(${isHappy ? '-16px' : '0'})`,
-                  animation: 'sway 4.5s ease-in-out infinite 1s, breathe 3.5s ease-in-out infinite',
-                }}
-              >
-                <div className="flex gap-5">
-                  <div className="w-5 h-5 bg-slate-900 rounded-full relative overflow-hidden transition-all duration-300">
-                    {areEyesClosed ? (
-                      <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
-                    ) : (
-                      <div
-                        className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
-                        style={{
-                          transform: `translate(${1 + calculateEyePosition(270, 320).x * 3}px, ${1 + calculateEyePosition(270, 320).y * 3}px)`
-                        }}
-                      ></div>
-                    )}
-                  </div>
-                  <div className="w-5 h-5 bg-slate-900 rounded-full relative overflow-hidden transition-all duration-300">
-                    {areEyesClosed ? (
-                      <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
-                    ) : (
-                      <div
-                        className="w-2.5 h-2.5 bg-white rounded-full absolute transition-transform duration-200"
-                        style={{
-                          transform: `translate(${1 + calculateEyePosition(270, 320).x * 3}px, ${1 + calculateEyePosition(270, 320).y * 3}px)`
-                        }}
-                      ></div>
-                    )}
-                  </div>
-                </div>
-                <div
-                  className={`transition-all duration-500 mt-5 ${isHappy ? 'w-12 h-2 bg-slate-900 rounded-full' : 'w-10 h-1 bg-slate-900 rounded-full'
-                    }`}
-                ></div>
-              </div>
-
-              {/* Character 4: Yellow */}
-              <div
-                className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-t-3xl shadow-2xl transition-all duration-500 z-30 flex flex-col items-center pt-10"
-                style={{
-                  transform: `translateY(${isHappy ? '-14px' : '0'})`,
-                  animation: 'sway 3.5s ease-in-out infinite 1.5s, breathe 3s ease-in-out infinite',
-                }}
-              >
-                <div className="flex gap-5">
-                  <div className="w-5 h-5 bg-slate-900 rounded-full relative overflow-hidden transition-all duration-300">
-                    {areEyesClosed ? (
-                      <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
-                    ) : (
-                      <div
-                        className="w-2.5 h-2.5 bg-yellow-200 rounded-full absolute transition-transform duration-200"
-                        style={{
-                          transform: `translate(${1 + calculateEyePosition(380, 340).x * 3}px, ${1 + calculateEyePosition(380, 340).y * 3}px)`
-                        }}
-                      ></div>
-                    )}
-                  </div>
-                  <div className="w-5 h-5 bg-slate-900 rounded-full relative overflow-hidden transition-all duration-300">
-                    {areEyesClosed ? (
-                      <div className="absolute top-1/2 left-0 w-full h-1.5 bg-slate-900 rounded-full"></div>
-                    ) : (
-                      <div
-                        className="w-2.5 h-2.5 bg-yellow-200 rounded-full absolute transition-transform duration-200"
-                        style={{
-                          transform: `translate(${1 + calculateEyePosition(380, 340).x * 3}px, ${1 + calculateEyePosition(380, 340).y * 3}px)`
-                        }}
-                      ></div>
-                    )}
-                  </div>
-                </div>
-                <div
-                  className={`transition-all duration-500 mt-5 ${isHappy ? 'w-14 h-2 border-b-[3px] border-slate-900 rounded-b-full' : 'w-12 h-1 bg-slate-900 rounded-full'
-                    }`}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AuthCharacters
+          isPasswordFocused={areEyesClosed}
+          isEmailFocused={isEmailFocused}
+          isHappy={isHappy}
+          mousePosition={mousePosition}
+          containerRef={containerRef}
+        />
 
         {/* Right Side - Form */}
         <div className="bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl rounded-r-3xl lg:rounded-l-none rounded-3xl border border-emerald-500/20 p-8 shadow-2xl h-[700px] flex flex-col justify-center">
@@ -625,6 +461,8 @@ export default function SignUpPage() {
                       placeholder="you@example.com"
                       value={formData.email}
                       onChange={handleChange}
+                      onFocus={() => setIsEmailFocused(true)}
+                      onBlur={() => setIsEmailFocused(false)}
                       className="h-10 bg-slate-800/50 border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 text-white placeholder:text-slate-500 rounded-lg text-sm"
                       disabled={isLoading}
                     />
