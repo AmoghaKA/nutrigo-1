@@ -26,9 +26,9 @@ export default function Footer() {
                 <Image
                   src="/logo.png"
                   alt="NutriGo Logo"
-                  width={140}
-                  height={140}
-                  className="relative transform group-hover:scale-105 transition-transform duration-300 sm:w-[160px] sm:h-[160px] md:w-[180px] md:h-[180px]"
+                  width={100}
+                  height={100}
+                  className="relative transform group-hover:scale-105 transition-transform duration-300 sm:w-[110px] sm:h-[110px] md:w-[200px] md:h-[130px]"
                 />
               </div>
             </Link>
