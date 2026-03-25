@@ -82,7 +82,7 @@ export default function Navigation() {
             onClick={() => window.location.href = '/'}
             className="flex items-center gap-3 group cursor-pointer"
           >
-            <div className="relative w-[120px] h-[38px] sm:w-[140px] sm:h-[44px] md:w-[160px] md:h-[50px] lg:w-[180px] lg:h-[56px]">
+            <div className="relative w-[140px] h-[48px] sm:w-[160px] sm:h-[54px] md:w-[180px] md:h-[60px] lg:w-[200px] lg:h-[200px]">
               <Image
                 src="/logo.png"
                 alt="NutriGo Logo"

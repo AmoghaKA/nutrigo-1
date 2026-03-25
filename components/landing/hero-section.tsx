@@ -130,7 +130,7 @@ export default function HeroSection() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto px-6 sm:px-8 py-6 sm:py-7 text-base sm:text-lg border-2 border-emerald-500/50 hover:border-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/15 text-emerald-400 font-bold backdrop-blur-xl transition-all duration-300 min-h-[44px]"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-6 sm:py-7 text-base sm:text-lg border-2 border-emerald-500/50 hover:border-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-400 hover:text-emerald-200 font-bold backdrop-blur-xl transition-all duration-300 min-h-[44px] shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 z-20 relative"
                 >
                   Learn More
                 </Button>

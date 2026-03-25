@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Menu, X, LogOut, Settings, User, Home, Zap, BarChart3, Crown, Sparkles, Scan, Heart } from "lucide-react"
+import { Menu, X, LogOut, Settings, User, Home, Zap, BarChart3, Crown, Sparkles, Scan, Heart, ChevronLeft, ChevronRight } from "lucide-react"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -241,8 +241,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Sidebar Header - Enlarged Logo */}
         <div className="p-4 border-b border-emerald-500/20 flex items-center justify-between">
           {sidebarOpen ? (
-            <div className="flex items-center gap-3 flex-1">
-              <div className="relative w-40 h-12">
+            <button
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <div className="relative w-44 h-32">
                 <Image
                   src="/logo.png"
                   alt="NutriGo Logo"
@@ -251,9 +254,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   priority
                 />
               </div>
-            </div>
+            </button>
           ) : (
-            <div className="relative w-12 h-12 mx-auto">
+            <button
+              onClick={() => window.location.reload()}
+              className="relative w-12 h-12 mx-auto hover:opacity-80 transition-opacity cursor-pointer"
+            >
               <Image
                 src="/logo.png"
                 alt="NutriGo Logo"
@@ -261,17 +267,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="object-contain"
                 priority
               />
-            </div>
-          )}
-          {sidebarOpen && (
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
-              aria-label="Collapse sidebar"
-            >
-              <X size={20} className="text-slate-400 hover:text-white" />
             </button>
           )}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="group relative p-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 rounded-lg transition-all duration-300 flex-shrink-0 shadow-lg shadow-emerald-500/10"
+            aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {sidebarOpen ? (
+              <ChevronLeft size={20} className="text-emerald-400 hover:text-emerald-300" />
+            ) : (
+              <ChevronRight size={20} className="text-emerald-400 hover:text-emerald-300" />
+            )}
+            {/* Tooltip */}
+            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50 whitespace-nowrap">
+              <div className="bg-slate-800 text-emerald-400 px-3 py-2 rounded-lg text-sm font-semibold border border-emerald-500/30 shadow-lg">
+                {sidebarOpen ? "Collapse" : "Expand"}
+              </div>
+            </div>
+          </button>
         </div>
 
         {/* Navigation */}

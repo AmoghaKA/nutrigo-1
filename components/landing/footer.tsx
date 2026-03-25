@@ -26,9 +26,9 @@ export default function Footer() {
                 <Image
                   src="/logo.png"
                   alt="NutriGo Logo"
-                  width={140}
-                  height={140}
-                  className="relative transform group-hover:scale-105 transition-transform duration-300 sm:w-[160px] sm:h-[160px] md:w-[180px] md:h-[180px]"
+                  width={100}
+                  height={100}
+                  className="relative transform group-hover:scale-105 transition-transform duration-300 sm:w-[110px] sm:h-[110px] md:w-[200px] md:h-[130px]"
                 />
               </div>
             </Link>
@@ -141,19 +141,19 @@ export default function Footer() {
           </p>
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 text-xs sm:text-sm text-slate-400">
             <Link
-              href="#"
+              href="/privacy"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium min-h-[44px] flex items-center md:min-h-0"
             >
               Privacy Policy
             </Link>
             <Link
-              href="#"
+              href="/terms"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium min-h-[44px] flex items-center md:min-h-0"
             >
               Terms of Service
             </Link>
             <Link
-              href="#"
+              href="/cookies"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium min-h-[44px] flex items-center md:min-h-0"
             >
               Cookies
