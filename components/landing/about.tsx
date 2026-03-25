@@ -1,7 +1,6 @@
 "use client"
 
-import { Sparkles, Target, Heart, Zap, Users, Award } from "lucide-react"
-import Image from "next/image"
+import { Sparkles, Target, Heart, Zap, Award } from "lucide-react"
 
 const values = [
   {
@@ -27,44 +26,6 @@ const values = [
     title: "Accessibility",
     description: "Making nutrition knowledge available to everyone, regardless of their background.",
     color: "from-purple-400 to-violet-500",
-  },
-]
-
-const team = [
-  {
-    name: "SHARANYA YELLURU",
-    role: "Product & Strategy Lead",
-    skills: "MIT, Manipal",
-    image: "/team/SH.png",
-    color: "from-pink-400 to-rose-500",
-  },
-  {
-    name: "ARJUN BHAT",
-    role: "UI/UX & Frontend Lead",
-    skills: "PES UNIVERSITY, Bengaluru",
-    image: "/team/AR.png",
-    color: "from-blue-400 to-cyan-500",
-  },
-  {
-    name: "PRANAV RAO K",
-    role: "ML & Product Experience Lead",
-    skills: "M S Ramaiah, Bengaluru",
-    image: "/team/PR.png",
-    color: "from-purple-400 to-violet-500",
-  },
-  {
-    name: "TUSHAR P",
-    role: "Backend & AI Integration Lead",
-    skills: "RVCE, Bengaluru",
-    image: "/team/TU.png",
-    color: "from-amber-400 to-orange-500",
-  },
-  {
-    name: "AMOGHA K A",
-    role: "Data & Research Lead",
-    skills: "BIT, Bengaluru",
-    image: "/team/AM.jpg",
-    color: "from-emerald-400 to-teal-500",
   },
 ]
 
@@ -213,85 +174,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Meet Our Team Section */}
-      <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        {/* Background Grid - Smaller on mobile */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(52,211,153,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(52,211,153,0.02)_1px,transparent_1px)] bg-[size:30px_30px] sm:bg-[size:40px_40px]"></div>
-
-        <div className="w-full max-w-7xl mx-auto relative z-10">
-          <div className="text-center space-y-3 sm:space-y-4 mb-10 sm:mb-12 md:mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-purple-500/10 border border-purple-500/30 rounded-full">
-              <Users size={14} className="sm:w-4 sm:h-4 text-purple-400" />
-              <span className="text-xs sm:text-sm font-semibold text-purple-400">The Dream Team</span>
-            </div>
-
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black px-4 sm:px-0">
-              <span className="text-white">Meet </span>
-              <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                Our Team
-              </span>
-            </h2>
-
-            <p className="text-base sm:text-lg text-slate-400 max-w-full sm:max-w-2xl md:max-w-3xl mx-auto px-4 sm:px-6 md:px-0">
-              A dedicated team of innovators building the future of packaged food transparency in India
-            </p>
-          </div>
-
-          {/* UPDATED: All 5 members in one row on desktop (lg:grid-cols-5), mobile stays single column */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-6 md:gap-6 lg:gap-5 justify-items-center">
-            {team.map((member, index) => (
-              <div
-                key={index}
-                className="group relative w-full max-w-sm lg:max-w-none"
-              >
-                {/* Glow Effect */}
-                <div
-                  className={`absolute -inset-0.5 bg-gradient-to-r ${member.color} rounded-2xl sm:rounded-2xl md:rounded-3xl blur-md sm:blur-lg opacity-0 group-hover:opacity-50 transition-all duration-500`}
-                ></div>
-
-                {/* Card */}
-                <div className="relative h-full rounded-2xl sm:rounded-2xl md:rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl hover:border-emerald-500/40 transition-all duration-500 transform hover:-translate-y-3 overflow-hidden">
-                  {/* Image Container */}
-                  <div className="relative h-48 sm:h-56 md:h-56 lg:h-48 xl:h-56 overflow-hidden">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${member.color} opacity-20`}></div>
-                    {/* Placeholder fallback */}
-                    <div className={`w-full h-full bg-gradient-to-br ${member.color} flex items-center justify-center`}>
-                      <span className="text-4xl sm:text-5xl md:text-6xl lg:text-4xl xl:text-5xl">👤</span>
-                    </div>
-                    
-                    <Image
-                      src={member.image}
-                      alt={member.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4 sm:p-5 md:p-6 lg:p-4 xl:p-5 text-center space-y-2 sm:space-y-2.5 md:space-y-3 lg:space-y-2">
-                    <h3 className="text-lg sm:text-xl md:text-xl lg:text-base xl:text-lg font-black text-white group-hover:text-emerald-400 transition-colors duration-300">
-                      {member.name}
-                    </h3>
-                    <p className="text-xs sm:text-sm md:text-sm lg:text-xs xl:text-sm text-slate-300 font-semibold">
-                      {member.role}
-                    </p>
-                    <div className={`inline-flex px-3 py-1.5 rounded-full bg-gradient-to-r ${member.color} bg-opacity-20 border border-emerald-500/20`}>
-                      <span className="text-[10px] sm:text-xs md:text-xs lg:text-[9px] xl:text-xs font-semibold text-white">
-                        {member.skills}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Bottom Accent */}
-                  <div
-                    className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${member.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500`}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   )
 }
